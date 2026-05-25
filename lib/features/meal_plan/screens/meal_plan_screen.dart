@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../../data/sample_recipes.dart';
 import '../../../models/recipe.dart';
 
 class MealPlanScreen extends StatelessWidget {
+  final List<Recipe> recipes;
   final Map<String, Recipe> plannedRecipes;
   final void Function(String day, Recipe recipe) onRecipeSelected;
   final void Function(String day) onRecipeRemoved;
 
   const MealPlanScreen({
     super.key,
+    required this.recipes,
     required this.plannedRecipes,
     required this.onRecipeSelected,
     required this.onRecipeRemoved,
@@ -38,7 +39,7 @@ class MealPlanScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
-              ...sampleRecipes.map(
+              ...recipes.map(
                 (recipe) => Card(
                   child: ListTile(
                     leading: const Icon(Icons.restaurant),
@@ -75,9 +76,7 @@ class MealPlanScreen extends StatelessWidget {
             leading: const Icon(Icons.calendar_today),
             title: Text(day),
             subtitle: Text(
-              plannedRecipe == null
-                  ? 'No recipe selected'
-                  : plannedRecipe.name,
+              plannedRecipe == null ? 'No recipe selected' : plannedRecipe.name,
             ),
             trailing: plannedRecipe == null
                 ? IconButton(

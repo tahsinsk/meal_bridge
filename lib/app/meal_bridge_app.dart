@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/sample_recipes.dart';
 import '../features/meal_plan/screens/meal_plan_screen.dart';
 import '../features/recipes/screens/recipe_list_screen.dart';
 import '../features/shopping_list/screens/shopping_list_screen.dart';
@@ -14,9 +15,7 @@ class MealBridgeApp extends StatelessWidget {
       title: 'MealBridge',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
       home: const MainShell(),
@@ -34,7 +33,14 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
+  final List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   final Map<String, Recipe> _plannedRecipes = {};
+
+  void _addRecipe(Recipe recipe) {
+    setState(() {
+      _recipes.add(recipe);
+    });
+  }
 
   void _selectRecipeForDay(String day, Recipe recipe) {
     setState(() {
@@ -64,8 +70,12 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      const RecipeListScreen(),
+      RecipeListScreen(
+        recipes: _recipes,
+        onRecipeAdded: _addRecipe,
+      ),
       MealPlanScreen(
+        recipes: _recipes,
         plannedRecipes: _plannedRecipes,
         onRecipeSelected: _selectRecipeForDay,
         onRecipeRemoved: _removeRecipeFromDay,
