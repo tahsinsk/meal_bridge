@@ -62,14 +62,14 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
+  bool _isCustomRecipe(Recipe recipe) {
+    return !sampleRecipes.any(
+      (sampleRecipe) => sampleRecipe.id == recipe.id,
+    );
+  }
+
   Future<void> _saveCustomRecipes() async {
-    final customRecipes = _recipes
-        .where(
-          (recipe) => !sampleRecipes.any(
-            (sampleRecipe) => sampleRecipe.id == recipe.id,
-          ),
-        )
-        .toList();
+    final customRecipes = _recipes.where(_isCustomRecipe).toList();
 
     await _recipeStorageService.saveRecipes(customRecipes);
   }
@@ -77,6 +77,17 @@ class _MainShellState extends State<MainShell> {
   void _addRecipe(Recipe recipe) {
     setState(() {
       _recipes.add(recipe);
+    });
+
+    _saveCustomRecipes();
+  }
+
+  void _deleteRecipe(Recipe recipe) {
+    setState(() {
+      _recipes.removeWhere((item) => item.id == recipe.id);
+      _plannedRecipes.removeWhere(
+        (day, plannedRecipe) => plannedRecipe.id == recipe.id,
+      );
     });
 
     _saveCustomRecipes();
@@ -112,7 +123,9 @@ class _MainShellState extends State<MainShell> {
     final screens = [
       RecipeListScreen(
         recipes: _recipes,
+        canDeleteRecipe: _isCustomRecipe,
         onRecipeAdded: _addRecipe,
+        onRecipeDeleted: _deleteRecipe,
       ),
       MealPlanScreen(
         recipes: _recipes,
