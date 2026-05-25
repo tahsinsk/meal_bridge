@@ -5,6 +5,7 @@ import '../features/meal_plan/screens/meal_plan_screen.dart';
 import '../features/recipes/screens/recipe_list_screen.dart';
 import '../features/shopping_list/screens/shopping_list_screen.dart';
 import '../models/recipe.dart';
+import '../services/recipe_storage_service.dart';
 
 class MealBridgeApp extends StatelessWidget {
   const MealBridgeApp({super.key});
@@ -31,15 +32,54 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 0;
+  final RecipeStorageService _recipeStorageService = RecipeStorageService();
 
-  final List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
+  int _selectedIndex = 0;
+  bool _isLoadingRecipes = true;
+
+  List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   final Map<String, Recipe> _plannedRecipes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedRecipes();
+  }
+
+  Future<void> _loadSavedRecipes() async {
+    final savedRecipes = await _recipeStorageService.loadRecipes();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _recipes = [
+        ...sampleRecipes,
+        ...savedRecipes,
+      ];
+      _isLoadingRecipes = false;
+    });
+  }
+
+  Future<void> _saveCustomRecipes() async {
+    final customRecipes = _recipes
+        .where(
+          (recipe) => !sampleRecipes.any(
+            (sampleRecipe) => sampleRecipe.id == recipe.id,
+          ),
+        )
+        .toList();
+
+    await _recipeStorageService.saveRecipes(customRecipes);
+  }
 
   void _addRecipe(Recipe recipe) {
     setState(() {
       _recipes.add(recipe);
     });
+
+    _saveCustomRecipes();
   }
 
   void _selectRecipeForDay(String day, Recipe recipe) {
@@ -90,7 +130,9 @@ class _MainShellState extends State<MainShell> {
         title: Text(_title),
         centerTitle: false,
       ),
-      body: screens[_selectedIndex],
+      body: _isLoadingRecipes
+          ? const Center(child: CircularProgressIndicator())
+          : screens[_selectedIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
