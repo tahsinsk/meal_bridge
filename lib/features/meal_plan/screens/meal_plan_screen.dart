@@ -39,6 +39,15 @@ class MealPlanScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
+              if (recipes.isEmpty)
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'No recipes yet. Add a recipe first, then come back to plan your week.',
+                    ),
+                  ),
+                ),
               ...recipes.map(
                 (recipe) => Card(
                   child: ListTile(
@@ -64,86 +73,107 @@ class MealPlanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _days.length,
-      itemBuilder: (context, index) {
-        final day = _days[index];
-        final plannedRecipe = plannedRecipes[day];
+    final plannedRecipeCount = plannedRecipes.length;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => _selectRecipeForDay(context, day),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today_outlined),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          day,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      if (plannedRecipe == null)
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
-                          tooltip: 'Select recipe',
-                          onPressed: () => _selectRecipeForDay(context, day),
-                        )
-                      else
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          tooltip: 'Remove recipe',
-                          onPressed: () => onRecipeRemoved(day),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (plannedRecipe == null)
-                    Text(
-                      'No recipe selected yet. Tap to choose one.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    )
-                  else ...[
-                    Text(
-                      plannedRecipe.name,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Chip(
-                          avatar: const Icon(Icons.restaurant_menu, size: 18),
-                          label: Text(plannedRecipe.category),
-                        ),
-                        Chip(
-                          avatar: const Icon(Icons.people_outline, size: 18),
-                          label: Text('${plannedRecipe.servings} servings'),
-                        ),
-                        Chip(
-                          avatar: const Icon(Icons.list_alt, size: 18),
-                          label: Text(
-                            '${plannedRecipe.ingredients.length} ingredients',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Weekly plan summary',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text('$plannedRecipeCount of ${_days.length} day(s) planned'),
+                const SizedBox(height: 4),
+                const Text('Tap a day to select or change its recipe.'),
+              ],
             ),
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 16),
+        ..._days.map((day) {
+          final plannedRecipe = plannedRecipes[day];
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _selectRecipeForDay(context, day),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today_outlined),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            day,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        if (plannedRecipe == null)
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline),
+                            tooltip: 'Select recipe',
+                            onPressed: () => _selectRecipeForDay(context, day),
+                          )
+                        else
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Remove recipe',
+                            onPressed: () => onRecipeRemoved(day),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (plannedRecipe == null)
+                      Text(
+                        'No recipe selected yet. Tap to choose one.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      )
+                    else ...[
+                      Text(
+                        plannedRecipe.name,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Chip(
+                            avatar: const Icon(Icons.restaurant_menu, size: 18),
+                            label: Text(plannedRecipe.category),
+                          ),
+                          Chip(
+                            avatar: const Icon(Icons.people_outline, size: 18),
+                            label: Text('${plannedRecipe.servings} servings'),
+                          ),
+                          Chip(
+                            avatar: const Icon(Icons.list_alt, size: 18),
+                            label: Text(
+                              '${plannedRecipe.ingredients.length} ingredients',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 }
