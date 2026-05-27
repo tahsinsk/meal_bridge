@@ -42,11 +42,12 @@ class MealPlanScreen extends StatelessWidget {
               ...recipes.map(
                 (recipe) => Card(
                   child: ListTile(
-                    leading: const Icon(Icons.restaurant),
+                    leading: const Icon(Icons.restaurant_menu),
                     title: Text(recipe.name),
                     subtitle: Text(
-                      '${recipe.category} • ${recipe.servings} servings',
+                      '${recipe.category} • ${recipe.servings} servings • ${recipe.ingredients.length} ingredients',
                     ),
+                    trailing: const Icon(Icons.add_circle_outline),
                     onTap: () {
                       onRecipeSelected(day, recipe);
                       Navigator.of(context).pop();
@@ -72,22 +73,74 @@ class MealPlanScreen extends StatelessWidget {
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: Text(day),
-            subtitle: Text(
-              plannedRecipe == null ? 'No recipe selected' : plannedRecipe.name,
-            ),
-            trailing: plannedRecipe == null
-                ? IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () => _selectRecipeForDay(context, day),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => onRecipeRemoved(day),
-                  ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
             onTap: () => _selectRecipeForDay(context, day),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today_outlined),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          day,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      if (plannedRecipe == null)
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          tooltip: 'Select recipe',
+                          onPressed: () => _selectRecipeForDay(context, day),
+                        )
+                      else
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          tooltip: 'Remove recipe',
+                          onPressed: () => onRecipeRemoved(day),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (plannedRecipe == null)
+                    Text(
+                      'No recipe selected yet. Tap to choose one.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    )
+                  else ...[
+                    Text(
+                      plannedRecipe.name,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          avatar: const Icon(Icons.restaurant_menu, size: 18),
+                          label: Text(plannedRecipe.category),
+                        ),
+                        Chip(
+                          avatar: const Icon(Icons.people_outline, size: 18),
+                          label: Text('${plannedRecipe.servings} servings'),
+                        ),
+                        Chip(
+                          avatar: const Icon(Icons.list_alt, size: 18),
+                          label: Text(
+                            '${plannedRecipe.ingredients.length} ingredients',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         );
       },
