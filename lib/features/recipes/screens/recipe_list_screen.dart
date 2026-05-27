@@ -78,13 +78,54 @@ class RecipeListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var searchQuery = '';
     return Scaffold(
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: recipes.length,
-        itemBuilder: (context, index) {
-          final recipe = recipes[index];
-          final isCustomRecipe = canDeleteRecipe(recipe);
+      body: StatefulBuilder(
+        builder: (context, setSearchState) {
+          final filteredRecipes = recipes.where((recipe) {
+            final query = searchQuery.trim().toLowerCase();
+
+            if (query.isEmpty) {
+              return true;
+            }
+
+            return recipe.name.toLowerCase().contains(query) ||
+                recipe.category.toLowerCase().contains(query);
+          }).toList();
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: filteredRecipes.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Search recipes',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setSearchState(() {
+                        searchQuery = value;
+                      });
+                    },
+                  ),
+                );
+              }
+
+              if (filteredRecipes.isEmpty) {
+                return const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('No recipes found.'),
+                  ),
+                );
+              }
+
+              final recipe = filteredRecipes[index - 1];
+              final isCustomRecipe = canDeleteRecipe(recipe);
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -169,6 +210,8 @@ class RecipeListScreen extends StatelessWidget {
                 ),
               ),
             ),
+          );
+            },
           );
         },
       ),
