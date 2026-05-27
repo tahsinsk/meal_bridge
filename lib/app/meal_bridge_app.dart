@@ -35,30 +35,46 @@ class _MainShellState extends State<MainShell> {
   final RecipeStorageService _recipeStorageService = RecipeStorageService();
 
   int _selectedIndex = 0;
-  bool _isLoadingRecipes = true;
+  bool _isLoadingData = true;
 
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
-  final Map<String, Recipe> _plannedRecipes = {};
+  Map<String, Recipe> _plannedRecipes = {};
 
   @override
   void initState() {
     super.initState();
-    _loadSavedRecipes();
+    _loadSavedData();
   }
 
-  Future<void> _loadSavedRecipes() async {
+  Future<void> _loadSavedData() async {
     final savedRecipes = await _recipeStorageService.loadRecipes();
+    final savedMealPlan = await _recipeStorageService.loadMealPlan();
+
+    final allRecipes = [
+      ...sampleRecipes,
+      ...savedRecipes,
+    ];
+
+    final plannedRecipes = <String, Recipe>{};
+
+    for (final entry in savedMealPlan.entries) {
+      final matchingRecipe = allRecipes.where(
+        (recipe) => recipe.id == entry.value,
+      );
+
+      if (matchingRecipe.isNotEmpty) {
+        plannedRecipes[entry.key] = matchingRecipe.first;
+      }
+    }
 
     if (!mounted) {
       return;
     }
 
     setState(() {
-      _recipes = [
-        ...sampleRecipes,
-        ...savedRecipes,
-      ];
-      _isLoadingRecipes = false;
+      _recipes = allRecipes;
+      _plannedRecipes = plannedRecipes;
+      _isLoadingData = false;
     });
   }
 
@@ -72,6 +88,14 @@ class _MainShellState extends State<MainShell> {
     final customRecipes = _recipes.where(_isCustomRecipe).toList();
 
     await _recipeStorageService.saveRecipes(customRecipes);
+  }
+
+  Future<void> _saveMealPlan() async {
+    final mealPlan = _plannedRecipes.map(
+      (day, recipe) => MapEntry(day, recipe.id),
+    );
+
+    await _recipeStorageService.saveMealPlan(mealPlan);
   }
 
   void _addRecipe(Recipe recipe) {
@@ -102,6 +126,7 @@ class _MainShellState extends State<MainShell> {
     });
 
     _saveCustomRecipes();
+    _saveMealPlan();
   }
 
   void _deleteRecipe(Recipe recipe) {
@@ -113,18 +138,23 @@ class _MainShellState extends State<MainShell> {
     });
 
     _saveCustomRecipes();
+    _saveMealPlan();
   }
 
   void _selectRecipeForDay(String day, Recipe recipe) {
     setState(() {
       _plannedRecipes[day] = recipe;
     });
+
+    _saveMealPlan();
   }
 
   void _removeRecipeFromDay(String day) {
     setState(() {
       _plannedRecipes.remove(day);
     });
+
+    _saveMealPlan();
   }
 
   String get _title {
@@ -166,7 +196,7 @@ class _MainShellState extends State<MainShell> {
         title: Text(_title),
         centerTitle: false,
       ),
-      body: _isLoadingRecipes
+      body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())
           : screens[_selectedIndex],
       bottomNavigationBar: NavigationBar(
