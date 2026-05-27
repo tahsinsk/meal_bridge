@@ -173,48 +173,63 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Recipe name',
-                border: OutlineInputBorder(),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Basic info',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Recipe name',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Recipe name is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _categoryController,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Category is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _servingsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Servings',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        final servings = int.tryParse(value ?? '');
+                        if (servings == null || servings <= 0) {
+                          return 'Enter a valid serving amount.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Recipe name is required.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _categoryController,
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Category is required.';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _servingsController,
-              decoration: const InputDecoration(
-                labelText: 'Servings',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (value) {
-                final servings = int.tryParse(value ?? '');
-                if (servings == null || servings <= 0) {
-                  return 'Enter a valid serving amount.';
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 24),
             Text(
@@ -244,51 +259,69 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               );
             }),
             const SizedBox(height: 8),
-            TextField(
-              controller: _ingredientNameController,
-              decoration: const InputDecoration(
-                labelText: 'Ingredient name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _ingredientAmountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      border: OutlineInputBorder(),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Add ingredient',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _ingredientUnitController,
-                    decoration: const InputDecoration(
-                      labelText: 'Unit',
-                      border: OutlineInputBorder(),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _ingredientNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ingredient name',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _ingredientAmountController,
+                            decoration: const InputDecoration(
+                              labelText: 'Amount',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _ingredientUnitController,
+                            decoration: const InputDecoration(
+                              labelText: 'Unit',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _ingredientCategoryController,
+                      decoration: const InputDecoration(
+                        labelText: 'Market category',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _addIngredient,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Ingredient'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _ingredientCategoryController,
-              decoration: const InputDecoration(
-                labelText: 'Market category',
-                border: OutlineInputBorder(),
               ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: _addIngredient,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Ingredient'),
             ),
             const SizedBox(height: 24),
             Text(
@@ -312,18 +345,38 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               );
             }),
             const SizedBox(height: 8),
-            TextField(
-              controller: _instructionController,
-              decoration: const InputDecoration(
-                labelText: 'Instruction',
-                border: OutlineInputBorder(),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Add instruction step',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _instructionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Instruction',
+                        border: OutlineInputBorder(),
+                      ),
+                      minLines: 2,
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _addInstruction,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Instruction'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: _addInstruction,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Instruction'),
             ),
             const SizedBox(height: 24),
             TextField(
@@ -336,9 +389,16 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               maxLines: 4,
             ),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _saveRecipe,
-              child: Text(widget.initialRecipe == null ? 'Save Recipe' : 'Update Recipe'),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: _saveRecipe,
+                icon: const Icon(Icons.save_outlined),
+                label: Text(
+                  widget.initialRecipe == null ? 'Save Recipe' : 'Update Recipe',
+                ),
+              ),
             ),
           ],
         ),
