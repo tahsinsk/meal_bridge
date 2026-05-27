@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../data/sample_recipes.dart';
@@ -173,6 +174,14 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
   }
 
+  void _clearCheckedShoppingItems() {
+    setState(() {
+      _checkedShoppingItemKeys.clear();
+    });
+
+    _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
+  }
+
   String get _title {
     switch (_selectedIndex) {
       case 0:
@@ -206,6 +215,7 @@ class _MainShellState extends State<MainShell> {
         plannedRecipes: _plannedRecipes,
         checkedItemKeys: _checkedShoppingItemKeys,
         onItemCheckedChanged: _setShoppingItemChecked,
+        onClearCheckedItems: _clearCheckedShoppingItems,
       ),
     ];
 

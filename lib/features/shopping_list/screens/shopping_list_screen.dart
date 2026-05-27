@@ -8,12 +8,14 @@ class ShoppingListScreen extends StatelessWidget {
   final Map<String, Recipe> plannedRecipes;
   final Set<String> checkedItemKeys;
   final void Function(String itemKey, bool isChecked) onItemCheckedChanged;
+  final VoidCallback onClearCheckedItems;
 
   const ShoppingListScreen({
     super.key,
     required this.plannedRecipes,
     required this.checkedItemKeys,
     required this.onItemCheckedChanged,
+    required this.onClearCheckedItems,
   });
 
   String _formatAmount(double amount) {
@@ -60,9 +62,21 @@ class ShoppingListScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          '${selectedRecipes.length} planned recipe(s)',
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${selectedRecipes.length} planned recipe(s)',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            if (checkedItemKeys.isNotEmpty)
+              TextButton.icon(
+                onPressed: onClearCheckedItems,
+                icon: const Icon(Icons.cleaning_services_outlined),
+                label: const Text('Clear checked'),
+              ),
+          ],
         ),
         const SizedBox(height: 16),
         ...groupedItems.entries.map(
