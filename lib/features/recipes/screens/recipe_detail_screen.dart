@@ -27,16 +27,45 @@ class RecipeDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            recipe.name,
-            style: Theme.of(context).textTheme.headlineMedium,
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe.name,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    recipe.category,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Chip(
+                        avatar: const Icon(Icons.people_outline, size: 18),
+                        label: Text('${recipe.servings} servings'),
+                      ),
+                      Chip(
+                        avatar: const Icon(Icons.list_alt, size: 18),
+                        label: Text('${recipe.ingredients.length} ingredients'),
+                      ),
+                      Chip(
+                        avatar: const Icon(Icons.format_list_numbered, size: 18),
+                        label: Text('${recipe.instructions.length} steps'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${recipe.category} • ${recipe.servings} servings',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Text(
             'Ingredients',
             style: Theme.of(context).textTheme.titleLarge,
@@ -66,11 +95,20 @@ class RecipeDetailScreen extends StatelessWidget {
               final instruction = entry.value;
 
               return Card(
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text('${index + 1}'),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        child: Text('${index + 1}'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(instruction),
+                      ),
+                    ],
                   ),
-                  title: Text(instruction),
                 ),
               );
             },
