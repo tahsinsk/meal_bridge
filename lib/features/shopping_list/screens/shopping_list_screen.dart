@@ -52,6 +52,9 @@ class ShoppingListScreen extends StatelessWidget {
     final selectedRecipes = plannedRecipes.values.toList();
     final shoppingItems = generateShoppingListFromRecipes(selectedRecipes);
     final groupedItems = _groupItemsByCategory(shoppingItems);
+    final checkedItemCount = shoppingItems.where(
+      (item) => checkedItemKeys.contains(_itemKey(item)),
+    ).length;
 
     if (selectedRecipes.isEmpty) {
       return const Center(
@@ -62,21 +65,34 @@ class ShoppingListScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                '${selectedRecipes.length} planned recipe(s)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Shopping summary',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text('${selectedRecipes.length} planned recipe(s)'),
+                Text('${shoppingItems.length} shopping item(s)'),
+                Text('$checkedItemCount checked item(s)'),
+                if (checkedItemKeys.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: onClearCheckedItems,
+                      icon: const Icon(Icons.cleaning_services_outlined),
+                      label: const Text('Clear checked'),
+                    ),
+                  ),
+                ],
+              ],
             ),
-            if (checkedItemKeys.isNotEmpty)
-              TextButton.icon(
-                onPressed: onClearCheckedItems,
-                icon: const Icon(Icons.cleaning_services_outlined),
-                label: const Text('Clear checked'),
-              ),
-          ],
+          ),
         ),
         const SizedBox(height: 16),
         ...groupedItems.entries.map(
