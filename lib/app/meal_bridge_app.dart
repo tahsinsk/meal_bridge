@@ -82,6 +82,28 @@ class _MainShellState extends State<MainShell> {
     _saveCustomRecipes();
   }
 
+  void _updateRecipe(Recipe updatedRecipe) {
+    setState(() {
+      final recipeIndex = _recipes.indexWhere(
+        (recipe) => recipe.id == updatedRecipe.id,
+      );
+
+      if (recipeIndex != -1) {
+        _recipes[recipeIndex] = updatedRecipe;
+      }
+
+      _plannedRecipes.updateAll((day, plannedRecipe) {
+        if (plannedRecipe.id == updatedRecipe.id) {
+          return updatedRecipe;
+        }
+
+        return plannedRecipe;
+      });
+    });
+
+    _saveCustomRecipes();
+  }
+
   void _deleteRecipe(Recipe recipe) {
     setState(() {
       _recipes.removeWhere((item) => item.id == recipe.id);
@@ -125,6 +147,7 @@ class _MainShellState extends State<MainShell> {
         recipes: _recipes,
         canDeleteRecipe: _isCustomRecipe,
         onRecipeAdded: _addRecipe,
+        onRecipeUpdated: _updateRecipe,
         onRecipeDeleted: _deleteRecipe,
       ),
       MealPlanScreen(

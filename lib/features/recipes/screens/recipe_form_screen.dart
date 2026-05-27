@@ -4,7 +4,12 @@ import '../../../models/ingredient.dart';
 import '../../../models/recipe.dart';
 
 class RecipeFormScreen extends StatefulWidget {
-  const RecipeFormScreen({super.key});
+  final Recipe? initialRecipe;
+
+  const RecipeFormScreen({
+    super.key,
+    this.initialRecipe,
+  });
 
   @override
   State<RecipeFormScreen> createState() => _RecipeFormScreenState();
@@ -13,10 +18,10 @@ class RecipeFormScreen extends StatefulWidget {
 class _RecipeFormScreenState extends State<RecipeFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameController = TextEditingController();
-  final _categoryController = TextEditingController(text: 'Dinner');
-  final _servingsController = TextEditingController(text: '2');
-  final _notesController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _categoryController;
+  late final TextEditingController _servingsController;
+  late final TextEditingController _notesController;
 
   final _ingredientNameController = TextEditingController();
   final _ingredientAmountController = TextEditingController();
@@ -26,6 +31,23 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
   final List<Ingredient> _ingredients = [];
   final List<String> _instructions = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    final recipe = widget.initialRecipe;
+
+    _nameController = TextEditingController(text: recipe?.name ?? '');
+    _categoryController = TextEditingController(text: recipe?.category ?? 'Dinner');
+    _servingsController = TextEditingController(text: recipe?.servings.toString() ?? '2');
+    _notesController = TextEditingController(text: recipe?.notes ?? '');
+
+    if (recipe != null) {
+      _ingredients.addAll(recipe.ingredients);
+      _instructions.addAll(recipe.instructions);
+    }
+  }
 
   @override
   void dispose() {
@@ -126,7 +148,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     }
 
     final recipe = Recipe(
-      id: 'recipe-${DateTime.now().millisecondsSinceEpoch}',
+      id: widget.initialRecipe?.id ?? 'recipe-${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
       servings: int.parse(_servingsController.text.trim()),
       category: _categoryController.text.trim(),
@@ -144,7 +166,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Recipe'),
+        title: Text(widget.initialRecipe == null ? 'Add Recipe' : 'Edit Recipe'),
       ),
       body: Form(
         key: _formKey,
@@ -316,7 +338,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _saveRecipe,
-              child: const Text('Save Recipe'),
+              child: Text(widget.initialRecipe == null ? 'Save Recipe' : 'Update Recipe'),
             ),
           ],
         ),

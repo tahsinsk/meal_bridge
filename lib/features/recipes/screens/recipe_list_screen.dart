@@ -8,6 +8,7 @@ class RecipeListScreen extends StatelessWidget {
   final List<Recipe> recipes;
   final bool Function(Recipe recipe) canDeleteRecipe;
   final ValueChanged<Recipe> onRecipeAdded;
+  final ValueChanged<Recipe> onRecipeUpdated;
   final ValueChanged<Recipe> onRecipeDeleted;
 
   const RecipeListScreen({
@@ -15,6 +16,7 @@ class RecipeListScreen extends StatelessWidget {
     required this.recipes,
     required this.canDeleteRecipe,
     required this.onRecipeAdded,
+    required this.onRecipeUpdated,
     required this.onRecipeDeleted,
   });
 
@@ -27,6 +29,21 @@ class RecipeListScreen extends StatelessWidget {
 
     if (newRecipe != null) {
       onRecipeAdded(newRecipe);
+    }
+  }
+
+  Future<void> _openEditRecipeScreen(
+    BuildContext context,
+    Recipe recipe,
+  ) async {
+    final updatedRecipe = await Navigator.of(context).push<Recipe>(
+      MaterialPageRoute(
+        builder: (context) => RecipeFormScreen(initialRecipe: recipe),
+      ),
+    );
+
+    if (updatedRecipe != null) {
+      onRecipeUpdated(updatedRecipe);
     }
   }
 
@@ -79,6 +96,12 @@ class RecipeListScreen extends StatelessWidget {
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (canDeleteRecipe(recipe))
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Edit recipe',
+                      onPressed: () => _openEditRecipeScreen(context, recipe),
+                    ),
                   if (canDeleteRecipe(recipe))
                     IconButton(
                       icon: const Icon(Icons.delete_outline),
