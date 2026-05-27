@@ -84,33 +84,12 @@ class RecipeListScreen extends StatelessWidget {
         itemCount: recipes.length,
         itemBuilder: (context, index) {
           final recipe = recipes[index];
+          final isCustomRecipe = canDeleteRecipe(recipe);
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const Icon(Icons.restaurant),
-              title: Text(recipe.name),
-              subtitle: Text(
-                '${recipe.category} • ${recipe.servings} servings • ${recipe.ingredients.length} ingredients',
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (canDeleteRecipe(recipe))
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined),
-                      tooltip: 'Edit recipe',
-                      onPressed: () => _openEditRecipeScreen(context, recipe),
-                    ),
-                  if (canDeleteRecipe(recipe))
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Delete recipe',
-                      onPressed: () => _confirmDeleteRecipe(context, recipe),
-                    ),
-                  const Icon(Icons.chevron_right),
-                ],
-              ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -118,6 +97,77 @@ class RecipeListScreen extends StatelessWidget {
                   ),
                 );
               },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.restaurant_menu),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                recipe.name,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(recipe.category),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          avatar: const Icon(Icons.people_outline, size: 18),
+                          label: Text('${recipe.servings} servings'),
+                        ),
+                        Chip(
+                          avatar: const Icon(Icons.list_alt, size: 18),
+                          label: Text('${recipe.ingredients.length} ingredients'),
+                        ),
+                        Chip(
+                          avatar: Icon(
+                            isCustomRecipe
+                                ? Icons.edit_note
+                                : Icons.verified_outlined,
+                            size: 18,
+                          ),
+                          label: Text(isCustomRecipe ? 'Custom' : 'Sample'),
+                        ),
+                      ],
+                    ),
+                    if (isCustomRecipe) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _openEditRecipeScreen(context, recipe),
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Edit'),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => _confirmDeleteRecipe(context, recipe),
+                            icon: const Icon(Icons.delete_outline),
+                            label: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           );
         },
