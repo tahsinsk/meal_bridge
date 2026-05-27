@@ -32,6 +32,19 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   final List<Ingredient> _ingredients = [];
   final List<String> _instructions = [];
 
+  final List<String> _marketCategories = const [
+    'Vegetables',
+    'Fruit',
+    'Meat',
+    'Dairy',
+    'Bakery',
+    'Pantry',
+    'Frozen',
+    'Drinks',
+    'Snacks',
+    'Other',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -303,12 +316,33 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: _ingredientCategoryController,
+                    DropdownButtonFormField<String>(
+                      value: _marketCategories.contains(
+                        _ingredientCategoryController.text,
+                      )
+                          ? _ingredientCategoryController.text
+                          : 'Other',
                       decoration: const InputDecoration(
                         labelText: 'Market category',
                         border: OutlineInputBorder(),
                       ),
+                      items: _marketCategories
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(category),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+
+                        setState(() {
+                          _ingredientCategoryController.text = value;
+                        });
+                      },
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
