@@ -45,6 +45,20 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     'Other',
   ];
 
+  final List<String> _units = const [
+    'g',
+    'kg',
+    'ml',
+    'l',
+    'pcs',
+    'tbsp',
+    'tsp',
+    'cup',
+    'slice',
+    'can',
+    'pack',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -305,23 +319,42 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: TextField(
-                            controller: _ingredientUnitController,
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _units.contains(_ingredientUnitController.text)
+    ? _ingredientUnitController.text
+    : 'g',
                             decoration: const InputDecoration(
                               labelText: 'Unit',
                               border: OutlineInputBorder(),
                             ),
+                            items: _units
+                                .map(
+                                  (unit) => DropdownMenuItem(
+                                    value: unit,
+                                    child: Text(unit),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) {
+                                return;
+                              }
+
+                              setState(() {
+                                _ingredientUnitController.text = value;
+                              });
+                            },
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _marketCategories.contains(
-                        _ingredientCategoryController.text,
-                      )
-                          ? _ingredientCategoryController.text
-                          : 'Other',
+                      initialValue: _marketCategories.contains(
+  _ingredientCategoryController.text,
+)
+    ? _ingredientCategoryController.text
+    : 'Other',
                       decoration: const InputDecoration(
                         labelText: 'Market category',
                         border: OutlineInputBorder(),
