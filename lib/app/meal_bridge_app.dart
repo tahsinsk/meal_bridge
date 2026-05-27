@@ -39,6 +39,7 @@ class _MainShellState extends State<MainShell> {
 
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   Map<String, Recipe> _plannedRecipes = {};
+  Set<String> _checkedShoppingItemKeys = {};
 
   @override
   void initState() {
@@ -49,6 +50,8 @@ class _MainShellState extends State<MainShell> {
   Future<void> _loadSavedData() async {
     final savedRecipes = await _recipeStorageService.loadRecipes();
     final savedMealPlan = await _recipeStorageService.loadMealPlan();
+    final savedCheckedShoppingItems =
+        await _recipeStorageService.loadCheckedShoppingItems();
 
     final allRecipes = [
       ...sampleRecipes,
@@ -74,6 +77,7 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       _recipes = allRecipes;
       _plannedRecipes = plannedRecipes;
+      _checkedShoppingItemKeys = savedCheckedShoppingItems;
       _isLoadingData = false;
     });
   }
@@ -157,6 +161,18 @@ class _MainShellState extends State<MainShell> {
     _saveMealPlan();
   }
 
+  void _setShoppingItemChecked(String itemKey, bool isChecked) {
+    setState(() {
+      if (isChecked) {
+        _checkedShoppingItemKeys.add(itemKey);
+      } else {
+        _checkedShoppingItemKeys.remove(itemKey);
+      }
+    });
+
+    _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
+  }
+
   String get _title {
     switch (_selectedIndex) {
       case 0:
@@ -188,6 +204,8 @@ class _MainShellState extends State<MainShell> {
       ),
       ShoppingListScreen(
         plannedRecipes: _plannedRecipes,
+        checkedItemKeys: _checkedShoppingItemKeys,
+        onItemCheckedChanged: _setShoppingItemChecked,
       ),
     ];
 

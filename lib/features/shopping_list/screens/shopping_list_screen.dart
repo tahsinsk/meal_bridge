@@ -4,20 +4,17 @@ import '../../../data/shopping_list_generator.dart';
 import '../../../models/recipe.dart';
 import '../../../models/shopping_list_item.dart';
 
-class ShoppingListScreen extends StatefulWidget {
+class ShoppingListScreen extends StatelessWidget {
   final Map<String, Recipe> plannedRecipes;
+  final Set<String> checkedItemKeys;
+  final void Function(String itemKey, bool isChecked) onItemCheckedChanged;
 
   const ShoppingListScreen({
     super.key,
     required this.plannedRecipes,
+    required this.checkedItemKeys,
+    required this.onItemCheckedChanged,
   });
-
-  @override
-  State<ShoppingListScreen> createState() => _ShoppingListScreenState();
-}
-
-class _ShoppingListScreenState extends State<ShoppingListScreen> {
-  final Set<String> _checkedItemKeys = {};
 
   String _formatAmount(double amount) {
     if (amount == amount.roundToDouble()) {
@@ -45,20 +42,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   void _toggleChecked(ShoppingListItem item, bool? value) {
-    final key = _itemKey(item);
-
-    setState(() {
-      if (value == true) {
-        _checkedItemKeys.add(key);
-      } else {
-        _checkedItemKeys.remove(key);
-      }
-    });
+    onItemCheckedChanged(_itemKey(item), value == true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedRecipes = widget.plannedRecipes.values.toList();
+    final selectedRecipes = plannedRecipes.values.toList();
     final shoppingItems = generateShoppingListFromRecipes(selectedRecipes);
     final groupedItems = _groupItemsByCategory(shoppingItems);
 
@@ -91,7 +80,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 const SizedBox(height: 8),
                 ...items.map(
                   (item) {
-                    final isChecked = _checkedItemKeys.contains(
+                    final isChecked = checkedItemKeys.contains(
                       _itemKey(item),
                     );
 
