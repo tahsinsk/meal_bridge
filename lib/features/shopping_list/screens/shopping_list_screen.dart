@@ -76,6 +76,52 @@ class ShoppingListScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _copyUncheckedShoppingList(
+    BuildContext context,
+    Map<String, List<ShoppingListItem>> groupedItems,
+  ) async {
+    final buffer = StringBuffer('MealBridge Shopping List\n\n');
+
+    for (final entry in groupedItems.entries) {
+      final uncheckedItems = entry.value.where(
+        (item) => !checkedItemKeys.contains(_itemKey(item)),
+      );
+
+      if (uncheckedItems.isEmpty) {
+        continue;
+      }
+
+      buffer.writeln(entry.key);
+
+      for (final item in uncheckedItems) {
+        buffer.writeln(
+          '[ ] ${_formatAmount(item.amount)} ${item.unit} ${item.name}',
+        );
+      }
+
+      buffer.writeln();
+    }
+
+    final copiedText = buffer.toString().trim();
+
+    if (copiedText == 'MealBridge Shopping List') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No unchecked items to copy.')),
+      );
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: copiedText));
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Unchecked shopping items copied.')),
+    );
+  }
+
   void _toggleChecked(ShoppingListItem item, bool? value) {
     onItemCheckedChanged(_itemKey(item), value == true);
   }
@@ -121,6 +167,14 @@ class ShoppingListScreen extends StatelessWidget {
                       onPressed: () => _copyShoppingList(context, groupedItems),
                       icon: const Icon(Icons.copy_outlined),
                       label: const Text('Copy list'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _copyUncheckedShoppingList(
+                        context,
+                        groupedItems,
+                      ),
+                      icon: const Icon(Icons.playlist_add_check_outlined),
+                      label: const Text('Copy unchecked'),
                     ),
                     if (checkedItemKeys.isNotEmpty)
                       TextButton.icon(
