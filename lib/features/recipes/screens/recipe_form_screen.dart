@@ -142,10 +142,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     });
   }
 
-  void _addInstruction() {
+    void _addInstruction() {
     final instruction = _instructionController.text.trim();
 
     if (instruction.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter an instruction step.')),
+      );
       return;
     }
 
