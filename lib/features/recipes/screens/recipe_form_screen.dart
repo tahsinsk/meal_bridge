@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../models/ingredient.dart';
 import '../../../models/recipe.dart';
@@ -246,6 +247,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
                         final servings = int.tryParse(value ?? '');
                         if (servings == null || servings <= 0) {
@@ -314,15 +316,40 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                               labelText: 'Amount',
                               border: OutlineInputBorder(),
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              TextInputFormatter.withFunction(
+                                (oldValue, newValue) {
+                                  final text = newValue.text.replaceAll(',', '.');
+
+                                  if (text.isEmpty) {
+                                    return newValue;
+                                  }
+
+                                  final isValidAmount = RegExp(
+                                    r'^\d*\.?\d*$',
+                                  ).hasMatch(text);
+
+                                  if (!isValidAmount) {
+                                    return oldValue;
+                                  }
+
+                                  return newValue;
+                                },
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            initialValue: _units.contains(_ingredientUnitController.text)
-    ? _ingredientUnitController.text
-    : 'g',
+                            initialValue: _units.contains(
+                              _ingredientUnitController.text,
+                            )
+                                ? _ingredientUnitController.text
+                                : 'g',
                             decoration: const InputDecoration(
                               labelText: 'Unit',
                               border: OutlineInputBorder(),
@@ -351,10 +378,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       initialValue: _marketCategories.contains(
-  _ingredientCategoryController.text,
-)
-    ? _ingredientCategoryController.text
-    : 'Other',
+                        _ingredientCategoryController.text,
+                      )
+                          ? _ingredientCategoryController.text
+                          : 'Other',
                       decoration: const InputDecoration(
                         labelText: 'Market category',
                         border: OutlineInputBorder(),

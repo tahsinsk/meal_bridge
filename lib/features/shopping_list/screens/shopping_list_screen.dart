@@ -19,6 +19,19 @@ class ShoppingListScreen extends StatelessWidget {
     required this.onClearCheckedItems,
   });
 
+  static const List<String> _categoryOrder = [
+    'Vegetables',
+    'Fruit',
+    'Meat',
+    'Dairy',
+    'Bakery',
+    'Pantry',
+    'Frozen',
+    'Drinks',
+    'Snacks',
+    'Other',
+  ];
+
   String _formatAmount(double amount) {
     if (amount == amount.roundToDouble()) {
       return amount.toInt().toString();
@@ -41,7 +54,27 @@ class ShoppingListScreen extends StatelessWidget {
       groupedItems[item.category]!.add(item);
     }
 
-    return groupedItems;
+    final sortedEntries = groupedItems.entries.toList()
+      ..sort((a, b) {
+        final aIndex = _categoryOrder.indexOf(a.key);
+        final bIndex = _categoryOrder.indexOf(b.key);
+
+        if (aIndex == -1 && bIndex == -1) {
+          return a.key.compareTo(b.key);
+        }
+
+        if (aIndex == -1) {
+          return 1;
+        }
+
+        if (bIndex == -1) {
+          return -1;
+        }
+
+        return aIndex.compareTo(bIndex);
+      });
+
+    return Map.fromEntries(sortedEntries);
   }
 
   Future<void> _copyShoppingList(
@@ -159,7 +192,11 @@ class ShoppingListScreen extends StatelessWidget {
                 Text('${selectedRecipes.length} planned recipe(s)'),
                 Text('${shoppingItems.length} shopping item(s)'),
                 Text('$checkedItemCount checked item(s)'),
-                Text('$uncheckedItemCount unchecked item(s)'),
+                const SizedBox(height: 8),
+                Chip(
+                  avatar: const Icon(Icons.shopping_basket_outlined, size: 18),
+                  label: Text('$uncheckedItemCount item(s) remaining'),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
