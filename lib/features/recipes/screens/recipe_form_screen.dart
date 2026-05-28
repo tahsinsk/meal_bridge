@@ -112,6 +112,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       return;
     }
 
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingredient amount must be greater than 0.')),
+      );
+      return;
+    }
+
     setState(() {
       _ingredients.add(
         Ingredient(
