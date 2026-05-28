@@ -27,6 +27,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   final _ingredientCategoryController = TextEditingController(text: 'Other');
   final _instructionController = TextEditingController();
 
+  final _ingredientNameFocusNode = FocusNode();
+  final _instructionFocusNode = FocusNode();
+
   final List<Ingredient> _ingredients = [];
   final List<String> _instructions = [];
 
@@ -89,6 +92,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _ingredientUnitController.dispose();
     _ingredientCategoryController.dispose();
     _instructionController.dispose();
+    _ingredientNameFocusNode.dispose();
+    _instructionFocusNode.dispose();
     super.dispose();
   }
 
@@ -97,6 +102,16 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       return amount.toInt().toString();
     }
     return amount.toString();
+  }
+
+  void _requestFocusAfterFrame(FocusNode focusNode) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      focusNode.requestFocus();
+    });
   }
 
   void _addIngredient() {
@@ -131,6 +146,22 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       return;
     }
 
+    final alreadyExists = _ingredients.any(
+      (ingredient) =>
+          ingredient.name.trim().toLowerCase() == name.toLowerCase() &&
+          ingredient.unit.trim().toLowerCase() == unit.toLowerCase() &&
+          ingredient.category.trim().toLowerCase() == category.toLowerCase(),
+    );
+
+    if (alreadyExists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This ingredient already exists in the recipe.'),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _ingredients.add(
         Ingredient(name: name, amount: amount, unit: unit, category: category),
@@ -141,6 +172,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       _ingredientUnitController.text = 'g';
       _ingredientCategoryController.text = 'Other';
     });
+
+    _requestFocusAfterFrame(_ingredientNameFocusNode);
   }
 
   void _removeIngredient(int index) {
@@ -172,6 +205,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       _instructions.add(instruction);
       _instructionController.clear();
     });
+
+    _requestFocusAfterFrame(_instructionFocusNode);
   }
 
   void _removeInstruction(int index) {
@@ -344,6 +379,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: _ingredientNameController,
+                      focusNode: _ingredientNameFocusNode,
                       decoration: const InputDecoration(
                         labelText: 'Ingredient name',
                         border: OutlineInputBorder(),
@@ -493,6 +529,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: _instructionController,
+                      focusNode: _instructionFocusNode,
                       decoration: const InputDecoration(
                         labelText: 'Instruction',
                         border: OutlineInputBorder(),
