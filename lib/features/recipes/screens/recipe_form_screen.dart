@@ -7,10 +7,7 @@ import '../../../models/recipe.dart';
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? initialRecipe;
 
-  const RecipeFormScreen({
-    super.key,
-    this.initialRecipe,
-  });
+  const RecipeFormScreen({super.key, this.initialRecipe});
 
   @override
   State<RecipeFormScreen> createState() => _RecipeFormScreenState();
@@ -67,8 +64,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     final recipe = widget.initialRecipe;
 
     _nameController = TextEditingController(text: recipe?.name ?? '');
-    _categoryController = TextEditingController(text: recipe?.category ?? 'Dinner');
-    _servingsController = TextEditingController(text: recipe?.servings.toString() ?? '2');
+    _categoryController = TextEditingController(
+      text: recipe?.category ?? 'Dinner',
+    );
+    _servingsController = TextEditingController(
+      text: recipe?.servings.toString() ?? '2',
+    );
     _notesController = TextEditingController(text: recipe?.notes ?? '');
 
     if (recipe != null) {
@@ -112,21 +113,27 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       return;
     }
 
+    if (name.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingredient name must be at least 2 characters.'),
+        ),
+      );
+      return;
+    }
+
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingredient amount must be greater than 0.')),
+        const SnackBar(
+          content: Text('Ingredient amount must be greater than 0.'),
+        ),
       );
       return;
     }
 
     setState(() {
       _ingredients.add(
-        Ingredient(
-          name: name,
-          amount: amount,
-          unit: unit,
-          category: category,
-        ),
+        Ingredient(name: name, amount: amount, unit: unit, category: category),
       );
 
       _ingredientNameController.clear();
@@ -142,12 +149,21 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     });
   }
 
-    void _addInstruction() {
+  void _addInstruction() {
     final instruction = _instructionController.text.trim();
 
     if (instruction.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter an instruction step.')),
+      );
+      return;
+    }
+
+    if (instruction.length < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Instruction step must be at least 5 characters.'),
+        ),
       );
       return;
     }
@@ -186,7 +202,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     }
 
     final recipe = Recipe(
-      id: widget.initialRecipe?.id ?? 'recipe-${DateTime.now().millisecondsSinceEpoch}',
+      id:
+          widget.initialRecipe?.id ??
+          'recipe-${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
       servings: int.parse(_servingsController.text.trim()),
       category: _categoryController.text.trim(),
@@ -204,7 +222,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.initialRecipe == null ? 'Add Recipe' : 'Edit Recipe'),
+        title: Text(
+          widget.initialRecipe == null ? 'Add Recipe' : 'Edit Recipe',
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -229,9 +249,16 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                        final name = value?.trim() ?? '';
+
+                        if (name.isEmpty) {
                           return 'Recipe name is required.';
                         }
+
+                        if (name.length < 2) {
+                          return 'Recipe name must be at least 2 characters.';
+                        }
+
                         return null;
                       },
                     ),
@@ -243,9 +270,16 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                        final category = value?.trim() ?? '';
+
+                        if (category.isEmpty) {
                           return 'Category is required.';
                         }
+
+                        if (category.length < 2) {
+                          return 'Category must be at least 2 characters.';
+                        }
+
                         return null;
                       },
                     ),
@@ -271,10 +305,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text(
-              'Ingredients',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Ingredients', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             ..._ingredients.asMap().entries.map((entry) {
               final index = entry.key;
@@ -287,7 +318,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('${_formatAmount(ingredient.amount)} ${ingredient.unit}'),
+                      Text(
+                        '${_formatAmount(ingredient.amount)} ${ingredient.unit}',
+                      ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () => _removeIngredient(index),
@@ -330,34 +363,34 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                               decimal: true,
                             ),
                             inputFormatters: [
-                              TextInputFormatter.withFunction(
-                                (oldValue, newValue) {
-                                  final text = newValue.text.replaceAll(',', '.');
+                              TextInputFormatter.withFunction((
+                                oldValue,
+                                newValue,
+                              ) {
+                                final text = newValue.text.replaceAll(',', '.');
 
-                                  if (text.isEmpty) {
-                                    return newValue;
-                                  }
-
-                                  final isValidAmount = RegExp(
-                                    r'^\d*\.?\d*$',
-                                  ).hasMatch(text);
-
-                                  if (!isValidAmount) {
-                                    return oldValue;
-                                  }
-
+                                if (text.isEmpty) {
                                   return newValue;
-                                },
-                              ),
+                                }
+
+                                final isValidAmount = RegExp(
+                                  r'^\d*\.?\d*$',
+                                ).hasMatch(text);
+
+                                if (!isValidAmount) {
+                                  return oldValue;
+                                }
+
+                                return newValue;
+                              }),
                             ],
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            initialValue: _units.contains(
-                              _ingredientUnitController.text,
-                            )
+                            initialValue:
+                                _units.contains(_ingredientUnitController.text)
                                 ? _ingredientUnitController.text
                                 : 'g',
                             decoration: const InputDecoration(
@@ -387,9 +420,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue: _marketCategories.contains(
-                        _ingredientCategoryController.text,
-                      )
+                      initialValue:
+                          _marketCategories.contains(
+                            _ingredientCategoryController.text,
+                          )
                           ? _ingredientCategoryController.text
                           : 'Other',
                       decoration: const InputDecoration(
@@ -428,10 +462,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text(
-              'Instructions',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Instructions', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             ..._instructions.asMap().entries.map((entry) {
               final index = entry.key;
@@ -500,7 +531,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 onPressed: _saveRecipe,
                 icon: const Icon(Icons.save_outlined),
                 label: Text(
-                  widget.initialRecipe == null ? 'Save Recipe' : 'Update Recipe',
+                  widget.initialRecipe == null
+                      ? 'Save Recipe'
+                      : 'Update Recipe',
                 ),
               ),
             ),
