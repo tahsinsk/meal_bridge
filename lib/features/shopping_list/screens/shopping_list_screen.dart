@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../data/shopping_list_generator.dart';
 import '../../../models/recipe.dart';
@@ -43,6 +44,38 @@ class ShoppingListScreen extends StatelessWidget {
     return groupedItems;
   }
 
+  Future<void> _copyShoppingList(
+    BuildContext context,
+    Map<String, List<ShoppingListItem>> groupedItems,
+  ) async {
+    final buffer = StringBuffer('MealBridge Shopping List\n\n');
+
+    for (final entry in groupedItems.entries) {
+      buffer.writeln(entry.key);
+
+      for (final item in entry.value) {
+        final isChecked = checkedItemKeys.contains(_itemKey(item));
+        final checkbox = isChecked ? '[x]' : '[ ]';
+
+        buffer.writeln(
+          '$checkbox ${_formatAmount(item.amount)} ${item.unit} ${item.name}',
+        );
+      }
+
+      buffer.writeln();
+    }
+
+    await Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Shopping list copied.')),
+    );
+  }
+
   void _toggleChecked(ShoppingListItem item, bool? value) {
     onItemCheckedChanged(_itemKey(item), value == true);
   }
@@ -79,17 +112,24 @@ class ShoppingListScreen extends StatelessWidget {
                 Text('${selectedRecipes.length} planned recipe(s)'),
                 Text('${shoppingItems.length} shopping item(s)'),
                 Text('$checkedItemCount checked item(s)'),
-                if (checkedItemKeys.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: onClearCheckedItems,
-                      icon: const Icon(Icons.cleaning_services_outlined),
-                      label: const Text('Clear checked'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _copyShoppingList(context, groupedItems),
+                      icon: const Icon(Icons.copy_outlined),
+                      label: const Text('Copy list'),
                     ),
-                  ),
-                ],
+                    if (checkedItemKeys.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: onClearCheckedItems,
+                        icon: const Icon(Icons.cleaning_services_outlined),
+                        label: const Text('Clear checked'),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
