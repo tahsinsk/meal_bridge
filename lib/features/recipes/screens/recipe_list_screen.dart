@@ -22,9 +22,7 @@ class RecipeListScreen extends StatelessWidget {
 
   Future<void> _openAddRecipeScreen(BuildContext context) async {
     final newRecipe = await Navigator.of(context).push<Recipe>(
-      MaterialPageRoute(
-        builder: (context) => const RecipeFormScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const RecipeFormScreen()),
     );
 
     if (newRecipe != null) {
@@ -47,10 +45,7 @@ class RecipeListScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _confirmDeleteRecipe(
-    BuildContext context,
-    Recipe recipe,
-  ) async {
+  Future<void> _confirmDeleteRecipe(BuildContext context, Recipe recipe) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -79,12 +74,13 @@ class RecipeListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var searchQuery = '';
+    final searchController = TextEditingController();
+
     return Scaffold(
       body: StatefulBuilder(
         builder: (context, setSearchState) {
+          final query = searchQuery.trim().toLowerCase();
           final filteredRecipes = recipes.where((recipe) {
-            final query = searchQuery.trim().toLowerCase();
-
             if (query.isEmpty) {
               return true;
             }
@@ -101,10 +97,24 @@ class RecipeListScreen extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: TextField(
-                    decoration: const InputDecoration(
+                    controller: searchController,
+                    decoration: InputDecoration(
                       labelText: 'Search recipes',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
+                      hintText: 'Search by name or category',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: query.isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: () {
+                                searchController.clear();
+
+                                setSearchState(() {
+                                  searchQuery = '';
+                                });
+                              },
+                              icon: const Icon(Icons.clear),
+                            ),
+                      border: const OutlineInputBorder(),
                     ),
                     onChanged: (value) {
                       setSearchState(() {
@@ -116,10 +126,25 @@ class RecipeListScreen extends StatelessWidget {
               }
 
               if (filteredRecipes.isEmpty) {
-                return const Card(
+                return Card(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No recipes found.'),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.search_off_outlined, size: 40),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No recipes found',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Try another name or category.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }
@@ -127,90 +152,114 @@ class RecipeListScreen extends StatelessWidget {
               final recipe = filteredRecipes[index - 1];
               final isCustomRecipe = canDeleteRecipe(recipe);
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => RecipeDetailScreen(recipe: recipe),
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RecipeDetailScreen(recipe: recipe),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.restaurant_menu),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                recipe.name,
-                                style: Theme.of(context).textTheme.titleMedium,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.restaurant_menu),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    recipe.name,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${recipe.category} • ${recipe.ingredients.length} ingredients • ${recipe.instructions.length} steps',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(recipe.category),
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Chip(
+                              avatar: const Icon(
+                                Icons.people_outline,
+                                size: 18,
+                              ),
+                              label: Text('${recipe.servings} servings'),
+                            ),
+                            Chip(
+                              avatar: const Icon(Icons.list_alt, size: 18),
+                              label: Text(
+                                '${recipe.ingredients.length} ingredients',
+                              ),
+                            ),
+                            Chip(
+                              avatar: const Icon(
+                                Icons.format_list_numbered,
+                                size: 18,
+                              ),
+                              label: Text(
+                                '${recipe.instructions.length} steps',
+                              ),
+                            ),
+                            Chip(
+                              avatar: Icon(
+                                isCustomRecipe
+                                    ? Icons.edit_note
+                                    : Icons.verified_outlined,
+                                size: 18,
+                              ),
+                              label: Text(isCustomRecipe ? 'Custom' : 'Sample'),
+                            ),
+                          ],
+                        ),
+                        if (isCustomRecipe) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _openEditRecipeScreen(context, recipe),
+                                icon: const Icon(Icons.edit_outlined),
+                                label: const Text('Edit'),
+                              ),
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _confirmDeleteRecipe(context, recipe),
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Delete'),
+                              ),
                             ],
                           ),
-                        ),
-                        const Icon(Icons.chevron_right),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Chip(
-                          avatar: const Icon(Icons.people_outline, size: 18),
-                          label: Text('${recipe.servings} servings'),
-                        ),
-                        Chip(
-                          avatar: const Icon(Icons.list_alt, size: 18),
-                          label: Text('${recipe.ingredients.length} ingredients'),
-                        ),
-                        Chip(
-                          avatar: Icon(
-                            isCustomRecipe
-                                ? Icons.edit_note
-                                : Icons.verified_outlined,
-                            size: 18,
-                          ),
-                          label: Text(isCustomRecipe ? 'Custom' : 'Sample'),
-                        ),
-                      ],
-                    ),
-                    if (isCustomRecipe) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton.icon(
-                            onPressed: () => _openEditRecipeScreen(context, recipe),
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Edit'),
-                          ),
-                          TextButton.icon(
-                            onPressed: () => _confirmDeleteRecipe(context, recipe),
-                            icon: const Icon(Icons.delete_outline),
-                            label: const Text('Delete'),
-                          ),
                         ],
-                      ),
-                    ],
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
+              );
             },
           );
         },
