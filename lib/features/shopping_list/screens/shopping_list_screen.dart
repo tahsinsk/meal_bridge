@@ -134,6 +134,7 @@ class ShoppingListScreen extends StatelessWidget {
     final checkedItemCount = shoppingItems.where(
       (item) => checkedItemKeys.contains(_itemKey(item)),
     ).length;
+    final uncheckedItemCount = shoppingItems.length - checkedItemCount;
 
     if (selectedRecipes.isEmpty) {
       return const Center(
@@ -158,6 +159,7 @@ class ShoppingListScreen extends StatelessWidget {
                 Text('${selectedRecipes.length} planned recipe(s)'),
                 Text('${shoppingItems.length} shopping item(s)'),
                 Text('$checkedItemCount checked item(s)'),
+                Text('$uncheckedItemCount unchecked item(s)'),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
