@@ -322,6 +322,9 @@ class MealPlanScreen extends StatelessWidget {
                               label: Text(
                                 plannedMealEntries.isEmpty
                                     ? 'Plan meal'
+                                    : plannedMealEntries.length ==
+                                          _mealTypes.length
+                                    ? 'Edit meals'
                                     : 'Add another meal',
                               ),
                             ),
