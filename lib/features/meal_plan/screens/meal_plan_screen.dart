@@ -185,6 +185,17 @@ class MealPlanScreen extends StatelessWidget {
         ..._days.map((day) {
           final plannedRecipe = plannedRecipes[_mealPlanKey(day)];
           final recipe = plannedRecipe?.recipe;
+          final plannedMealEntries = _mealTypes
+              .map(
+                (mealType) => MapEntry(
+                  mealType,
+                  plannedRecipes[_mealPlanKey(day, mealType)],
+                ),
+              )
+              .where((entry) => entry.value != null)
+              .toList();
+          final isDayPlanned =
+              plannedRecipe != null || plannedMealEntries.isNotEmpty;
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -199,9 +210,9 @@ class MealPlanScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          plannedRecipe == null
-                              ? Icons.calendar_today_outlined
-                              : Icons.check_circle_outline,
+                          isDayPlanned
+                              ? Icons.check_circle_outline
+                              : Icons.calendar_today_outlined,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -214,9 +225,11 @@ class MealPlanScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                plannedRecipe == null
-                                    ? 'Not planned'
-                                    : 'Planned',
+                                isDayPlanned
+                                    ? plannedRecipe == null
+                                          ? '${plannedMealEntries.length} meal(s) planned'
+                                          : 'Planned'
+                                    : 'Not planned',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
@@ -226,14 +239,67 @@ class MealPlanScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     if (plannedRecipe == null)
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.add_circle_outline, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'No recipe selected yet. Tap to choose one.',
-                              style: Theme.of(context).textTheme.bodyMedium,
+                          if (plannedMealEntries.isEmpty)
+                            Row(
+                              children: [
+                                const Icon(Icons.add_circle_outline, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'No recipe selected yet. Tap to choose one.',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ],
+                            )
+                          else
+                            ...plannedMealEntries.map((entry) {
+                              final mealType = entry.key;
+                              final plannedMealRecipe = entry.value!.recipe;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.schedule_outlined,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '${mealType.label}: ${plannedMealRecipe.name}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () =>
+                                          onRecipeRemoved(day, mealType),
+                                      icon: const Icon(Icons.close),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: OutlinedButton.icon(
+                              onPressed: () =>
+                                  _showMealTypePicker(context, day),
+                              icon: const Icon(Icons.schedule_outlined),
+                              label: Text(
+                                plannedMealEntries.isEmpty
+                                    ? 'Plan meal'
+                                    : 'Add another meal',
+                              ),
                             ),
                           ),
                         ],
