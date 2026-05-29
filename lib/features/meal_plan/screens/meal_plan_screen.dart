@@ -107,20 +107,29 @@ class MealPlanScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
-              ..._mealTypes.map(
-                (mealType) => Card(
+              ..._mealTypes.map((mealType) {
+                final plannedRecipe = plannedRecipes[_mealPlanKey(
+                  day,
+                  mealType,
+                )];
+
+                return Card(
                   child: ListTile(
                     leading: const Icon(Icons.schedule_outlined),
                     title: Text(mealType.label),
-                    subtitle: const Text('Choose a recipe for this meal'),
+                    subtitle: Text(
+                      plannedRecipe == null
+                          ? 'Choose a recipe for this meal'
+                          : 'Current: ${plannedRecipe.recipe.name}',
+                    ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       Navigator.of(context).pop();
                       _selectRecipeForDay(context, day, mealType);
                     },
                   ),
-                ),
-              ),
+                );
+              }),
             ],
           ),
         );
@@ -163,12 +172,14 @@ class MealPlanScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text('$plannedDayCount of ${_days.length} day(s) planned'),
                 const SizedBox(height: 8),
-                LinearProgressIndicator(value: plannedDayCount / _days.length),
+                LinearProgressIndicator(
+                  value: plannedDayCount / _days.length,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   hasPlannedRecipes
-                      ? 'Tap a planned day to change its recipe or remove it.'
-                      : 'Start by tapping a day and selecting one of your recipes.',
+                      ? 'Tap a day to add breakfast, lunch, or dinner.'
+                      : 'Start by tapping a day and planning a meal.',
                 ),
                 if (hasPlannedRecipes) ...[
                   const SizedBox(height: 8),
@@ -214,7 +225,7 @@ class MealPlanScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: () => _selectRecipeForDay(context, day),
+              onTap: () => _showMealTypePicker(context, day),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -262,7 +273,7 @@ class MealPlanScreen extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'No recipe selected yet. Tap to choose one.',
+                                    'No meals planned yet. Tap to plan breakfast, lunch, or dinner.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodyMedium,
