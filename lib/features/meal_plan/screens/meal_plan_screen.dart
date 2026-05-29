@@ -163,9 +163,7 @@ class MealPlanScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text('$plannedDayCount of ${_days.length} day(s) planned'),
                 const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: plannedDayCount / _days.length,
-                ),
+                LinearProgressIndicator(value: plannedDayCount / _days.length),
                 const SizedBox(height: 8),
                 Text(
                   hasPlannedRecipes
