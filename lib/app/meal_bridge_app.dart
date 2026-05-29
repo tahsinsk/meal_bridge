@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../data/sample_recipes.dart';
@@ -18,21 +17,26 @@ class MealBridgeApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
+          seedColor: const Color(0xFF2E7D32),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
-        scaffoldBackgroundColor: Colors.green.shade50,
+        scaffoldBackgroundColor: const Color(0xFFF7FAF5),
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0,
+          backgroundColor: Color(0xFFF7FAF5),
+          foregroundColor: Color(0xFF1B1B1B),
         ),
         cardTheme: CardThemeData(
-          elevation: 0,
+          elevation: 1,
+          shadowColor: Colors.black.withValues(alpha: 0.08),
+          surfaceTintColor: Colors.white,
           margin: EdgeInsets.zero,
+          color: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
@@ -43,13 +47,50 @@ class MealBridgeApp extends StatelessWidget {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            minimumSize: const Size(0, 40),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: const Color(0xFFEAF4E8),
+          labelStyle: const TextStyle(color: Color(0xFF1F3D1F)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          side: BorderSide.none,
+        ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          elevation: 1,
+          elevation: 2,
+          backgroundColor: Color(0xFF2E7D32),
+          foregroundColor: Colors.white,
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: Colors.white,
+          indicatorColor: const Color(0xFFDDEEDB),
+          labelTextStyle: WidgetStateProperty.all(
+            const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ),
       ),
       home: const MainShell(),
