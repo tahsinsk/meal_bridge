@@ -51,7 +51,10 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 
 MealBridge MVP v0.2 is currently working locally and has passed a basic manual stability test.
 
+
 A stable v0.2 MVP checkpoint has been tagged in Git as `v0.2-mvp`.
+
+Breakfast / Lunch / Dinner meal slot planning is currently being implemented on the `feature/meal-slots` branch.
 
 The main user flow is complete:
 
@@ -59,7 +62,7 @@ The main user flow is complete:
 2. Add ingredients and instructions
 3. Save the recipe
 4. Search and manage saved recipes
-5. Assign recipes to weekly plan days
+5. Assign recipes to weekly plan days, with meal slot planning being developed separately
 6. Generate a merged shopping list with basic unit conversion
 7. Check off shopping items
 8. Copy the shopping list when needed
@@ -136,4 +139,4 @@ A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, s
 
 Servings scaling is planned for a future milestone. Current shopping list generation uses each recipe's base servings.
 
-Breakfast, lunch, and dinner planning is being prepared on the `feature/meal-slots` branch. The first groundwork includes `MealType`, `PlannedMeal`, meal-plan key preparation, and lightweight UI hints, but the current MVP still uses one planned recipe per day.
+Breakfast, lunch, and dinner planning is being implemented on the `feature/meal-slots` branch. Current progress includes `MealType`, `PlannedMeal`, meal-plan key preparation, meal type ready callbacks, a meal type picker, meal slot planning UI, and weekly progress that separates planned days from total planned meal slots.
