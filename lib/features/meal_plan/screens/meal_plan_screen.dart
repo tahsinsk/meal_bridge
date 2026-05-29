@@ -90,7 +90,11 @@ class MealPlanScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text('$plannedRecipeCount of ${_days.length} day(s) planned'),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: plannedRecipeCount / _days.length,
+                ),
+                const SizedBox(height: 8),
                 const Text('Tap a day to select or change its recipe.'),
               ],
             ),
@@ -112,33 +116,45 @@ class MealPlanScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined),
+                        Icon(
+                          plannedRecipe == null
+                              ? Icons.calendar_today_outlined
+                              : Icons.check_circle_outline,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            day,
-                            style: Theme.of(context).textTheme.titleMedium,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                day,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                plannedRecipe == null
+                                    ? 'Not planned'
+                                    : 'Planned',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
                           ),
                         ),
-                        if (plannedRecipe == null)
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            tooltip: 'Select recipe',
-                            onPressed: () => _selectRecipeForDay(context, day),
-                          )
-                        else
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            tooltip: 'Remove recipe',
-                            onPressed: () => onRecipeRemoved(day),
-                          ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     if (plannedRecipe == null)
-                      Text(
-                        'No recipe selected yet. Tap to choose one.',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      Row(
+                        children: [
+                          const Icon(Icons.add_circle_outline, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'No recipe selected yet. Tap to choose one.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
                       )
                     else ...[
                       Text(
@@ -164,7 +180,25 @@ class MealPlanScreen extends StatelessWidget {
                               '${plannedRecipe.ingredients.length} ingredients',
                             ),
                           ),
+                          Chip(
+                            avatar: const Icon(
+                              Icons.format_list_numbered,
+                              size: 18,
+                            ),
+                            label: Text(
+                              '${plannedRecipe.instructions.length} steps',
+                            ),
+                          ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () => onRecipeRemoved(day),
+                          icon: const Icon(Icons.close),
+                          label: const Text('Remove'),
+                        ),
                       ),
                     ],
                   ],
