@@ -104,9 +104,9 @@ class ShoppingListScreen extends StatelessWidget {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Shopping list copied.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Shopping list copied.')));
   }
 
   Future<void> _copyUncheckedShoppingList(
@@ -164,9 +164,9 @@ class ShoppingListScreen extends StatelessWidget {
     final selectedRecipes = plannedRecipes.values.toList();
     final shoppingItems = generateShoppingListFromRecipes(selectedRecipes);
     final groupedItems = _groupItemsByCategory(shoppingItems);
-    final checkedItemCount = shoppingItems.where(
-      (item) => checkedItemKeys.contains(_itemKey(item)),
-    ).length;
+    final checkedItemCount = shoppingItems
+        .where((item) => checkedItemKeys.contains(_itemKey(item)))
+        .length;
     final uncheckedItemCount = shoppingItems.length - checkedItemCount;
 
     if (selectedRecipes.isEmpty) {
@@ -218,8 +218,13 @@ class ShoppingListScreen extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     Chip(
-                      avatar: const Icon(Icons.calendar_month_outlined, size: 18),
-                      label: Text('${selectedRecipes.length} planned recipe(s)'),
+                      avatar: const Icon(
+                        Icons.calendar_month_outlined,
+                        size: 18,
+                      ),
+                      label: Text(
+                        '${selectedRecipes.length} planned recipe(s)',
+                      ),
                     ),
                     Chip(
                       avatar: const Icon(Icons.list_alt, size: 18),
@@ -230,7 +235,10 @@ class ShoppingListScreen extends StatelessWidget {
                       label: Text('$checkedItemCount checked'),
                     ),
                     Chip(
-                      avatar: const Icon(Icons.shopping_basket_outlined, size: 18),
+                      avatar: const Icon(
+                        Icons.shopping_basket_outlined,
+                        size: 18,
+                      ),
                       label: Text('$uncheckedItemCount remaining'),
                     ),
                   ],
@@ -246,10 +254,8 @@ class ShoppingListScreen extends StatelessWidget {
                       label: const Text('Copy list'),
                     ),
                     TextButton.icon(
-                      onPressed: () => _copyUncheckedShoppingList(
-                        context,
-                        groupedItems,
-                      ),
+                      onPressed: () =>
+                          _copyUncheckedShoppingList(context, groupedItems),
                       icon: const Icon(Icons.playlist_add_check_outlined),
                       label: const Text('Copy unchecked'),
                     ),
@@ -266,70 +272,59 @@ class ShoppingListScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        ...groupedItems.entries.map(
-          (entry) {
-            final category = entry.key;
-            final items = entry.value;
+        ...groupedItems.entries.map((entry) {
+          final category = entry.key;
+          final items = entry.value;
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.category_outlined, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      category,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(width: 8),
-                    Chip(label: Text('${items.length} item(s)')),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ...items.map(
-                  (item) {
-                    final isChecked = checkedItemKeys.contains(
-                      _itemKey(item),
-                    );
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.category_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Text(category, style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(width: 8),
+                  Chip(label: Text('${items.length} item(s)')),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ...items.map((item) {
+                final isChecked = checkedItemKeys.contains(_itemKey(item));
 
-                    return Card(
-                      child: CheckboxListTile(
-                        value: isChecked,
-                        onChanged: (value) => _toggleChecked(item, value),
-                        title: Text(
-                          item.name,
-                          style: TextStyle(
-                            decoration: isChecked
-                                ? TextDecoration.lineThrough
-                                : null,
-                            color: isChecked
-                                ? Theme.of(context).disabledColor
-                                : null,
-                          ),
-                        ),
-                        subtitle: Text(
-                          item.category,
-                          style: TextStyle(
-                            color: isChecked
-                                ? Theme.of(context).disabledColor
-                                : null,
-                          ),
-                        ),
-                        secondary: Chip(
-                          label: Text(
-                            '${_formatAmount(item.amount)} ${item.unit}',
-                          ),
-                        ),
+                return Card(
+                  child: CheckboxListTile(
+                    value: isChecked,
+                    onChanged: (value) => _toggleChecked(item, value),
+                    title: Text(
+                      item.name,
+                      style: TextStyle(
+                        decoration: isChecked
+                            ? TextDecoration.lineThrough
+                            : null,
+                        color: isChecked
+                            ? Theme.of(context).disabledColor
+                            : null,
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-              ],
-            );
-          },
-        ),
+                    ),
+                    subtitle: Text(
+                      item.category,
+                      style: TextStyle(
+                        color: isChecked
+                            ? Theme.of(context).disabledColor
+                            : null,
+                      ),
+                    ),
+                    secondary: Chip(
+                      label: Text('${_formatAmount(item.amount)} ${item.unit}'),
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          );
+        }),
       ],
     );
   }
