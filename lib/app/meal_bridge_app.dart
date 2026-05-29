@@ -5,6 +5,7 @@ import '../features/meal_plan/screens/meal_plan_screen.dart';
 import '../features/recipes/screens/recipe_list_screen.dart';
 import '../features/shopping_list/screens/shopping_list_screen.dart';
 import '../models/recipe.dart';
+import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
 
 class MealBridgeApp extends StatelessWidget {
@@ -41,9 +42,7 @@ class MealBridgeApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
@@ -112,7 +111,7 @@ class _MainShellState extends State<MainShell> {
   bool _isLoadingData = true;
 
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
-  Map<String, Recipe> _plannedRecipes = {};
+  Map<String, PlannedRecipe> _plannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
 
   @override
@@ -124,15 +123,12 @@ class _MainShellState extends State<MainShell> {
   Future<void> _loadSavedData() async {
     final savedRecipes = await _recipeStorageService.loadRecipes();
     final savedMealPlan = await _recipeStorageService.loadMealPlan();
-    final savedCheckedShoppingItems =
-        await _recipeStorageService.loadCheckedShoppingItems();
+    final savedCheckedShoppingItems = await _recipeStorageService
+        .loadCheckedShoppingItems();
 
-    final allRecipes = [
-      ...sampleRecipes,
-      ...savedRecipes,
-    ];
+    final allRecipes = [...sampleRecipes, ...savedRecipes];
 
-    final plannedRecipes = <String, Recipe>{};
+    final plannedRecipes = <String, PlannedRecipe>{};
 
     for (final entry in savedMealPlan.entries) {
       final matchingRecipe = allRecipes.where(
@@ -140,7 +136,11 @@ class _MainShellState extends State<MainShell> {
       );
 
       if (matchingRecipe.isNotEmpty) {
-        plannedRecipes[entry.key] = matchingRecipe.first;
+        final recipe = matchingRecipe.first;
+        plannedRecipes[entry.key] = PlannedRecipe(
+          recipe: recipe,
+          targetServings: recipe.servings,
+        );
       }
     }
 
@@ -157,9 +157,7 @@ class _MainShellState extends State<MainShell> {
   }
 
   bool _isCustomRecipe(Recipe recipe) {
-    return !sampleRecipes.any(
-      (sampleRecipe) => sampleRecipe.id == recipe.id,
-    );
+    return !sampleRecipes.any((sampleRecipe) => sampleRecipe.id == recipe.id);
   }
 
   Future<void> _saveCustomRecipes() async {
@@ -170,7 +168,7 @@ class _MainShellState extends State<MainShell> {
 
   Future<void> _saveMealPlan() async {
     final mealPlan = _plannedRecipes.map(
-      (day, recipe) => MapEntry(day, recipe.id),
+      (day, plannedRecipe) => MapEntry(day, plannedRecipe.recipe.id),
     );
 
     await _recipeStorageService.saveMealPlan(mealPlan);
@@ -195,8 +193,8 @@ class _MainShellState extends State<MainShell> {
       }
 
       _plannedRecipes.updateAll((day, plannedRecipe) {
-        if (plannedRecipe.id == updatedRecipe.id) {
-          return updatedRecipe;
+        if (plannedRecipe.recipe.id == updatedRecipe.id) {
+          return plannedRecipe.copyWith(recipe: updatedRecipe);
         }
 
         return plannedRecipe;
@@ -211,7 +209,7 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       _recipes.removeWhere((item) => item.id == recipe.id);
       _plannedRecipes.removeWhere(
-        (day, plannedRecipe) => plannedRecipe.id == recipe.id,
+        (day, plannedRecipe) => plannedRecipe.recipe.id == recipe.id,
       );
     });
 
@@ -221,7 +219,10 @@ class _MainShellState extends State<MainShell> {
 
   void _selectRecipeForDay(String day, Recipe recipe) {
     setState(() {
-      _plannedRecipes[day] = recipe;
+      _plannedRecipes[day] = PlannedRecipe(
+        recipe: recipe,
+        targetServings: recipe.servings,
+      );
     });
 
     _saveMealPlan();
@@ -270,6 +271,9 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final plannedRecipeMap = _plannedRecipes.map(
+      (day, plannedRecipe) => MapEntry(day, plannedRecipe.recipe),
+    );
     final screens = [
       RecipeListScreen(
         recipes: _recipes,
@@ -280,12 +284,12 @@ class _MainShellState extends State<MainShell> {
       ),
       MealPlanScreen(
         recipes: _recipes,
-        plannedRecipes: _plannedRecipes,
+        plannedRecipes: plannedRecipeMap,
         onRecipeSelected: _selectRecipeForDay,
         onRecipeRemoved: _removeRecipeFromDay,
       ),
       ShoppingListScreen(
-        plannedRecipes: _plannedRecipes,
+        plannedRecipes: plannedRecipeMap,
         checkedItemKeys: _checkedShoppingItemKeys,
         onItemCheckedChanged: _setShoppingItemChecked,
         onClearCheckedItems: _clearCheckedShoppingItems,
@@ -293,10 +297,7 @@ class _MainShellState extends State<MainShell> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_title),
-        centerTitle: false,
-      ),
+      appBar: AppBar(title: Text(_title), centerTitle: false),
       body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())
           : screens[_selectedIndex],
