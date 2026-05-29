@@ -75,6 +75,7 @@ class MealPlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final plannedRecipeCount = plannedRecipes.length;
+    final hasPlannedRecipes = plannedRecipeCount > 0;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -85,9 +86,15 @@ class MealPlanScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Weekly plan summary',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_month_outlined),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Weekly plan summary',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text('$plannedRecipeCount of ${_days.length} day(s) planned'),
@@ -96,7 +103,11 @@ class MealPlanScreen extends StatelessWidget {
                   value: plannedRecipeCount / _days.length,
                 ),
                 const SizedBox(height: 8),
-                const Text('Tap a day to select or change its recipe.'),
+                Text(
+                  hasPlannedRecipes
+                      ? 'Tap a planned day to change its recipe or remove it.'
+                      : 'Start by tapping a day and selecting one of your recipes.',
+                ),
               ],
             ),
           ),
