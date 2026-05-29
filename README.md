@@ -6,12 +6,11 @@ The goal of the app is to let users save recipes, create a weekly meal plan, and
 
 This is the first MVP version. It does not use AI, backend, or user accounts yet. The focus is a working local mobile app.
 
-## Current MVP Features
-
 - Add recipes
 - Edit custom recipes
 - Delete custom recipes
 - Search recipes by name or category
+- Show improved empty and search result states for recipe discovery
 - Add ingredients with amount, unit, and market category
 - Select ingredient units from predefined options
 - Select market categories from predefined options
@@ -21,6 +20,7 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Add optional recipe notes
 - Assign recipes to days in the weekly plan
 - View weekly meal plan progress
+- Show improved weekly plan guidance when no meals are planned yet
 - Persist weekly meal plan locally
 - Generate a shopping list from planned recipes
 - Merge matching ingredients where possible
@@ -34,6 +34,7 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Copy the full shopping list to clipboard
 - Copy only unchecked shopping list items to clipboard
 - Show remaining shopping item count
+- Show improved shopping list empty state guidance
 - Polished recipe list, recipe detail, recipe form, meal plan, and shopping list screens
 - Basic mobile-friendly UI
 - Tested on iOS Simulator
@@ -49,6 +50,8 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 ## Project Status
 
 MealBridge MVP v0.2 is currently working locally and has passed a basic manual stability test.
+
+A stable v0.2 MVP checkpoint has been tagged in Git as `v0.2-mvp`.
 
 The main user flow is complete:
 
@@ -125,6 +128,8 @@ This project is intentionally kept simple for the MVP.
 The first goal is a stable, usable mobile app before adding advanced architecture, backend, or AI features.
 
 Current development focuses on small, practical MVP improvements and clean local-first behavior.
+
+Recent polish work improved recipe search empty states, weekly plan guidance, shopping list empty state guidance, and app metadata.
 
 A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, shopping list generation, ingredient merging, unit conversion, checked item persistence, clear checked, and clipboard copy flows.
 
