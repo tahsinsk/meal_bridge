@@ -284,7 +284,7 @@ class _MainShellState extends State<MainShell> {
       ),
       MealPlanScreen(
         recipes: _recipes,
-        plannedRecipes: plannedRecipeMap,
+        plannedRecipes: _plannedRecipes,
         onRecipeSelected: _selectRecipeForDay,
         onRecipeRemoved: _removeRecipeFromDay,
       ),

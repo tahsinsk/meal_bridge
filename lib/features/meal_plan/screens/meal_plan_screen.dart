@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/recipe.dart';
+import '../../../models/planned_recipe.dart';
 
 class MealPlanScreen extends StatelessWidget {
   final List<Recipe> recipes;
-  final Map<String, Recipe> plannedRecipes;
+  final Map<String, PlannedRecipe> plannedRecipes;
   final void Function(String day, Recipe recipe) onRecipeSelected;
   final void Function(String day) onRecipeRemoved;
 
@@ -103,6 +104,7 @@ class MealPlanScreen extends StatelessWidget {
         const SizedBox(height: 16),
         ..._days.map((day) {
           final plannedRecipe = plannedRecipes[day];
+          final recipe = plannedRecipe?.recipe;
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -158,7 +160,7 @@ class MealPlanScreen extends StatelessWidget {
                       )
                     else ...[
                       Text(
-                        plannedRecipe.name,
+                        recipe!.name,
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       const SizedBox(height: 8),
@@ -168,16 +170,22 @@ class MealPlanScreen extends StatelessWidget {
                         children: [
                           Chip(
                             avatar: const Icon(Icons.restaurant_menu, size: 18),
-                            label: Text(plannedRecipe.category),
+                            label: Text(recipe.category),
                           ),
                           Chip(
                             avatar: const Icon(Icons.people_outline, size: 18),
-                            label: Text('${plannedRecipe.servings} servings'),
+                            label: Text('${recipe.servings} base servings'),
+                          ),
+                          Chip(
+                            avatar: const Icon(Icons.scale_outlined, size: 18),
+                            label: Text(
+                              '${plannedRecipe.targetServings} target servings',
+                            ),
                           ),
                           Chip(
                             avatar: const Icon(Icons.list_alt, size: 18),
                             label: Text(
-                              '${plannedRecipe.ingredients.length} ingredients',
+                              '${recipe.ingredients.length} ingredients',
                             ),
                           ),
                           Chip(
@@ -185,9 +193,7 @@ class MealPlanScreen extends StatelessWidget {
                               Icons.format_list_numbered,
                               size: 18,
                             ),
-                            label: Text(
-                              '${plannedRecipe.instructions.length} steps',
-                            ),
+                            label: Text('${recipe.instructions.length} steps'),
                           ),
                         ],
                       ),
