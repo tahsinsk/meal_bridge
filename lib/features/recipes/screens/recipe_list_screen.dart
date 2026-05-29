@@ -199,39 +199,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                         const Icon(Icons.chevron_right),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Chip(
-                          avatar: const Icon(Icons.people_outline, size: 18),
-                          label: Text('${recipe.servings} servings'),
-                        ),
-                        Chip(
-                          avatar: const Icon(Icons.list_alt, size: 18),
-                          label: Text(
-                            '${recipe.ingredients.length} ingredients',
-                          ),
-                        ),
-                        Chip(
-                          avatar: const Icon(
-                            Icons.format_list_numbered,
-                            size: 18,
-                          ),
-                          label: Text('${recipe.instructions.length} steps'),
-                        ),
-                        Chip(
-                          avatar: Icon(
-                            isCustomRecipe
-                                ? Icons.edit_note
-                                : Icons.verified_outlined,
-                            size: 18,
-                          ),
-                          label: Text(isCustomRecipe ? 'Custom' : 'Sample'),
-                        ),
-                      ],
-                    ),
                     if (isCustomRecipe) ...[
                       const SizedBox(height: 8),
                       Row(
