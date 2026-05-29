@@ -104,6 +104,7 @@ Possible next improvements:
 - Continue improving visual design and icons
 - Improve advanced ingredient merging logic
 - Add servings scaling in a future milestone
+- Add Breakfast / Lunch / Dinner meal slots in a future milestone
 - Add shopping list share/export options
 - Add onboarding or empty-state guidance
 - Add backend later
@@ -134,3 +135,5 @@ Recent polish work improved recipe search empty states, weekly plan guidance, sh
 A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, shopping list generation, ingredient merging, unit conversion, checked item persistence, clear checked, and clipboard copy flows.
 
 Servings scaling is planned for a future milestone. Current shopping list generation uses each recipe's base servings.
+
+Breakfast, lunch, and dinner planning is also planned for a future milestone. The first model groundwork has started with `MealType` and `PlannedMeal`, but the current MVP still uses one planned recipe per day.
