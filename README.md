@@ -18,10 +18,10 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Prevent duplicate ingredients inside a recipe
 - Add recipe instructions
 - Add optional recipe notes
-- Assign recipes to Breakfast / Lunch / Dinner meal slots in the weekly plan on the `feature/meal-slots` branch
+- Assign recipes to Breakfast / Lunch / Dinner meal slots in the weekly plan
 - View weekly meal plan progress
-- Show weekly progress by planned days and total planned meal slots on the `feature/meal-slots` branch
-- Persist weekly meal plan locally, including meal slot selections on the `feature/meal-slots` branch
+- Show weekly progress by planned days and total planned meal slots
+- Persist weekly meal plan locally, including meal slot selections
 - Generate a shopping list from planned recipes
 - Merge matching ingredients where possible
 - Normalize ingredient names, units, and categories for better merging
@@ -49,12 +49,15 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 
 ## Project Status
 
-MealBridge MVP v0.2 is currently working locally and has passed a basic manual stability test.
+MealBridge v0.3 is currently working locally and has passed manual testing for the core MVP flow and Breakfast / Lunch / Dinner meal slot planning.
+
 
 
 A stable v0.2 MVP checkpoint has been tagged in Git as `v0.2-mvp`.
 
-Breakfast / Lunch / Dinner meal slot planning is working on the `feature/meal-slots` branch and has passed manual testing for selection, editing, removal, shopping list generation, weekly progress, and local persistence.
+A stable v0.3 meal slots checkpoint has been tagged in Git as `v0.3-meal-slots`.
+
+Breakfast / Lunch / Dinner meal slot planning is now merged into `main` and has passed manual testing for selection, editing, removal, shopping list generation, weekly progress, and local persistence.
 
 The main user flow is complete:
 
@@ -62,7 +65,7 @@ The main user flow is complete:
 2. Add ingredients and instructions
 3. Save the recipe
 4. Search and manage saved recipes
-5. Assign recipes to weekly plan days, with Breakfast / Lunch / Dinner meal slot planning working on the `feature/meal-slots` branch
+5. Assign recipes to Breakfast / Lunch / Dinner meal slots in the weekly plan
 6. Generate a merged shopping list with basic unit conversion
 7. Check off shopping items
 8. Copy the shopping list when needed
@@ -107,7 +110,7 @@ Possible next improvements:
 - Continue improving visual design and icons
 - Improve advanced ingredient merging logic
 - Add servings scaling in a future milestone
-- Continue Breakfast / Lunch / Dinner meal slot implementation on the `feature/meal-slots` branch
+- Polish Breakfast / Lunch / Dinner meal slot UX if needed
 - Add shopping list share/export options
 - Add onboarding or empty-state guidance
 - Add backend later
@@ -139,4 +142,4 @@ A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, s
 
 Servings scaling is planned for a future milestone. Current shopping list generation uses each recipe's base servings.
 
-Breakfast, lunch, and dinner planning is working on the `feature/meal-slots` branch. Current progress includes `MealType`, `PlannedMeal`, meal-plan key preparation, meal type ready callbacks, a meal type picker that shows the currently selected recipe for each meal, meal slot planning UI, adaptive meal action labels, weekly progress that separates planned days from total planned meal slots, shopping list wording updates, and local persistence for meal slot selections.
+Breakfast, lunch, and dinner planning is now merged into `main`. Current progress includes `MealType`, `PlannedMeal`, meal-plan key preparation, meal type ready callbacks, a meal type picker that shows the currently selected recipe for each meal, meal slot planning UI, adaptive meal action labels, weekly progress that separates planned days from total planned meal slots, shopping list wording updates, and local persistence for meal slot selections.
