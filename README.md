@@ -11,17 +11,30 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Add recipes
 - Edit custom recipes
 - Delete custom recipes
+- Search recipes by name or category
 - Add ingredients with amount, unit, and market category
+- Select ingredient units from predefined options
+- Select market categories from predefined options
+- Validate recipe form inputs
+- Prevent duplicate ingredients inside a recipe
 - Add recipe instructions
 - Add optional recipe notes
 - Assign recipes to days in the weekly plan
+- View weekly meal plan progress
 - Persist weekly meal plan locally
 - Generate a shopping list from planned recipes
 - Merge matching ingredients where possible
+- Normalize ingredient names, units, and categories for better merging
+- Convert basic compatible units in the shopping list, such as g/kg and ml/l
 - Group shopping list items by market category
+- Sort shopping list items by market category order
 - Mark shopping list items as checked / unchecked
 - Persist checked shopping list items locally
 - Clear checked shopping list items
+- Copy the full shopping list to clipboard
+- Copy only unchecked shopping list items to clipboard
+- Show remaining shopping item count
+- Polished recipe list, recipe detail, meal plan, and shopping list screens
 - Basic mobile-friendly UI
 - Tested on iOS Simulator
 
@@ -35,17 +48,19 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 
 ## Project Status
 
-MealBridge MVP v0.1 is currently working locally.
+MealBridge MVP v0.2 is currently working locally.
 
 The main user flow is complete:
 
 1. Create a recipe
 2. Add ingredients and instructions
 3. Save the recipe
-4. Assign recipes to weekly plan days
-5. Generate a shopping list
-6. Check off shopping items
-7. Keep data after app restart
+4. Search and manage saved recipes
+5. Assign recipes to weekly plan days
+6. Generate a merged shopping list with basic unit conversion
+7. Check off shopping items
+8. Copy the shopping list when needed
+9. Keep data after app restart
 
 ## How to Run
 
@@ -83,12 +98,11 @@ No data is sent to a server.
 
 Possible next improvements:
 
-- Improve visual design and icons
-- Add recipe search/filter
-- Add predefined ingredient categories
-- Improve ingredient merging logic
+- Continue improving visual design and icons
+- Improve advanced ingredient merging logic
 - Add servings scaling
-- Add export/share shopping list
+- Add shopping list share/export options
+- Add onboarding or empty-state guidance
 - Add backend later
 - Add AI features later through backend
 
@@ -109,3 +123,5 @@ Future versions may include:
 This project is intentionally kept simple for the MVP.
 
 The first goal is a stable, usable mobile app before adding advanced architecture, backend, or AI features.
+
+Current development focuses on small, practical MVP improvements and clean local-first behavior.
