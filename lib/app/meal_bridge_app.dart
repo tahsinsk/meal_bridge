@@ -177,7 +177,10 @@ class _MainShellState extends State<MainShell> {
 
   Future<void> _saveMealPlan() async {
     final mealPlan = _plannedRecipes.map(
-      (day, plannedRecipe) => MapEntry(day, plannedRecipe.recipe.id),
+      (mealPlanKey, plannedRecipe) => MapEntry(
+        mealPlanKey,
+        plannedRecipe.recipe.id,
+      ),
     );
 
     await _recipeStorageService.saveMealPlan(mealPlan);
