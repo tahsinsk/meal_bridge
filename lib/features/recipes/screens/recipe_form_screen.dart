@@ -278,9 +278,15 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Basic info',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      children: [
+                        const Icon(Icons.info_outline),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Basic info',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -346,7 +352,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Ingredients', style: Theme.of(context).textTheme.titleLarge),
+            Row(
+              children: [
+                const Icon(Icons.shopping_basket_outlined),
+                const SizedBox(width: 8),
+                Text(
+                  'Ingredients',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(width: 8),
+                Chip(label: Text('${_ingredients.length} item(s)')),
+              ],
+            ),
             const SizedBox(height: 8),
             ..._ingredients.asMap().entries.map((entry) {
               final index = entry.key;
@@ -354,13 +371,16 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
               return Card(
                 child: ListTile(
+                  leading: const Icon(Icons.shopping_basket_outlined),
                   title: Text(ingredient.name),
                   subtitle: Text(ingredient.category),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        '${_formatAmount(ingredient.amount)} ${ingredient.unit}',
+                      Chip(
+                        label: Text(
+                          '${_formatAmount(ingredient.amount)} ${ingredient.unit}',
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline),
@@ -378,9 +398,15 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Add ingredient',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      children: [
+                        const Icon(Icons.add_circle_outline),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Add ingredient',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -504,7 +530,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Instructions', style: Theme.of(context).textTheme.titleLarge),
+            Row(
+              children: [
+                const Icon(Icons.format_list_numbered),
+                const SizedBox(width: 8),
+                Text(
+                  'Instructions',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(width: 8),
+                Chip(label: Text('${_instructions.length} step(s)')),
+              ],
+            ),
             const SizedBox(height: 8),
             ..._instructions.asMap().entries.map((entry) {
               final index = entry.key;
@@ -528,9 +565,15 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Add instruction step',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      children: [
+                        const Icon(Icons.add_task_outlined),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Add instruction step',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -557,14 +600,35 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes optional',
-                border: OutlineInputBorder(),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.notes_outlined),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Notes',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Optional notes',
+                        border: OutlineInputBorder(),
+                      ),
+                      minLines: 2,
+                      maxLines: 4,
+                    ),
+                  ],
+                ),
               ),
-              minLines: 2,
-              maxLines: 4,
             ),
             const SizedBox(height: 24),
             SizedBox(
