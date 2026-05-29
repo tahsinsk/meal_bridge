@@ -54,7 +54,7 @@ MealBridge MVP v0.2 is currently working locally and has passed a basic manual s
 
 A stable v0.2 MVP checkpoint has been tagged in Git as `v0.2-mvp`.
 
-Breakfast / Lunch / Dinner meal slot planning is working on the `feature/meal-slots` branch and has passed manual testing for selection, removal, shopping list generation, and local persistence.
+Breakfast / Lunch / Dinner meal slot planning is working on the `feature/meal-slots` branch and has passed manual testing for selection, editing, removal, shopping list generation, weekly progress, and local persistence.
 
 The main user flow is complete:
 
@@ -139,4 +139,4 @@ A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, s
 
 Servings scaling is planned for a future milestone. Current shopping list generation uses each recipe's base servings.
 
-Breakfast, lunch, and dinner planning is working on the `feature/meal-slots` branch. Current progress includes `MealType`, `PlannedMeal`, meal-plan key preparation, meal type ready callbacks, a meal type picker, meal slot planning UI, weekly progress that separates planned days from total planned meal slots, shopping list wording updates, and local persistence for meal slot selections.
+Breakfast, lunch, and dinner planning is working on the `feature/meal-slots` branch. Current progress includes `MealType`, `PlannedMeal`, meal-plan key preparation, meal type ready callbacks, a meal type picker that shows the currently selected recipe for each meal, meal slot planning UI, adaptive meal action labels, weekly progress that separates planned days from total planned meal slots, shopping list wording updates, and local persistence for meal slot selections.
