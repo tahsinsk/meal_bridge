@@ -7,8 +7,9 @@ import '../../../models/meal_type.dart';
 class MealPlanScreen extends StatelessWidget {
   final List<Recipe> recipes;
   final Map<String, PlannedRecipe> plannedRecipes;
-  final void Function(String day, Recipe recipe) onRecipeSelected;
-  final void Function(String day) onRecipeRemoved;
+  final void Function(String day, Recipe recipe, [MealType? mealType])
+  onRecipeSelected;
+  final void Function(String day, [MealType? mealType]) onRecipeRemoved;
 
   const MealPlanScreen({
     super.key,

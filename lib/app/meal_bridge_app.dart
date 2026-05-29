@@ -226,8 +226,8 @@ class _MainShellState extends State<MainShell> {
     _saveMealPlan();
   }
 
-  void _selectRecipeForDay(String day, Recipe recipe) {
-    final mealPlanKey = _mealPlanKey(day);
+  void _selectRecipeForDay(String day, Recipe recipe, [MealType? mealType]) {
+    final mealPlanKey = _mealPlanKey(day, mealType);
 
     setState(() {
       _plannedRecipes[mealPlanKey] = PlannedRecipe(
@@ -239,8 +239,8 @@ class _MainShellState extends State<MainShell> {
     _saveMealPlan();
   }
 
-  void _removeRecipeFromDay(String day) {
-    final mealPlanKey = _mealPlanKey(day);
+  void _removeRecipeFromDay(String day, [MealType? mealType]) {
+    final mealPlanKey = _mealPlanKey(day, mealType);
 
     setState(() {
       _plannedRecipes.remove(mealPlanKey);
