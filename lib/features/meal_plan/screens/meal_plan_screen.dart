@@ -73,7 +73,7 @@ class MealPlanScreen extends StatelessWidget {
                     ),
                     trailing: const Icon(Icons.add_circle_outline),
                     onTap: () {
-                      onRecipeSelected(day, recipe);
+                      onRecipeSelected(day, recipe, mealType);
                       Navigator.of(context).pop();
                     },
                   ),
