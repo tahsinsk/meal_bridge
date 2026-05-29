@@ -170,8 +170,26 @@ class ShoppingListScreen extends StatelessWidget {
     final uncheckedItemCount = shoppingItems.length - checkedItemCount;
 
     if (selectedRecipes.isEmpty) {
-      return const Center(
-        child: Text('Add recipes to your weekly plan first.'),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.shopping_basket_outlined, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'No shopping list yet',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Add recipes to your weekly plan first to generate a shopping list.',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -184,18 +202,38 @@ class ShoppingListScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Shopping summary',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    const Icon(Icons.shopping_basket_outlined),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Shopping summary',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text('${selectedRecipes.length} planned recipe(s)'),
-                Text('${shoppingItems.length} shopping item(s)'),
-                Text('$checkedItemCount checked item(s)'),
-                const SizedBox(height: 8),
-                Chip(
-                  avatar: const Icon(Icons.shopping_basket_outlined, size: 18),
-                  label: Text('$uncheckedItemCount item(s) remaining'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Chip(
+                      avatar: const Icon(Icons.calendar_month_outlined, size: 18),
+                      label: Text('${selectedRecipes.length} planned recipe(s)'),
+                    ),
+                    Chip(
+                      avatar: const Icon(Icons.list_alt, size: 18),
+                      label: Text('${shoppingItems.length} item(s)'),
+                    ),
+                    Chip(
+                      avatar: const Icon(Icons.check_circle_outline, size: 18),
+                      label: Text('$checkedItemCount checked'),
+                    ),
+                    Chip(
+                      avatar: const Icon(Icons.shopping_basket_outlined, size: 18),
+                      label: Text('$uncheckedItemCount remaining'),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -236,9 +274,17 @@ class ShoppingListScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  category,
-                  style: Theme.of(context).textTheme.titleLarge,
+                Row(
+                  children: [
+                    const Icon(Icons.category_outlined, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      category,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(width: 8),
+                    Chip(label: Text('${items.length} item(s)')),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 ...items.map(
@@ -257,11 +303,23 @@ class ShoppingListScreen extends StatelessWidget {
                             decoration: isChecked
                                 ? TextDecoration.lineThrough
                                 : null,
+                            color: isChecked
+                                ? Theme.of(context).disabledColor
+                                : null,
                           ),
                         ),
-                        subtitle: Text(item.category),
-                        secondary: Text(
-                          '${_formatAmount(item.amount)} ${item.unit}',
+                        subtitle: Text(
+                          item.category,
+                          style: TextStyle(
+                            color: isChecked
+                                ? Theme.of(context).disabledColor
+                                : null,
+                          ),
+                        ),
+                        secondary: Chip(
+                          label: Text(
+                            '${_formatAmount(item.amount)} ${item.unit}',
+                          ),
                         ),
                       ),
                     );
