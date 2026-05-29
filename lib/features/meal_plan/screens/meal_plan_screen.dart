@@ -94,6 +94,40 @@ class MealPlanScreen extends StatelessWidget {
     );
   }
 
+  void _showMealTypePicker(BuildContext context, String day) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                'Plan meal for $day',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              ..._mealTypes.map(
+                (mealType) => Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.schedule_outlined),
+                    title: Text(mealType.label),
+                    subtitle: const Text('Choose a recipe for this meal'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _selectRecipeForDay(context, day, mealType);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final plannedRecipeCount = plannedRecipes.length;
