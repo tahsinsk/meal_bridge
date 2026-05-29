@@ -35,6 +35,14 @@ class MealPlanScreen extends StatelessWidget {
     MealType.dinner,
   ];
 
+  String _mealPlanKey(String day, [MealType? mealType]) {
+    if (mealType == null) {
+      return day;
+    }
+
+    return '$day-${mealType.name}';
+  }
+
   void _selectRecipeForDay(
     BuildContext context,
     String day, [
@@ -141,7 +149,7 @@ class MealPlanScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         ..._days.map((day) {
-          final plannedRecipe = plannedRecipes[day];
+          final plannedRecipe = plannedRecipes[_mealPlanKey(day)];
           final recipe = plannedRecipe?.recipe;
 
           return Card(
