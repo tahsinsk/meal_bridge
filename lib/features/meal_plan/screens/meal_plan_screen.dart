@@ -130,8 +130,16 @@ class MealPlanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final plannedRecipeCount = plannedRecipes.length;
-    final hasPlannedRecipes = plannedRecipeCount > 0;
+    final plannedDayCount = _days.where((day) {
+      final hasLegacyPlan = plannedRecipes.containsKey(_mealPlanKey(day));
+      final hasMealSlotPlan = _mealTypes.any(
+        (mealType) => plannedRecipes.containsKey(_mealPlanKey(day, mealType)),
+      );
+
+      return hasLegacyPlan || hasMealSlotPlan;
+    }).length;
+    final plannedMealCount = plannedRecipes.length;
+    final hasPlannedRecipes = plannedDayCount > 0;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -153,10 +161,10 @@ class MealPlanScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('$plannedRecipeCount of ${_days.length} day(s) planned'),
+                Text('$plannedDayCount of ${_days.length} day(s) planned'),
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
-                  value: plannedRecipeCount / _days.length,
+                  value: plannedDayCount / _days.length,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -164,6 +172,13 @@ class MealPlanScreen extends StatelessWidget {
                       ? 'Tap a planned day to change its recipe or remove it.'
                       : 'Start by tapping a day and selecting one of your recipes.',
                 ),
+                if (hasPlannedRecipes) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '$plannedMealCount meal slot(s) planned in total',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
