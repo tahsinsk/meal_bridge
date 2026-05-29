@@ -18,10 +18,10 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Prevent duplicate ingredients inside a recipe
 - Add recipe instructions
 - Add optional recipe notes
-- Assign recipes to days in the weekly plan
+- Assign recipes to Breakfast / Lunch / Dinner meal slots in the weekly plan on the `feature/meal-slots` branch
 - View weekly meal plan progress
-- Show improved weekly plan guidance when no meals are planned yet
-- Persist weekly meal plan locally
+- Show weekly progress by planned days and total planned meal slots on the `feature/meal-slots` branch
+- Persist weekly meal plan locally, including meal slot selections on the `feature/meal-slots` branch
 - Generate a shopping list from planned recipes
 - Merge matching ingredients where possible
 - Normalize ingredient names, units, and categories for better merging
@@ -54,7 +54,7 @@ MealBridge MVP v0.2 is currently working locally and has passed a basic manual s
 
 A stable v0.2 MVP checkpoint has been tagged in Git as `v0.2-mvp`.
 
-Breakfast / Lunch / Dinner meal slot planning is currently being implemented on the `feature/meal-slots` branch.
+Breakfast / Lunch / Dinner meal slot planning is working on the `feature/meal-slots` branch and has passed manual testing for selection, removal, shopping list generation, and local persistence.
 
 The main user flow is complete:
 
@@ -62,7 +62,7 @@ The main user flow is complete:
 2. Add ingredients and instructions
 3. Save the recipe
 4. Search and manage saved recipes
-5. Assign recipes to weekly plan days, with meal slot planning being developed separately
+5. Assign recipes to weekly plan days, with Breakfast / Lunch / Dinner meal slot planning working on the `feature/meal-slots` branch
 6. Generate a merged shopping list with basic unit conversion
 7. Check off shopping items
 8. Copy the shopping list when needed
@@ -139,4 +139,4 @@ A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, s
 
 Servings scaling is planned for a future milestone. Current shopping list generation uses each recipe's base servings.
 
-Breakfast, lunch, and dinner planning is being implemented on the `feature/meal-slots` branch. Current progress includes `MealType`, `PlannedMeal`, meal-plan key preparation, meal type ready callbacks, a meal type picker, meal slot planning UI, and weekly progress that separates planned days from total planned meal slots.
+Breakfast, lunch, and dinner planning is working on the `feature/meal-slots` branch. Current progress includes `MealType`, `PlannedMeal`, meal-plan key preparation, meal type ready callbacks, a meal type picker, meal slot planning UI, weekly progress that separates planned days from total planned meal slots, shopping list wording updates, and local persistence for meal slot selections.
