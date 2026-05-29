@@ -173,21 +173,43 @@ class ShoppingListScreen extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.shopping_basket_outlined, size: 48),
-              const SizedBox(height: 12),
-              Text(
-                'No shopping list yet',
-                style: Theme.of(context).textTheme.titleLarge,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.shopping_basket_outlined, size: 56),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No shopping list yet',
+                    style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Plan one or more recipes for the week and MealBridge will generate a combined shopping list for you.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  const Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Chip(
+                        avatar: Icon(Icons.calendar_month_outlined, size: 18),
+                        label: Text('Go to Plan'),
+                      ),
+                      Chip(
+                        avatar: Icon(Icons.restaurant_menu, size: 18),
+                        label: Text('Select recipes'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Add recipes to your weekly plan first to generate a shopping list.',
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         ),
       );
@@ -222,9 +244,7 @@ class ShoppingListScreen extends StatelessWidget {
                         Icons.calendar_month_outlined,
                         size: 18,
                       ),
-                      label: Text(
-                        '${selectedRecipes.length} planned recipe(s)',
-                      ),
+                      label: Text('${selectedRecipes.length} planned meal(s)'),
                     ),
                     Chip(
                       avatar: const Icon(Icons.list_alt, size: 18),
