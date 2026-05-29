@@ -38,6 +38,9 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Polished recipe list, recipe detail, recipe form, meal plan, and shopping list screens
 - Basic mobile-friendly UI
 - Tested on iOS Simulator
+- Android application ID updated to `com.tahsinsk.mealbridge`
+- iOS bundle identifier updated to `com.tahsinsk.mealbridge`
+- App display name set to `Meal Bridge` on Android and iOS
 
 ## Tech Stack
 
@@ -58,6 +61,8 @@ A stable v0.2 MVP checkpoint has been tagged in Git as `v0.2-mvp`.
 A stable v0.3 meal slots checkpoint has been tagged in Git as `v0.3-meal-slots`.
 
 Breakfast / Lunch / Dinner meal slot planning is now merged into `main` and has passed manual testing for selection, editing, removal, shopping list generation, weekly progress, and local persistence.
+
+Release preparation has started. The app version is `0.3.0+1`, Android and iOS app identifiers have been updated, and the app display name is set to `Meal Bridge`.
 
 The main user flow is complete:
 
@@ -111,6 +116,7 @@ Possible next improvements:
 - Improve advanced ingredient merging logic
 - Add servings scaling in a future milestone
 - Polish Breakfast / Lunch / Dinner meal slot UX if needed
+- Install/configure Android SDK before building APK files
 - Add shopping list share/export options
 - Add onboarding or empty-state guidance
 - Add backend later
@@ -137,6 +143,8 @@ The first goal is a stable, usable mobile app before adding advanced architectur
 Current development focuses on small, practical MVP improvements and clean local-first behavior.
 
 Recent polish work improved recipe search empty states, weekly plan guidance, shopping list empty state guidance, and app metadata.
+
+Release preparation currently includes `version: 0.3.0+1`, Android application ID `com.tahsinsk.mealbridge`, iOS bundle identifier `com.tahsinsk.mealbridge`, and the app display name `Meal Bridge`. Android APK build is not available yet on this machine because Android SDK is not configured.
 
 A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, shopping list generation, ingredient merging, unit conversion, checked item persistence, clear checked, and clipboard copy flows.
 
