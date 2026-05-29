@@ -34,7 +34,7 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Copy the full shopping list to clipboard
 - Copy only unchecked shopping list items to clipboard
 - Show remaining shopping item count
-- Polished recipe list, recipe detail, meal plan, and shopping list screens
+- Polished recipe list, recipe detail, recipe form, meal plan, and shopping list screens
 - Basic mobile-friendly UI
 - Tested on iOS Simulator
 
@@ -48,7 +48,7 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 
 ## Project Status
 
-MealBridge MVP v0.2 is currently working locally.
+MealBridge MVP v0.2 is currently working locally and has passed a basic manual stability test.
 
 The main user flow is complete:
 
@@ -60,7 +60,7 @@ The main user flow is complete:
 6. Generate a merged shopping list with basic unit conversion
 7. Check off shopping items
 8. Copy the shopping list when needed
-9. Keep data after app restart
+9. Keep recipes, meal plan, and checked shopping items after app restart
 
 ## How to Run
 
@@ -125,3 +125,5 @@ This project is intentionally kept simple for the MVP.
 The first goal is a stable, usable mobile app before adding advanced architecture, backend, or AI features.
 
 Current development focuses on small, practical MVP improvements and clean local-first behavior.
+
+A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, shopping list generation, ingredient merging, unit conversion, checked item persistence, clear checked, and clipboard copy flows.
