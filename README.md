@@ -100,7 +100,7 @@ Possible next improvements:
 
 - Continue improving visual design and icons
 - Improve advanced ingredient merging logic
-- Add servings scaling
+- Add servings scaling in a future milestone
 - Add shopping list share/export options
 - Add onboarding or empty-state guidance
 - Add backend later
@@ -127,3 +127,5 @@ The first goal is a stable, usable mobile app before adding advanced architectur
 Current development focuses on small, practical MVP improvements and clean local-first behavior.
 
 A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, shopping list generation, ingredient merging, unit conversion, checked item persistence, clear checked, and clipboard copy flows.
+
+Servings scaling is planned for a future milestone. Current shopping list generation uses each recipe's base servings.
