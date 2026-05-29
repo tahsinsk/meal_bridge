@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/recipe.dart';
 import '../../../models/planned_recipe.dart';
+import '../../../models/meal_type.dart';
 
 class MealPlanScreen extends StatelessWidget {
   final List<Recipe> recipes;
@@ -25,6 +26,12 @@ class MealPlanScreen extends StatelessWidget {
     'Friday',
     'Saturday',
     'Sunday',
+  ];
+
+  static const List<MealType> _mealTypes = [
+    MealType.breakfast,
+    MealType.lunch,
+    MealType.dinner,
   ];
 
   void _selectRecipeForDay(BuildContext context, String day) {
@@ -107,6 +114,19 @@ class MealPlanScreen extends StatelessWidget {
                   hasPlannedRecipes
                       ? 'Tap a planned day to change its recipe or remove it.'
                       : 'Start by tapping a day and selecting one of your recipes.',
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _mealTypes
+                      .map(
+                        (mealType) => Chip(
+                          avatar: const Icon(Icons.schedule_outlined, size: 18),
+                          label: Text(mealType.label),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
             ),
