@@ -105,12 +105,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   }
 
   void _requestFocusAfterFrame(FocusNode focusNode) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
         return;
       }
 
-      focusNode.requestFocus();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      if (!mounted) {
+        return;
+      }
+
+      FocusScope.of(context).requestFocus(focusNode);
     });
   }
 
