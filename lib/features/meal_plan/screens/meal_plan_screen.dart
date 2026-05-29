@@ -34,7 +34,11 @@ class MealPlanScreen extends StatelessWidget {
     MealType.dinner,
   ];
 
-  void _selectRecipeForDay(BuildContext context, String day) {
+  void _selectRecipeForDay(
+    BuildContext context,
+    String day, [
+    MealType? mealType,
+  ]) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -43,7 +47,9 @@ class MealPlanScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             children: [
               Text(
-                'Select recipe for $day',
+                mealType == null
+                    ? 'Select recipe for $day'
+                    : 'Select ${mealType.label.toLowerCase()} for $day',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
