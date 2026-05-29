@@ -5,6 +5,7 @@ import '../features/meal_plan/screens/meal_plan_screen.dart';
 import '../features/recipes/screens/recipe_list_screen.dart';
 import '../features/shopping_list/screens/shopping_list_screen.dart';
 import '../models/recipe.dart';
+import '../models/meal_type.dart';
 import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
 
@@ -166,6 +167,14 @@ class _MainShellState extends State<MainShell> {
     await _recipeStorageService.saveRecipes(customRecipes);
   }
 
+  String _mealPlanKey(String day, [MealType? mealType]) {
+    if (mealType == null) {
+      return day;
+    }
+
+    return '$day-${mealType.name}';
+  }
+
   Future<void> _saveMealPlan() async {
     final mealPlan = _plannedRecipes.map(
       (day, plannedRecipe) => MapEntry(day, plannedRecipe.recipe.id),
@@ -218,8 +227,10 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _selectRecipeForDay(String day, Recipe recipe) {
+    final mealPlanKey = _mealPlanKey(day);
+
     setState(() {
-      _plannedRecipes[day] = PlannedRecipe(
+      _plannedRecipes[mealPlanKey] = PlannedRecipe(
         recipe: recipe,
         targetServings: recipe.servings,
       );
@@ -229,8 +240,10 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _removeRecipeFromDay(String day) {
+    final mealPlanKey = _mealPlanKey(day);
+
     setState(() {
-      _plannedRecipes.remove(day);
+      _plannedRecipes.remove(mealPlanKey);
     });
 
     _saveMealPlan();
