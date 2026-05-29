@@ -96,10 +96,12 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
           recipe.category.toLowerCase().contains(query);
     }).toList();
 
+    final hasRecipes = widget.recipes.isNotEmpty;
+
     return Scaffold(
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: filteredRecipes.length + 1,
+        itemCount: filteredRecipes.isEmpty ? 2 : filteredRecipes.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
@@ -135,21 +137,36 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
           if (filteredRecipes.isEmpty) {
             return Card(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    const Icon(Icons.search_off_outlined, size: 40),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No recipes found',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Icon(
+                      hasRecipes
+                          ? Icons.search_off_outlined
+                          : Icons.restaurant_menu_outlined,
+                      size: 48,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 16),
                     Text(
-                      'Try another name or category.',
+                      hasRecipes ? 'No matching recipes' : 'No recipes yet',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      hasRecipes
+                          ? 'No recipe matches your search. Try a different name or category.'
+                          : 'Add your first recipe to start building your weekly meal plan and shopping list.',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
+                    if (!hasRecipes) ...[
+                      const SizedBox(height: 16),
+                      const Chip(
+                        avatar: Icon(Icons.add, size: 18),
+                        label: Text('Use Add Recipe'),
+                      ),
+                    ],
                   ],
                 ),
               ),
