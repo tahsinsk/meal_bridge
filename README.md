@@ -38,6 +38,7 @@ This is the first MVP version. It does not use AI, backend, or user accounts yet
 - Polished recipe list, recipe detail, recipe form, meal plan, and shopping list screens
 - Basic mobile-friendly UI
 - Tested on iOS Simulator
+- Debug APK build tested successfully
 - Android application ID updated to `com.tahsinsk.mealbridge`
 - iOS bundle identifier updated to `com.tahsinsk.mealbridge`
 - App display name set to `Meal Bridge` on Android and iOS
@@ -62,7 +63,7 @@ A stable v0.3 meal slots checkpoint has been tagged in Git as `v0.3-meal-slots`.
 
 Breakfast / Lunch / Dinner meal slot planning is now merged into `main` and has passed manual testing for selection, editing, removal, shopping list generation, weekly progress, and local persistence.
 
-Release preparation has started. The app version is `0.3.0+1`, Android and iOS app identifiers have been updated, and the app display name is set to `Meal Bridge`.
+Release preparation has started. The app version is `0.3.0+1`, Android and iOS app identifiers have been updated, the app display name is set to `Meal Bridge`, and debug APK build has been tested successfully.
 
 The main user flow is complete:
 
@@ -96,6 +97,14 @@ Analyze the project:
 
 flutter analyze
 
+Build a debug APK:
+
+flutter build apk --debug
+
+Debug APK output path:
+
+build/app/outputs/flutter-apk/app-debug.apk
+
 ## Local Storage
 
 The MVP stores data locally on the device.
@@ -116,7 +125,7 @@ Possible next improvements:
 - Improve advanced ingredient merging logic
 - Add servings scaling in a future milestone
 - Polish Breakfast / Lunch / Dinner meal slot UX if needed
-- Install/configure Android SDK before building APK files
+- Prepare release APK / AAB signing for store-ready builds
 - Add shopping list share/export options
 - Add onboarding or empty-state guidance
 - Add backend later
@@ -144,7 +153,7 @@ Current development focuses on small, practical MVP improvements and clean local
 
 Recent polish work improved recipe search empty states, weekly plan guidance, shopping list empty state guidance, and app metadata.
 
-Release preparation currently includes `version: 0.3.0+1`, Android application ID `com.tahsinsk.mealbridge`, iOS bundle identifier `com.tahsinsk.mealbridge`, and the app display name `Meal Bridge`. Android APK build is not available yet on this machine because Android SDK is not configured.
+Release preparation currently includes `version: 0.3.0+1`, Android application ID `com.tahsinsk.mealbridge`, iOS bundle identifier `com.tahsinsk.mealbridge`, the app display name `Meal Bridge`, and a successful debug APK build at `build/app/outputs/flutter-apk/app-debug.apk`. Store-ready release builds still need signing setup.
 
 A basic manual test pass has confirmed recipe add/edit/delete, meal plan sync, shopping list generation, ingredient merging, unit conversion, checked item persistence, clear checked, and clipboard copy flows.
 
