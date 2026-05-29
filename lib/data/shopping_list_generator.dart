@@ -26,6 +26,37 @@ String _resolveMergedCategory({
   return currentCategory;
 }
 
+String _baseUnitFor(String unit) {
+  final normalizedUnit = _normalizeText(unit);
+
+  if (normalizedUnit == 'kg' || normalizedUnit == 'g') {
+    return 'g';
+  }
+
+  if (normalizedUnit == 'l' || normalizedUnit == 'ml') {
+    return 'ml';
+  }
+
+  return normalizedUnit;
+}
+
+double _amountToBaseUnit({
+  required double amount,
+  required String unit,
+}) {
+  final normalizedUnit = _normalizeText(unit);
+
+  if (normalizedUnit == 'kg') {
+    return amount * 1000;
+  }
+
+  if (normalizedUnit == 'l') {
+    return amount * 1000;
+  }
+
+  return amount;
+}
+
 List<ShoppingListItem> generateShoppingListFromRecipes(List<Recipe> recipes) {
   final Map<String, ShoppingListItem> mergedItems = {};
 
@@ -33,22 +64,27 @@ List<ShoppingListItem> generateShoppingListFromRecipes(List<Recipe> recipes) {
     for (final ingredient in recipe.ingredients) {
       final normalizedName = _normalizeText(ingredient.name);
       final normalizedUnit = _normalizeText(ingredient.unit);
-      final key = '$normalizedName-$normalizedUnit';
+      final baseUnit = _baseUnitFor(normalizedUnit);
+      final baseAmount = _amountToBaseUnit(
+        amount: ingredient.amount,
+        unit: normalizedUnit,
+      );
+      final key = '$normalizedName-$baseUnit';
 
       final existingItem = mergedItems[key];
 
       if (existingItem == null) {
         mergedItems[key] = ShoppingListItem(
           name: _cleanDisplayText(ingredient.name),
-          amount: ingredient.amount,
-          unit: _cleanDisplayText(ingredient.unit),
+          amount: baseAmount,
+          unit: baseUnit,
           category: _cleanDisplayText(ingredient.category).isEmpty
               ? 'Other'
               : _cleanDisplayText(ingredient.category),
         );
       } else {
         mergedItems[key] = existingItem.copyWith(
-          amount: existingItem.amount + ingredient.amount,
+          amount: existingItem.amount + baseAmount,
           category: _resolveMergedCategory(
             currentCategory: existingItem.category,
             newCategory: ingredient.category,
