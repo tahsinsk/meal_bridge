@@ -106,9 +106,16 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
   void _requestFocusAfterFrame(FocusNode focusNode) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
+
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      if (!mounted) return;
+
+      if (!mounted) {
+        return;
+      }
+
       FocusScope.of(context).requestFocus(focusNode);
     });
   }
@@ -165,6 +172,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       _ingredients.add(
         Ingredient(name: name, amount: amount, unit: unit, category: category),
       );
+
       _ingredientNameController.clear();
       _ingredientAmountController.clear();
       _ingredientUnitController.text = 'g';
@@ -179,8 +187,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       _ingredients.removeAt(index);
     });
   }
-
-  void _showEditIngredientDialog(int index) {
+void _showEditIngredientDialog(int index) {
     final ingredient = _ingredients[index];
 
     final nameCtrl = TextEditingController(text: ingredient.name);
@@ -224,19 +231,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            inputFormatters: [
-                              TextInputFormatter.withFunction((
-                                oldValue,
-                                newValue,
-                              ) {
-                                final text =
-                                    newValue.text.replaceAll(',', '.');
-                                if (text.isEmpty) return newValue;
-                                final isValid =
-                                    RegExp(r'^\d*\.?\d*$').hasMatch(text);
-                                return isValid ? newValue : oldValue;
-                              }),
-                            ],
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -328,39 +322,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     );
   }
 
-  void _addInstruction() {
-    final instruction = _instructionController.text.trim();
-
-    if (instruction.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an instruction step.')),
-      );
-      return;
-    }
-
-    if (instruction.length < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Instruction step must be at least 5 characters.'),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _instructions.add(instruction);
-      _instructionController.clear();
-    });
-
-    _requestFocusAfterFrame(_instructionFocusNode);
-  }
-
-  void _removeInstruction(int index) {
-    setState(() {
-      _instructions.removeAt(index);
-    });
-  }
-
   void _showEditInstructionDialog(int index) {
     final instructionCtrl = TextEditingController(text: _instructions[index]);
 
@@ -410,11 +371,45 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       },
     );
   }
+  void _addInstruction() {
+    final instruction = _instructionController.text.trim();
+
+    if (instruction.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter an instruction step.')),
+      );
+      return;
+    }
+
+    if (instruction.length < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Instruction step must be at least 5 characters.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _instructions.add(instruction);
+      _instructionController.clear();
+    });
+
+    _requestFocusAfterFrame(_instructionFocusNode);
+  }
+
+  void _removeInstruction(int index) {
+    setState(() {
+      _instructions.removeAt(index);
+    });
+  }
 
   void _saveRecipe() {
     final isValid = _formKey.currentState?.validate() ?? false;
 
-    if (!isValid) return;
+    if (!isValid) {
+      return;
+    }
 
     if (_ingredients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -431,7 +426,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     }
 
     final recipe = Recipe(
-      id: widget.initialRecipe?.id ??
+      id:
+          widget.initialRecipe?.id ??
           'recipe-${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
       servings: int.parse(_servingsController.text.trim()),
@@ -459,7 +455,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Basic info
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -485,25 +480,45 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       ),
                       validator: (value) {
                         final name = value?.trim() ?? '';
-                        if (name.isEmpty) return 'Recipe name is required.';
+
+                        if (name.isEmpty) {
+                          return 'Recipe name is required.';
+                        }
+
                         if (name.length < 2) {
                           return 'Recipe name must be at least 2 characters.';
                         }
+
                         return null;
                       },
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _categoryController,
+                   DropdownButtonFormField<String>(
+                      value: ['Breakfast', 'Lunch', 'Dinner', 'Other']
+                              .contains(_categoryController.text)
+                          ? _categoryController.text
+                          : 'Other',
                       decoration: const InputDecoration(
                         labelText: 'Category',
                         border: OutlineInputBorder(),
                       ),
+                      items: ['Breakfast', 'Lunch', 'Dinner', 'Other']
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat,
+                              child: Text(cat),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _categoryController.text = value;
+                        });
+                      },
                       validator: (value) {
-                        final category = value?.trim() ?? '';
-                        if (category.isEmpty) return 'Category is required.';
-                        if (category.length < 2) {
-                          return 'Category must be at least 2 characters.';
+                        if (value == null || value.isEmpty) {
+                          return 'Category is required.';
                         }
                         return null;
                       },
@@ -529,10 +544,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // Ingredients
             Row(
               children: [
                 const Icon(Icons.shopping_basket_outlined),
@@ -555,7 +567,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   leading: const Icon(Icons.shopping_basket_outlined),
                   title: Text(ingredient.name),
                   subtitle: Text(ingredient.category),
-                  trailing: Row(
+                trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Chip(
@@ -578,10 +590,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               );
             }),
-
             const SizedBox(height: 8),
-
-            // Add ingredient form
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -625,12 +634,21 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                 oldValue,
                                 newValue,
                               ) {
-                                final text =
-                                    newValue.text.replaceAll(',', '.');
-                                if (text.isEmpty) return newValue;
-                                final isValid =
-                                    RegExp(r'^\d*\.?\d*$').hasMatch(text);
-                                return isValid ? newValue : oldValue;
+                                final text = newValue.text.replaceAll(',', '.');
+
+                                if (text.isEmpty) {
+                                  return newValue;
+                                }
+
+                                final isValidAmount = RegExp(
+                                  r'^\d*\.?\d*$',
+                                ).hasMatch(text);
+
+                                if (!isValidAmount) {
+                                  return oldValue;
+                                }
+
+                                return newValue;
                               }),
                             ],
                           ),
@@ -638,8 +656,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            initialValue: _units.contains(
-                                    _ingredientUnitController.text)
+                            initialValue:
+                                _units.contains(_ingredientUnitController.text)
                                 ? _ingredientUnitController.text
                                 : 'g',
                             decoration: const InputDecoration(
@@ -655,7 +673,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                 )
                                 .toList(),
                             onChanged: (value) {
-                              if (value == null) return;
+                              if (value == null) {
+                                return;
+                              }
+
                               setState(() {
                                 _ingredientUnitController.text = value;
                               });
@@ -666,8 +687,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue: _marketCategories.contains(
-                              _ingredientCategoryController.text)
+                      initialValue:
+                          _marketCategories.contains(
+                            _ingredientCategoryController.text,
+                          )
                           ? _ingredientCategoryController.text
                           : 'Other',
                       decoration: const InputDecoration(
@@ -683,7 +706,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                           )
                           .toList(),
                       onChanged: (value) {
-                        if (value == null) return;
+                        if (value == null) {
+                          return;
+                        }
+
                         setState(() {
                           _ingredientCategoryController.text = value;
                         });
@@ -702,10 +728,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // Instructions
             Row(
               children: [
                 const Icon(Icons.format_list_numbered),
@@ -727,7 +750,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 child: ListTile(
                   leading: CircleAvatar(child: Text('${index + 1}')),
                   title: Text(instruction),
-                  trailing: Row(
+               trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
@@ -745,10 +768,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               );
             }),
-
             const SizedBox(height: 8),
-
-            // Add instruction form
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -789,10 +809,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // Notes
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -823,9 +840,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -833,7 +848,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 onPressed: _saveRecipe,
                 icon: const Icon(Icons.save_outlined),
                 label: Text(
-                  widget.initialRecipe == null ? 'Save Recipe' : 'Update Recipe',
+                  widget.initialRecipe == null
+                      ? 'Save Recipe'
+                      : 'Update Recipe',
                 ),
               ),
             ),
