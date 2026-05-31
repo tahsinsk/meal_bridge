@@ -8,6 +8,8 @@ import '../models/recipe.dart';
 import '../models/meal_type.dart';
 import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
+import '../features/settings/screens/settings_screen.dart';
+
 
 class MealBridgeApp extends StatelessWidget {
   const MealBridgeApp({super.key});
@@ -386,7 +388,7 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
   }
 
-  String get _title {
+String get _title {
     switch (_selectedIndex) {
       case 0:
         return 'Recipes';
@@ -394,6 +396,8 @@ class _MainShellState extends State<MainShell> {
         return 'Weekly Plan';
       case 2:
         return 'Shopping List';
+      case 3:
+        return 'Settings';
       default:
         return 'MealBridge';
     }
@@ -404,6 +408,8 @@ class _MainShellState extends State<MainShell> {
     final quickRecipes =
         _recipes.where((r) => _quickRecipeIds.contains(r.id)).toList();
 
+
+
     final screens = [
       RecipeListScreen(
         recipes: _recipes,
@@ -411,7 +417,7 @@ class _MainShellState extends State<MainShell> {
         onRecipeAdded: _addRecipe,
         onRecipeUpdated: _updateRecipe,
         onRecipeDeleted: _deleteRecipe,
-        onFavoriteToggled: _toggleFavorite,   
+        onFavoriteToggled: _toggleFavorite,
       ),
       MealPlanScreen(
         recipes: _recipes,
@@ -430,6 +436,9 @@ class _MainShellState extends State<MainShell> {
         onToggleQuickRecipe: _toggleQuickRecipe,
         onClearQuickRecipes: _clearQuickRecipes,
       ),
+      SettingsScreen(
+        onImportSuccess: () => _loadSavedData(),
+      ),
     ];
 
     return Scaffold(
@@ -442,7 +451,7 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
-        destinations: const [
+     destinations: const [
           NavigationDestination(
             icon: Icon(Icons.restaurant_menu_outlined),
             selectedIcon: Icon(Icons.restaurant_menu),
@@ -457,6 +466,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.shopping_cart_outlined),
             selectedIcon: Icon(Icons.shopping_cart),
             label: 'Shopping',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
