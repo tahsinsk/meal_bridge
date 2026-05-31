@@ -196,7 +196,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   Widget _calorieChip(Recipe recipe) {
     final perServing = (recipe.calories! / recipe.servings).round();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3E0),
         borderRadius: BorderRadius.circular(20),
@@ -209,6 +209,35 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
           Text(
             '$perServing kcal/serving',
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFE65100)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F9F1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: const Color(0xFF558B2F)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF558B2F),
+            ),
           ),
         ],
       ),
@@ -448,78 +477,96 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               },
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.restaurant_menu_outlined,
-                            color: Color(0xFF2E7D32),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                recipe.name,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 4),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-                                  _categoryChip(recipe.category),
-                                  Text(
-                                    '${recipe.ingredients.length} ingredients • ${recipe.instructions.length} steps',
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                  if (recipe.calories != null)
-                                    _calorieChip(recipe),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            recipe.isFavorite ? Icons.star : Icons.star_outline,
-                            color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
-                          ),
-                          tooltip: recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites',
-                          onPressed: () => widget.onFavoriteToggled(recipe),
-                        ),
-                      ],
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.restaurant_menu_outlined,
+                        color: Color(0xFF2E7D32),
+                      ),
                     ),
-                    if (isCustomRecipe) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextButton.icon(
-                            onPressed: () => _openEditRecipeScreen(context, recipe),
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Edit'),
+                          Text(
+                            recipe.name,
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          TextButton.icon(
-                            onPressed: () => _confirmDeleteRecipe(context, recipe),
-                            icon: const Icon(Icons.delete_outline),
-                            label: const Text('Delete'),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _categoryChip(recipe.category),
+                              _infoChip(
+                                Icons.shopping_basket_outlined,
+                                '${recipe.ingredients.length} ingredients',
+                              ),
+                              _infoChip(
+                                Icons.format_list_numbered,
+                                '${recipe.instructions.length} steps',
+                              ),
+                              if (recipe.calories != null)
+                                _calorieChip(recipe),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: Icon(
+                        recipe.isFavorite ? Icons.star : Icons.star_outline,
+                        color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
+                      ),
+                      tooltip: recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                      onPressed: () => widget.onFavoriteToggled(recipe),
+                    ),
+                    if (isCustomRecipe)
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _openEditRecipeScreen(context, recipe);
+                          } else if (value == 'delete') {
+                            _confirmDeleteRecipe(context, recipe);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined, size: 20),
+                                SizedBox(width: 12),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                                SizedBox(width: 12),
+                                Text('Delete', style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
