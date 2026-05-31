@@ -32,12 +32,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   var _showFavoritesOnly = false;
   String? _selectedCategory;
 
-  static const _categories = [
-    'Breakfast',
-    'Lunch',
-    'Dinner',
-    'Other',
-  ];
+  static const _categories = ['Breakfast', 'Lunch', 'Dinner', 'Other'];
 
   @override
   void dispose() {
@@ -68,39 +63,23 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     if (newRecipe != null) widget.onRecipeAdded(newRecipe);
   }
 
-  Future<void> _openEditRecipeScreen(
-    BuildContext context,
-    Recipe recipe,
-  ) async {
+  Future<void> _openEditRecipeScreen(BuildContext context, Recipe recipe) async {
     final updatedRecipe = await Navigator.of(context).push<Recipe>(
-      MaterialPageRoute(
-        builder: (context) => RecipeFormScreen(initialRecipe: recipe),
-      ),
+      MaterialPageRoute(builder: (context) => RecipeFormScreen(initialRecipe: recipe)),
     );
     if (updatedRecipe != null) widget.onRecipeUpdated(updatedRecipe);
   }
 
-  Future<void> _confirmDeleteRecipe(
-    BuildContext context,
-    Recipe recipe,
-  ) async {
+  Future<void> _confirmDeleteRecipe(BuildContext context, Recipe recipe) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete recipe?'),
-          content: Text(
-            'Are you sure you want to delete "${recipe.name}"?',
-          ),
+          content: Text('Are you sure you want to delete "${recipe.name}"?'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
           ],
         );
       },
@@ -125,10 +104,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                     children: [
                       const Icon(Icons.filter_list_outlined),
                       const SizedBox(width: 8),
-                      Text(
-                        'Filter recipes',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
+                      Text('Filter recipes', style: Theme.of(context).textTheme.titleLarge),
                       const Spacer(),
                       if (_activeFilterCount > 0)
                         TextButton(
@@ -142,10 +118,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Category',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
+                  Text('Category', style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -156,30 +129,21 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                         label: Text(cat),
                         selected: isSelected,
                         onSelected: (val) {
-                          setState(() {
-                            _selectedCategory = val ? cat : null;
-                          });
+                          setState(() => _selectedCategory = val ? cat : null);
                           setSheetState(() {});
                         },
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'Show',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
+                  Text('Show', style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 8),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Favorites only'),
                     secondary: Icon(
-                      _showFavoritesOnly
-                          ? Icons.star
-                          : Icons.star_outline,
-                      color: _showFavoritesOnly
-                          ? const Color(0xFFF9A825)
-                          : null,
+                      _showFavoritesOnly ? Icons.star : Icons.star_outline,
+                      color: _showFavoritesOnly ? const Color(0xFFF9A825) : null,
                     ),
                     value: _showFavoritesOnly,
                     onChanged: (val) {
@@ -208,6 +172,49 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     );
   }
 
+  Widget _categoryChip(String category) {
+    final colors = {
+      'Breakfast': (const Color(0xFFFFF8E1), const Color(0xFFF57F17)),
+      'Lunch': (const Color(0xFFE3F2FD), const Color(0xFF1565C0)),
+      'Dinner': (const Color(0xFFEDE7F6), const Color(0xFF4527A0)),
+      'Other': (const Color(0xFFE8F5E9), const Color(0xFF2E7D32)),
+    };
+    final pair = colors[category] ?? (const Color(0xFFE8F5E9), const Color(0xFF2E7D32));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: pair.$1,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        category,
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: pair.$2),
+      ),
+    );
+  }
+
+  Widget _calorieChip(Recipe recipe) {
+    final perServing = (recipe.calories! / recipe.servings).round();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.local_fire_department_outlined, size: 12, color: Color(0xFFE65100)),
+          const SizedBox(width: 3),
+          Text(
+            '$perServing kcal/serving',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFE65100)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final query = _searchQuery.trim().toLowerCase();
@@ -224,8 +231,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
           recipe.category.toLowerCase().contains(query);
       final matchesFavorite = !_showFavoritesOnly || recipe.isFavorite;
       final matchesCategory = _selectedCategory == null ||
-          recipe.category.toLowerCase() ==
-              _selectedCategory!.toLowerCase();
+          recipe.category.toLowerCase() == _selectedCategory!.toLowerCase();
       return matchesQuery && matchesFavorite && matchesCategory;
     }).toList();
 
@@ -242,7 +248,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Arama + filtre butonu
                 Row(
                   children: [
                     Expanded(
@@ -263,8 +268,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                                 ),
                           border: const OutlineInputBorder(),
                         ),
-                        onChanged: (value) =>
-                            setState(() => _searchQuery = value),
+                        onChanged: (value) => setState(() => _searchQuery = value),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -309,10 +313,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 8),
-
-                // Aktif filtre chip'leri
                 if (hasActiveFilters) ...[
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -323,13 +324,8 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                             padding: const EdgeInsets.only(right: 8),
                             child: Chip(
                               label: Text(_selectedCategory!),
-                              avatar: const Icon(
-                                Icons.category_outlined,
-                                size: 16,
-                              ),
-                              onDeleted: () => setState(
-                                () => _selectedCategory = null,
-                              ),
+                              avatar: const Icon(Icons.category_outlined, size: 16),
+                              onDeleted: () => setState(() => _selectedCategory = null),
                               deleteIcon: const Icon(Icons.close, size: 16),
                             ),
                           ),
@@ -338,28 +334,17 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                             padding: const EdgeInsets.only(right: 8),
                             child: Chip(
                               label: const Text('Favorites'),
-                              avatar: const Icon(
-                                Icons.star,
-                                size: 16,
-                                color: Color(0xFFF9A825),
-                              ),
-                              onDeleted: () => setState(
-                                () => _showFavoritesOnly = false,
-                              ),
+                              avatar: const Icon(Icons.star, size: 16, color: Color(0xFFF9A825)),
+                              onDeleted: () => setState(() => _showFavoritesOnly = false),
                               deleteIcon: const Icon(Icons.close, size: 16),
                             ),
                           ),
                         if (hasActiveFilters)
-                          TextButton(
-                            onPressed: _clearFilters,
-                            child: const Text('Clear all'),
-                          ),
+                          TextButton(onPressed: _clearFilters, child: const Text('Clear all')),
                       ],
                     ),
                   ),
                 ],
-
-                // Özet satırı
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
@@ -370,11 +355,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                       ),
                       if (favoriteCount > 0) ...[
                         const Text(' • '),
-                        Icon(
-                          Icons.star,
-                          size: 13,
-                          color: const Color(0xFFF9A825),
-                        ),
+                        const Icon(Icons.star, size: 13, color: Color(0xFFF9A825)),
                         const SizedBox(width: 2),
                         Text(
                           '$favoriteCount favorite${favoriteCount != 1 ? 's' : ''}',
@@ -384,7 +365,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 4),
               ],
             );
@@ -462,8 +442,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) =>
-                        RecipeDetailScreen(recipe: recipe),
+                    builder: (context) => RecipeDetailScreen(recipe: recipe),
                   ),
                 );
               },
@@ -494,21 +473,20 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                             children: [
                               Text(
                                 recipe.name,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium,
+                                style: Theme.of(context).textTheme.titleMedium,
                               ),
                               const SizedBox(height: 4),
                               Wrap(
                                 spacing: 6,
+                                runSpacing: 4,
                                 children: [
                                   _categoryChip(recipe.category),
                                   Text(
                                     '${recipe.ingredients.length} ingredients • ${recipe.instructions.length} steps',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall,
+                                    style: Theme.of(context).textTheme.bodySmall,
                                   ),
+                                  if (recipe.calories != null)
+                                    _calorieChip(recipe),
                                 ],
                               ),
                             ],
@@ -516,18 +494,11 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                         ),
                         IconButton(
                           icon: Icon(
-                            recipe.isFavorite
-                                ? Icons.star
-                                : Icons.star_outline,
-                            color: recipe.isFavorite
-                                ? const Color(0xFFF9A825)
-                                : null,
+                            recipe.isFavorite ? Icons.star : Icons.star_outline,
+                            color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
                           ),
-                          tooltip: recipe.isFavorite
-                              ? 'Remove from favorites'
-                              : 'Add to favorites',
-                          onPressed: () =>
-                              widget.onFavoriteToggled(recipe),
+                          tooltip: recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                          onPressed: () => widget.onFavoriteToggled(recipe),
                         ),
                       ],
                     ),
@@ -537,14 +508,12 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton.icon(
-                            onPressed: () =>
-                                _openEditRecipeScreen(context, recipe),
+                            onPressed: () => _openEditRecipeScreen(context, recipe),
                             icon: const Icon(Icons.edit_outlined),
                             label: const Text('Edit'),
                           ),
                           TextButton.icon(
-                            onPressed: () =>
-                                _confirmDeleteRecipe(context, recipe),
+                            onPressed: () => _confirmDeleteRecipe(context, recipe),
                             icon: const Icon(Icons.delete_outline),
                             label: const Text('Delete'),
                           ),
@@ -562,33 +531,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
         onPressed: () => _openAddRecipeScreen(context),
         icon: const Icon(Icons.add),
         label: const Text('Add Recipe'),
-      ),
-    );
-  }
-
-  Widget _categoryChip(String category) {
-    final colors = {
-      'Breakfast': (const Color(0xFFFFF8E1), const Color(0xFFF57F17)),
-      'Lunch': (const Color(0xFFE3F2FD), const Color(0xFF1565C0)),
-      'Dinner': (const Color(0xFFEDE7F6), const Color(0xFF4527A0)),
-      'Other': (const Color(0xFFE8F5E9), const Color(0xFF2E7D32)),
-    };
-    final pair = colors[category] ??
-        (const Color(0xFFE8F5E9), const Color(0xFF2E7D32));
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: pair.$1,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        category,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: pair.$2,
-        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ class Recipe {
   final List<String> instructions;
   final String? notes;
   final bool isFavorite;
+  final int? calories;
 
   const Recipe({
     required this.id,
@@ -19,6 +20,7 @@ class Recipe {
     required this.instructions,
     this.notes,
     this.isFavorite = false,
+    this.calories,
   });
 
   Recipe copyWith({
@@ -30,6 +32,7 @@ class Recipe {
     List<String>? instructions,
     String? notes,
     bool? isFavorite,
+    int? calories,
   }) {
     return Recipe(
       id: id ?? this.id,
@@ -40,6 +43,7 @@ class Recipe {
       instructions: instructions ?? this.instructions,
       notes: notes ?? this.notes,
       isFavorite: isFavorite ?? this.isFavorite,
+      calories: calories ?? this.calories,
     );
   }
 
@@ -53,6 +57,7 @@ class Recipe {
       'instructions': instructions,
       'notes': notes,
       'isFavorite': isFavorite,
+      'calories': calories,
     };
   }
 
@@ -71,6 +76,7 @@ class Recipe {
       instructions: instructionsJson.map((i) => i as String).toList(),
       notes: json['notes'] as String?,
       isFavorite: json['isFavorite'] as bool? ?? false,
+      calories: json['calories'] as int?,
     );
   }
 }

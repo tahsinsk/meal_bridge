@@ -116,7 +116,7 @@ class RecipeDetailScreen extends StatelessWidget {
                   const Divider(height: 1),
                   const SizedBox(height: 16),
                   // Stats
-                  Row(
+               Row(
                     children: [
                       _statItem(
                         context,
@@ -138,6 +138,15 @@ class RecipeDetailScreen extends StatelessWidget {
                         '${recipe.instructions.length}',
                         'steps',
                       ),
+                      if (recipe.calories != null) ...[
+                        _divider(),
+                        _statItem(
+                          context,
+                          Icons.local_fire_department_outlined,
+                          '${(recipe.calories! / recipe.servings).round()}',
+                          'kcal/serving',
+                        ),
+                      ],
                     ],
                   ),
                 ],
