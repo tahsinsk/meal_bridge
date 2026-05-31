@@ -8,6 +8,7 @@ class Recipe {
   final List<Ingredient> ingredients;
   final List<String> instructions;
   final String? notes;
+  final bool isFavorite;
 
   const Recipe({
     required this.id,
@@ -17,7 +18,30 @@ class Recipe {
     required this.ingredients,
     required this.instructions,
     this.notes,
+    this.isFavorite = false,
   });
+
+  Recipe copyWith({
+    String? id,
+    String? name,
+    int? servings,
+    String? category,
+    List<Ingredient>? ingredients,
+    List<String>? instructions,
+    String? notes,
+    bool? isFavorite,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      servings: servings ?? this.servings,
+      category: category ?? this.category,
+      ingredients: ingredients ?? this.ingredients,
+      instructions: instructions ?? this.instructions,
+      notes: notes ?? this.notes,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -25,11 +49,10 @@ class Recipe {
       'name': name,
       'servings': servings,
       'category': category,
-      'ingredients': ingredients
-          .map((ingredient) => ingredient.toJson())
-          .toList(),
+      'ingredients': ingredients.map((i) => i.toJson()).toList(),
       'instructions': instructions,
       'notes': notes,
+      'isFavorite': isFavorite,
     };
   }
 
@@ -43,16 +66,11 @@ class Recipe {
       servings: json['servings'] as int,
       category: json['category'] as String,
       ingredients: ingredientsJson
-          .map(
-            (ingredientJson) => Ingredient.fromJson(
-              ingredientJson as Map<String, dynamic>,
-            ),
-          )
+          .map((i) => Ingredient.fromJson(i as Map<String, dynamic>))
           .toList(),
-      instructions: instructionsJson
-          .map((instruction) => instruction as String)
-          .toList(),
+      instructions: instructionsJson.map((i) => i as String).toList(),
       notes: json['notes'] as String?,
+      isFavorite: json['isFavorite'] as bool? ?? false,
     );
   }
 }

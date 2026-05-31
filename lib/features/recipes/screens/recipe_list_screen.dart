@@ -10,6 +10,7 @@ class RecipeListScreen extends StatefulWidget {
   final ValueChanged<Recipe> onRecipeAdded;
   final ValueChanged<Recipe> onRecipeUpdated;
   final ValueChanged<Recipe> onRecipeDeleted;
+  final ValueChanged<Recipe> onFavoriteToggled;
 
   const RecipeListScreen({
     super.key,
@@ -18,6 +19,7 @@ class RecipeListScreen extends StatefulWidget {
     required this.onRecipeAdded,
     required this.onRecipeUpdated,
     required this.onRecipeDeleted,
+    required this.onFavoriteToggled,
   });
 
   @override
@@ -27,6 +29,7 @@ class RecipeListScreen extends StatefulWidget {
 class _RecipeListScreenState extends State<RecipeListScreen> {
   final _searchController = TextEditingController();
   var _searchQuery = '';
+  var _showFavoritesOnly = false;
 
   @override
   void dispose() {
@@ -38,10 +41,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     final newRecipe = await Navigator.of(context).push<Recipe>(
       MaterialPageRoute(builder: (context) => const RecipeFormScreen()),
     );
-
-    if (newRecipe != null) {
-      widget.onRecipeAdded(newRecipe);
-    }
+    if (newRecipe != null) widget.onRecipeAdded(newRecipe);
   }
 
   Future<void> _openEditRecipeScreen(
@@ -53,10 +53,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
         builder: (context) => RecipeFormScreen(initialRecipe: recipe),
       ),
     );
-
-    if (updatedRecipe != null) {
-      widget.onRecipeUpdated(updatedRecipe);
-    }
+    if (updatedRecipe != null) widget.onRecipeUpdated(updatedRecipe);
   }
 
   Future<void> _confirmDeleteRecipe(BuildContext context, Recipe recipe) async {
@@ -79,24 +76,30 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
         );
       },
     );
-
-    if (shouldDelete == true) {
-      widget.onRecipeDeleted(recipe);
-    }
+    if (shouldDelete == true) widget.onRecipeDeleted(recipe);
   }
 
   @override
   Widget build(BuildContext context) {
     final query = _searchQuery.trim().toLowerCase();
-    final filteredRecipes = widget.recipes.where((recipe) {
-      if (query.isEmpty) {
-        return true;
-      }
-      return recipe.name.toLowerCase().contains(query) ||
+
+    // Favoriler önce, sonra alfabetik
+    final sortedRecipes = [...widget.recipes]..sort((a, b) {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+
+    final filteredRecipes = sortedRecipes.where((recipe) {
+      final matchesQuery = query.isEmpty ||
+          recipe.name.toLowerCase().contains(query) ||
           recipe.category.toLowerCase().contains(query);
+      final matchesFavorite = !_showFavoritesOnly || recipe.isFavorite;
+      return matchesQuery && matchesFavorite;
     }).toList();
 
     final hasRecipes = widget.recipes.isNotEmpty;
+    final favoriteCount = widget.recipes.where((r) => r.isFavorite).length;
 
     return Scaffold(
       body: ListView.builder(
@@ -104,33 +107,59 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
         itemCount: filteredRecipes.isEmpty ? 2 : filteredRecipes.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: 'Search recipes',
-                  hintText: 'Search by name or category',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: query.isEmpty
-                      ? null
-                      : IconButton(
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                          icon: const Icon(Icons.clear),
-                        ),
-                  border: const OutlineInputBorder(),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Search recipes',
+                      hintText: 'Search by name or category',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: query.isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              icon: const Icon(Icons.clear),
+                            ),
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (value) =>
+                        setState(() => _searchQuery = value),
+                  ),
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-              ),
+                // Filtre satırı
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      FilterChip(
+                        avatar: Icon(
+                          _showFavoritesOnly
+                              ? Icons.star
+                              : Icons.star_outline,
+                          size: 18,
+                          color: _showFavoritesOnly
+                              ? const Color(0xFF2E7D32)
+                              : null,
+                        ),
+                        label: Text(
+                          favoriteCount > 0
+                              ? 'Favorites ($favoriteCount)'
+                              : 'Favorites',
+                        ),
+                        selected: _showFavoritesOnly,
+                        onSelected: (value) =>
+                            setState(() => _showFavoritesOnly = value),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             );
           }
 
@@ -141,32 +170,33 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                 child: Column(
                   children: [
                     Icon(
-                      hasRecipes
-                          ? Icons.search_off_outlined
-                          : Icons.restaurant_menu_outlined,
+                      _showFavoritesOnly
+                          ? Icons.star_outline
+                          : hasRecipes
+                              ? Icons.search_off_outlined
+                              : Icons.restaurant_menu_outlined,
                       size: 48,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      hasRecipes ? 'No matching recipes' : 'No recipes yet',
+                      _showFavoritesOnly
+                          ? 'No favorites yet'
+                          : hasRecipes
+                              ? 'No matching recipes'
+                              : 'No recipes yet',
                       style: Theme.of(context).textTheme.titleMedium,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      hasRecipes
-                          ? 'No recipe matches your search. Try a different name or category.'
-                          : 'Add your first recipe to start building your weekly meal plan and shopping list.',
+                      _showFavoritesOnly
+                          ? 'Tap the ⭐ on any recipe to add it to favorites.'
+                          : hasRecipes
+                              ? 'No recipe matches your search.'
+                              : 'Add your first recipe to start building your weekly meal plan.',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
-                    if (!hasRecipes) ...[
-                      const SizedBox(height: 16),
-                      const Chip(
-                        avatar: Icon(Icons.add, size: 18),
-                        label: Text('Use Add Recipe'),
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -203,17 +233,34 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                             children: [
                               Text(
                                 recipe.name,
-                                style: Theme.of(context).textTheme.titleMedium,
+                                style:
+                                    Theme.of(context).textTheme.titleMedium,
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '${recipe.category} • ${recipe.ingredients.length} ingredients • ${recipe.instructions.length} steps',
-                                style: Theme.of(context).textTheme.bodyMedium,
+                                style:
+                                    Theme.of(context).textTheme.bodyMedium,
                               ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right),
+                        // Favori butonu
+                        IconButton(
+                          icon: Icon(
+                            recipe.isFavorite
+                                ? Icons.star
+                                : Icons.star_outline,
+                            color: recipe.isFavorite
+                                ? const Color(0xFFF9A825)
+                                : null,
+                          ),
+                          tooltip: recipe.isFavorite
+                              ? 'Remove from favorites'
+                              : 'Add to favorites',
+                          onPressed: () =>
+                              widget.onFavoriteToggled(recipe),
+                        ),
                       ],
                     ),
                     if (isCustomRecipe) ...[

@@ -207,6 +207,15 @@ class _MainShellState extends State<MainShell> {
     _saveMealPlan();
     _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
   }
+  void _toggleFavorite(Recipe recipe) {
+    setState(() {
+      final idx = _recipes.indexWhere((r) => r.id == recipe.id);
+      if (idx != -1) {
+        _recipes[idx] = recipe.copyWith(isFavorite: !recipe.isFavorite);
+      }
+    });
+    _saveCustomRecipes();
+  }
 
   void _selectRecipeForDay(String day, Recipe recipe, [MealType? mealType]) {
     final key = _mealPlanKey(day, mealType);
@@ -293,6 +302,7 @@ class _MainShellState extends State<MainShell> {
         onRecipeAdded: _addRecipe,
         onRecipeUpdated: _updateRecipe,
         onRecipeDeleted: _deleteRecipe,
+        onFavoriteToggled: _toggleFavorite,   
       ),
       MealPlanScreen(
         recipes: _recipes,
