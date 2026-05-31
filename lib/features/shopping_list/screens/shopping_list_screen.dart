@@ -546,38 +546,53 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Kategori başlığı
+                // Kategori başlığı
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
                       _categoryIcon(category),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           category,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                            color: const Color(0xFF2E7D32),
+                          style: const TextStyle(
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1C19),
                           ),
                         ),
                       ),
-                      Text(
-                        '$categoryCheckedCount/${items.length}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: allCategoryChecked
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '$categoryCheckedCount/${items.length}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: allCategoryChecked
+                                ? Colors.white
+                                : const Color(0xFF2E7D32),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       GestureDetector(
-                        onTap: () =>
-                            _checkCategory(items, !allCategoryChecked),
+                        onTap: () => _checkCategory(items, !allCategoryChecked),
                         child: Icon(
                           allCategoryChecked
                               ? Icons.check_circle
                               : Icons.check_circle_outline,
-                          size: 20,
+                          size: 22,
                           color: allCategoryChecked
                               ? const Color(0xFF2E7D32)
-                              : Theme.of(context).disabledColor,
+                              : Colors.grey[400],
                         ),
                       ),
                     ],
