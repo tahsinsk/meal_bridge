@@ -114,6 +114,7 @@ class _MainShellState extends State<MainShell> {
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   Map<String, PlannedRecipe> _plannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
+  Set<String> _quickRecipeIds = {};
 
   @override
   void initState() {
@@ -124,18 +125,17 @@ class _MainShellState extends State<MainShell> {
   Future<void> _loadSavedData() async {
     final savedRecipes = await _recipeStorageService.loadRecipes();
     final savedMealPlan = await _recipeStorageService.loadMealPlan();
-    final savedCheckedShoppingItems = await _recipeStorageService
-        .loadCheckedShoppingItems();
+    final savedCheckedShoppingItems =
+        await _recipeStorageService.loadCheckedShoppingItems();
+    final savedQuickRecipeIds =
+        await _recipeStorageService.loadQuickRecipeIds();
 
     final allRecipes = [...sampleRecipes, ...savedRecipes];
-
     final plannedRecipes = <String, PlannedRecipe>{};
 
     for (final entry in savedMealPlan.entries) {
-      final matchingRecipe = allRecipes.where(
-        (recipe) => recipe.id == entry.value,
-      );
-
+      final matchingRecipe =
+          allRecipes.where((recipe) => recipe.id == entry.value);
       if (matchingRecipe.isNotEmpty) {
         final recipe = matchingRecipe.first;
         plannedRecipes[entry.key] = PlannedRecipe(
@@ -145,110 +145,94 @@ class _MainShellState extends State<MainShell> {
       }
     }
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       _recipes = allRecipes;
       _plannedRecipes = plannedRecipes;
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
+      _quickRecipeIds = savedQuickRecipeIds;
       _isLoadingData = false;
     });
   }
 
   bool _isCustomRecipe(Recipe recipe) {
-    return !sampleRecipes.any((sampleRecipe) => sampleRecipe.id == recipe.id);
+    return !sampleRecipes.any((s) => s.id == recipe.id);
   }
 
   Future<void> _saveCustomRecipes() async {
     final customRecipes = _recipes.where(_isCustomRecipe).toList();
-
     await _recipeStorageService.saveRecipes(customRecipes);
   }
 
   String _mealPlanKey(String day, [MealType? mealType]) {
-    if (mealType == null) {
-      return day;
-    }
-
+    if (mealType == null) return day;
     return '$day-${mealType.name}';
   }
 
   Future<void> _saveMealPlan() async {
     final mealPlan = _plannedRecipes.map(
-      (mealPlanKey, plannedRecipe) => MapEntry(
-        mealPlanKey,
-        plannedRecipe.recipe.id,
-      ),
+      (key, pr) => MapEntry(key, pr.recipe.id),
     );
-
     await _recipeStorageService.saveMealPlan(mealPlan);
   }
 
   void _addRecipe(Recipe recipe) {
-    setState(() {
-      _recipes.add(recipe);
-    });
-
+    setState(() => _recipes.add(recipe));
     _saveCustomRecipes();
   }
 
   void _updateRecipe(Recipe updatedRecipe) {
     setState(() {
-      final recipeIndex = _recipes.indexWhere(
-        (recipe) => recipe.id == updatedRecipe.id,
-      );
-
-      if (recipeIndex != -1) {
-        _recipes[recipeIndex] = updatedRecipe;
-      }
-
-      _plannedRecipes.updateAll((day, plannedRecipe) {
-        if (plannedRecipe.recipe.id == updatedRecipe.id) {
-          return plannedRecipe.copyWith(recipe: updatedRecipe);
+      final idx = _recipes.indexWhere((r) => r.id == updatedRecipe.id);
+      if (idx != -1) _recipes[idx] = updatedRecipe;
+      _plannedRecipes.updateAll((_, pr) {
+        if (pr.recipe.id == updatedRecipe.id) {
+          return pr.copyWith(recipe: updatedRecipe);
         }
-
-        return plannedRecipe;
+        return pr;
       });
     });
-
     _saveCustomRecipes();
     _saveMealPlan();
   }
 
   void _deleteRecipe(Recipe recipe) {
     setState(() {
-      _recipes.removeWhere((item) => item.id == recipe.id);
-      _plannedRecipes.removeWhere(
-        (day, plannedRecipe) => plannedRecipe.recipe.id == recipe.id,
-      );
+      _recipes.removeWhere((r) => r.id == recipe.id);
+      _plannedRecipes.removeWhere((_, pr) => pr.recipe.id == recipe.id);
+      _quickRecipeIds.remove(recipe.id);
     });
-
     _saveCustomRecipes();
     _saveMealPlan();
+    _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
   }
 
   void _selectRecipeForDay(String day, Recipe recipe, [MealType? mealType]) {
-    final mealPlanKey = _mealPlanKey(day, mealType);
-
+    final key = _mealPlanKey(day, mealType);
     setState(() {
-      _plannedRecipes[mealPlanKey] = PlannedRecipe(
+      _plannedRecipes[key] = PlannedRecipe(
         recipe: recipe,
         targetServings: recipe.servings,
       );
     });
-
     _saveMealPlan();
   }
 
   void _removeRecipeFromDay(String day, [MealType? mealType]) {
-    final mealPlanKey = _mealPlanKey(day, mealType);
+    final key = _mealPlanKey(day, mealType);
+    setState(() => _plannedRecipes.remove(key));
+    _saveMealPlan();
+  }
 
+  void _updateServings(String day, MealType? mealType, int delta) {
+    final key = _mealPlanKey(day, mealType);
+    final current = _plannedRecipes[key];
+    if (current == null) return;
+    final newServings = (current.targetServings + delta).clamp(1, 20);
     setState(() {
-      _plannedRecipes.remove(mealPlanKey);
+      _plannedRecipes[key] = current.copyWith(targetServings: newServings);
     });
-
     _saveMealPlan();
   }
 
@@ -260,16 +244,28 @@ class _MainShellState extends State<MainShell> {
         _checkedShoppingItemKeys.remove(itemKey);
       }
     });
-
     _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
   }
 
   void _clearCheckedShoppingItems() {
-    setState(() {
-      _checkedShoppingItemKeys.clear();
-    });
-
+    setState(() => _checkedShoppingItemKeys.clear());
     _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
+  }
+
+  void _toggleQuickRecipe(String recipeId) {
+    setState(() {
+      if (_quickRecipeIds.contains(recipeId)) {
+        _quickRecipeIds.remove(recipeId);
+      } else {
+        _quickRecipeIds.add(recipeId);
+      }
+    });
+    _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
+  }
+
+  void _clearQuickRecipes() {
+    setState(() => _quickRecipeIds.clear());
+    _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
   }
 
   String get _title {
@@ -287,9 +283,9 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final plannedRecipeMap = _plannedRecipes.map(
-      (day, plannedRecipe) => MapEntry(day, plannedRecipe.recipe),
-    );
+    final quickRecipes =
+        _recipes.where((r) => _quickRecipeIds.contains(r.id)).toList();
+
     final screens = [
       RecipeListScreen(
         recipes: _recipes,
@@ -303,12 +299,17 @@ class _MainShellState extends State<MainShell> {
         plannedRecipes: _plannedRecipes,
         onRecipeSelected: _selectRecipeForDay,
         onRecipeRemoved: _removeRecipeFromDay,
+        onServingsChanged: _updateServings,
       ),
       ShoppingListScreen(
-        plannedRecipes: plannedRecipeMap,
+        plannedRecipes: _plannedRecipes,
+        quickRecipes: quickRecipes,
+        allRecipes: _recipes,
         checkedItemKeys: _checkedShoppingItemKeys,
         onItemCheckedChanged: _setShoppingItemChecked,
         onClearCheckedItems: _clearCheckedShoppingItems,
+        onToggleQuickRecipe: _toggleQuickRecipe,
+        onClearQuickRecipes: _clearQuickRecipes,
       ),
     ];
 
@@ -320,9 +321,7 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+          setState(() => _selectedIndex = index);
         },
         destinations: const [
           NavigationDestination(

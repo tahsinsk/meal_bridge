@@ -8,8 +8,10 @@ class MealPlanScreen extends StatelessWidget {
   final List<Recipe> recipes;
   final Map<String, PlannedRecipe> plannedRecipes;
   final void Function(String day, Recipe recipe, [MealType? mealType])
-  onRecipeSelected;
+      onRecipeSelected;
   final void Function(String day, [MealType? mealType]) onRecipeRemoved;
+  final void Function(String day, MealType? mealType, int delta)
+      onServingsChanged;
 
   const MealPlanScreen({
     super.key,
@@ -17,6 +19,7 @@ class MealPlanScreen extends StatelessWidget {
     required this.plannedRecipes,
     required this.onRecipeSelected,
     required this.onRecipeRemoved,
+    required this.onServingsChanged,
   });
 
   static const List<String> _days = [
@@ -36,10 +39,7 @@ class MealPlanScreen extends StatelessWidget {
   ];
 
   String _mealPlanKey(String day, [MealType? mealType]) {
-    if (mealType == null) {
-      return day;
-    }
-
+    if (mealType == null) return day;
     return '$day-${mealType.name}';
   }
 
@@ -108,10 +108,8 @@ class MealPlanScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ..._mealTypes.map((mealType) {
-                final plannedRecipe = plannedRecipes[_mealPlanKey(
-                  day,
-                  mealType,
-                )];
+                final plannedRecipe =
+                    plannedRecipes[_mealPlanKey(day, mealType)];
 
                 return Card(
                   child: ListTile(
@@ -137,6 +135,50 @@ class MealPlanScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildServingsControl(
+    BuildContext context,
+    String day,
+    MealType? mealType,
+    PlannedRecipe plannedRecipe,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.remove_circle_outline),
+          iconSize: 20,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          onPressed: plannedRecipe.targetServings > 1
+              ? () => onServingsChanged(day, mealType, -1)
+              : null,
+        ),
+        SizedBox(
+          width: 32,
+          child: Text(
+            '${plannedRecipe.targetServings}',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add_circle_outline),
+          iconSize: 20,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          onPressed: plannedRecipe.targetServings < 20
+              ? () => onServingsChanged(day, mealType, 1)
+              : null,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          'servings',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final plannedDayCount = _days.where((day) {
@@ -144,7 +186,6 @@ class MealPlanScreen extends StatelessWidget {
       final hasMealSlotPlan = _mealTypes.any(
         (mealType) => plannedRecipes.containsKey(_mealPlanKey(day, mealType)),
       );
-
       return hasLegacyPlan || hasMealSlotPlan;
     }).length;
     final plannedMealCount = plannedRecipes.length;
@@ -195,7 +236,8 @@ class MealPlanScreen extends StatelessWidget {
                   children: _mealTypes
                       .map(
                         (mealType) => Chip(
-                          avatar: const Icon(Icons.schedule_outlined, size: 18),
+                          avatar:
+                              const Icon(Icons.schedule_outlined, size: 18),
                           label: Text(mealType.label),
                         ),
                       )
@@ -245,14 +287,15 @@ class MealPlanScreen extends StatelessWidget {
                             children: [
                               Text(
                                 day,
-                                style: Theme.of(context).textTheme.titleMedium,
+                                style:
+                                    Theme.of(context).textTheme.titleMedium,
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 isDayPlanned
                                     ? plannedRecipe == null
-                                          ? '${plannedMealEntries.length} meal(s) planned'
-                                          : 'Planned'
+                                        ? '${plannedMealEntries.length} meal(s) planned'
+                                        : 'Planned'
                                     : 'Not planned',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
@@ -274,9 +317,9 @@ class MealPlanScreen extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     'No meals planned yet. Tap to plan breakfast, lunch, or dinner.',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium,
                                   ),
                                 ),
                               ],
@@ -284,29 +327,48 @@ class MealPlanScreen extends StatelessWidget {
                           else
                             ...plannedMealEntries.map((entry) {
                               final mealType = entry.key;
-                              final plannedMealRecipe = entry.value!.recipe;
+                              final mealPlannedRecipe = entry.value!;
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(
-                                      Icons.schedule_outlined,
-                                      size: 18,
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.schedule_outlined,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            '${mealType.label}: ${mealPlannedRecipe.recipe.name}',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          onPressed: () =>
+                                              onRecipeRemoved(day, mealType),
+                                          icon: const Icon(Icons.close),
+                                          iconSize: 18,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 32,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        '${mealType.label}: ${plannedMealRecipe.name}',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      onPressed: () =>
-                                          onRecipeRemoved(day, mealType),
-                                      icon: const Icon(Icons.close),
+                                    const SizedBox(height: 4),
+                                    _buildServingsControl(
+                                      context,
+                                      day,
+                                      mealType,
+                                      mealPlannedRecipe,
                                     ),
                                   ],
                                 ),
@@ -323,9 +385,9 @@ class MealPlanScreen extends StatelessWidget {
                                 plannedMealEntries.isEmpty
                                     ? 'Plan meal'
                                     : plannedMealEntries.length ==
-                                          _mealTypes.length
-                                    ? 'Edit meals'
-                                    : 'Add another meal',
+                                            _mealTypes.length
+                                        ? 'Edit meals'
+                                        : 'Add another meal',
                               ),
                             ),
                           ),
@@ -337,36 +399,28 @@ class MealPlanScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                       const SizedBox(height: 8),
+                      _buildServingsControl(
+                        context,
+                        day,
+                        null,
+                        plannedRecipe,
+                      ),
+                      const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
                           Chip(
-                            avatar: const Icon(Icons.restaurant_menu, size: 18),
+                            avatar: const Icon(Icons.restaurant_menu,
+                                size: 18),
                             label: Text(recipe.category),
                           ),
                           Chip(
-                            avatar: const Icon(Icons.people_outline, size: 18),
-                            label: Text('${recipe.servings} base servings'),
-                          ),
-                          Chip(
-                            avatar: const Icon(Icons.scale_outlined, size: 18),
-                            label: Text(
-                              '${plannedRecipe.targetServings} target servings',
-                            ),
-                          ),
-                          Chip(
-                            avatar: const Icon(Icons.list_alt, size: 18),
+                            avatar:
+                                const Icon(Icons.list_alt, size: 18),
                             label: Text(
                               '${recipe.ingredients.length} ingredients',
                             ),
-                          ),
-                          Chip(
-                            avatar: const Icon(
-                              Icons.format_list_numbered,
-                              size: 18,
-                            ),
-                            label: Text('${recipe.instructions.length} steps'),
                           ),
                         ],
                       ),

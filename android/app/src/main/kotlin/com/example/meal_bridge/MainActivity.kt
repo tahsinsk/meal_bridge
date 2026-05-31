@@ -1,4 +1,4 @@
-package com.example.meal_bridge
+package com.tahsinsk.mealbridge
 
 import io.flutter.embedding.android.FlutterActivity
 

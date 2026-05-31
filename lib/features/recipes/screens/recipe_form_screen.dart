@@ -106,16 +106,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
   void _requestFocusAfterFrame(FocusNode focusNode) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       await Future<void>.delayed(const Duration(milliseconds: 100));
-
-      if (!mounted) {
-        return;
-      }
-
+      if (!mounted) return;
       FocusScope.of(context).requestFocus(focusNode);
     });
   }
@@ -172,7 +165,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       _ingredients.add(
         Ingredient(name: name, amount: amount, unit: unit, category: category),
       );
-
       _ingredientNameController.clear();
       _ingredientAmountController.clear();
       _ingredientUnitController.text = 'g';
@@ -186,6 +178,154 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     setState(() {
       _ingredients.removeAt(index);
     });
+  }
+
+  void _showEditIngredientDialog(int index) {
+    final ingredient = _ingredients[index];
+
+    final nameCtrl = TextEditingController(text: ingredient.name);
+    final amountCtrl = TextEditingController(
+      text: _formatAmount(ingredient.amount),
+    );
+    String selectedUnit =
+        _units.contains(ingredient.unit) ? ingredient.unit : 'g';
+    String selectedCategory = _marketCategories.contains(ingredient.category)
+        ? ingredient.category
+        : 'Other';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Edit ingredient'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Ingredient name',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: amountCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Amount',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [
+                              TextInputFormatter.withFunction((
+                                oldValue,
+                                newValue,
+                              ) {
+                                final text =
+                                    newValue.text.replaceAll(',', '.');
+                                if (text.isEmpty) return newValue;
+                                final isValid =
+                                    RegExp(r'^\d*\.?\d*$').hasMatch(text);
+                                return isValid ? newValue : oldValue;
+                              }),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: selectedUnit,
+                            decoration: const InputDecoration(
+                              labelText: 'Unit',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: _units
+                                .map(
+                                  (unit) => DropdownMenuItem(
+                                    value: unit,
+                                    child: Text(unit),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setDialogState(() => selectedUnit = value);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      decoration: const InputDecoration(
+                        labelText: 'Market category',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _marketCategories
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat,
+                              child: Text(cat),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() => selectedCategory = value);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final name = nameCtrl.text.trim();
+                    final amount = double.tryParse(
+                      amountCtrl.text.trim().replaceAll(',', '.'),
+                    );
+
+                    if (name.length < 2 || amount == null || amount <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter valid values.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _ingredients[index] = Ingredient(
+                        name: name,
+                        amount: amount,
+                        unit: selectedUnit,
+                        category: selectedCategory,
+                      );
+                    });
+
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _addInstruction() {
@@ -221,12 +361,60 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     });
   }
 
+  void _showEditInstructionDialog(int index) {
+    final instructionCtrl = TextEditingController(text: _instructions[index]);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit step ${index + 1}'),
+          content: TextField(
+            controller: instructionCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Instruction',
+              border: OutlineInputBorder(),
+            ),
+            minLines: 2,
+            maxLines: 5,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final text = instructionCtrl.text.trim();
+
+                if (text.length < 5) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Instruction must be at least 5 characters.'),
+                    ),
+                  );
+                  return;
+                }
+
+                setState(() {
+                  _instructions[index] = text;
+                });
+
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _saveRecipe() {
     final isValid = _formKey.currentState?.validate() ?? false;
 
-    if (!isValid) {
-      return;
-    }
+    if (!isValid) return;
 
     if (_ingredients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -243,8 +431,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     }
 
     final recipe = Recipe(
-      id:
-          widget.initialRecipe?.id ??
+      id: widget.initialRecipe?.id ??
           'recipe-${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
       servings: int.parse(_servingsController.text.trim()),
@@ -272,6 +459,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Basic info
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -297,15 +485,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       ),
                       validator: (value) {
                         final name = value?.trim() ?? '';
-
-                        if (name.isEmpty) {
-                          return 'Recipe name is required.';
-                        }
-
+                        if (name.isEmpty) return 'Recipe name is required.';
                         if (name.length < 2) {
                           return 'Recipe name must be at least 2 characters.';
                         }
-
                         return null;
                       },
                     ),
@@ -318,15 +501,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       ),
                       validator: (value) {
                         final category = value?.trim() ?? '';
-
-                        if (category.isEmpty) {
-                          return 'Category is required.';
-                        }
-
+                        if (category.isEmpty) return 'Category is required.';
                         if (category.length < 2) {
                           return 'Category must be at least 2 characters.';
                         }
-
                         return null;
                       },
                     ),
@@ -351,7 +529,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 24),
+
+            // Ingredients
             Row(
               children: [
                 const Icon(Icons.shopping_basket_outlined),
@@ -383,7 +564,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         ),
                       ),
                       IconButton(
+                        icon: const Icon(Icons.edit_outlined),
+                        tooltip: 'Edit',
+                        onPressed: () => _showEditIngredientDialog(index),
+                      ),
+                      IconButton(
                         icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Delete',
                         onPressed: () => _removeIngredient(index),
                       ),
                     ],
@@ -391,7 +578,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               );
             }),
+
             const SizedBox(height: 8),
+
+            // Add ingredient form
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -435,21 +625,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                 oldValue,
                                 newValue,
                               ) {
-                                final text = newValue.text.replaceAll(',', '.');
-
-                                if (text.isEmpty) {
-                                  return newValue;
-                                }
-
-                                final isValidAmount = RegExp(
-                                  r'^\d*\.?\d*$',
-                                ).hasMatch(text);
-
-                                if (!isValidAmount) {
-                                  return oldValue;
-                                }
-
-                                return newValue;
+                                final text =
+                                    newValue.text.replaceAll(',', '.');
+                                if (text.isEmpty) return newValue;
+                                final isValid =
+                                    RegExp(r'^\d*\.?\d*$').hasMatch(text);
+                                return isValid ? newValue : oldValue;
                               }),
                             ],
                           ),
@@ -457,8 +638,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            initialValue:
-                                _units.contains(_ingredientUnitController.text)
+                            initialValue: _units.contains(
+                                    _ingredientUnitController.text)
                                 ? _ingredientUnitController.text
                                 : 'g',
                             decoration: const InputDecoration(
@@ -474,10 +655,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                 )
                                 .toList(),
                             onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-
+                              if (value == null) return;
                               setState(() {
                                 _ingredientUnitController.text = value;
                               });
@@ -488,10 +666,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      initialValue:
-                          _marketCategories.contains(
-                            _ingredientCategoryController.text,
-                          )
+                      initialValue: _marketCategories.contains(
+                              _ingredientCategoryController.text)
                           ? _ingredientCategoryController.text
                           : 'Other',
                       decoration: const InputDecoration(
@@ -507,10 +683,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                           )
                           .toList(),
                       onChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
-
+                        if (value == null) return;
                         setState(() {
                           _ingredientCategoryController.text = value;
                         });
@@ -529,7 +702,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 24),
+
+            // Instructions
             Row(
               children: [
                 const Icon(Icons.format_list_numbered),
@@ -551,14 +727,28 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 child: ListTile(
                   leading: CircleAvatar(child: Text('${index + 1}')),
                   title: Text(instruction),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _removeInstruction(index),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined),
+                        tooltip: 'Edit',
+                        onPressed: () => _showEditInstructionDialog(index),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Delete',
+                        onPressed: () => _removeInstruction(index),
+                      ),
+                    ],
                   ),
                 ),
               );
             }),
+
             const SizedBox(height: 8),
+
+            // Add instruction form
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -599,7 +789,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 24),
+
+            // Notes
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -630,7 +823,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 24),
+
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -638,9 +833,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 onPressed: _saveRecipe,
                 icon: const Icon(Icons.save_outlined),
                 label: Text(
-                  widget.initialRecipe == null
-                      ? 'Save Recipe'
-                      : 'Update Recipe',
+                  widget.initialRecipe == null ? 'Save Recipe' : 'Update Recipe',
                 ),
               ),
             ),
