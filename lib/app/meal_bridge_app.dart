@@ -21,76 +21,185 @@ class MealBridgeApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2E7D32),
           brightness: Brightness.light,
+        ).copyWith(
+          primary: const Color(0xFF2E7D32),
+          onPrimary: Colors.white,
+          primaryContainer: const Color(0xFFE8F5E9),
+          onPrimaryContainer: const Color(0xFF1B5E20),
+          surface: const Color(0xFFFAFDF7),
+          onSurface: const Color(0xFF1A1C19),
+          surfaceContainerHighest: const Color(0xFFE8F5E9),
         ),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF7FAF5),
+        scaffoldBackgroundColor: const Color(0xFFF4F9F1),
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0,
-          backgroundColor: Color(0xFFF7FAF5),
-          foregroundColor: Color(0xFF1B1B1B),
+          backgroundColor: Color(0xFF2E7D32),
+          foregroundColor: Colors.white,
+          iconTheme: IconThemeData(color: Colors.white),
+          actionsIconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
         ),
         cardTheme: CardThemeData(
-          elevation: 1,
-          shadowColor: Colors.black.withValues(alpha: 0.08),
-          surfaceTintColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
           margin: EdgeInsets.zero,
           color: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+              width: 1,
+            ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Color(0xFF2E7D32),
+              width: 2,
+            ),
+          ),
+          labelStyle: const TextStyle(color: Color(0xFF388E3C)),
+          prefixIconColor: const Color(0xFF388E3C),
+          suffixIconColor: const Color(0xFF388E3C),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            minimumSize: const Size(0, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            backgroundColor: const Color(0xFF2E7D32),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
             ),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF2E7D32),
             minimumSize: const Size(0, 40),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size(0, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            foregroundColor: const Color(0xFF2E7D32),
+            side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
         chipTheme: ChipThemeData(
-          backgroundColor: const Color(0xFFEAF4E8),
-          labelStyle: const TextStyle(color: Color(0xFF1F3D1F)),
+          backgroundColor: const Color(0xFFE8F5E9),
+          labelStyle: const TextStyle(
+            color: Color(0xFF1B5E20),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
           ),
           side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          elevation: 2,
+          elevation: 3,
           backgroundColor: Color(0xFF2E7D32),
           foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
-          indicatorColor: const Color(0xFFDDEEDB),
-          labelTextStyle: WidgetStateProperty.all(
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          indicatorColor: const Color(0xFFE8F5E9),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: Color(0xFF2E7D32));
+            }
+            return const IconThemeData(color: Color(0xFF888888));
+          }),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2E7D32),
+              );
+            }
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF888888),
+            );
+          }),
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.black12,
+          elevation: 8,
+        ),
+        dividerTheme: DividerThemeData(
+          color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+          thickness: 1,
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: const Color(0xFF1B5E20),
+          contentTextStyle: const TextStyle(color: Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
+          behavior: SnackBarBehavior.floating,
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Color(0xFF2E7D32),
+          linearTrackColor: Color(0xFFE8F5E9),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const Color(0xFF2E7D32);
+            }
+            return Colors.transparent;
+          }),
+          checkColor: WidgetStateProperty.all(Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+          side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
         ),
       ),
       home: const MainShell(),
