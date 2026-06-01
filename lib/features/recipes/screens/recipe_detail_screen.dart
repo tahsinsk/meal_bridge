@@ -192,7 +192,7 @@ class RecipeDetailScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           Text(
-                            ingredient.category,
+                            ingredient.resolvedCategory,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],

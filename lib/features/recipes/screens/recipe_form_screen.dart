@@ -25,7 +25,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   final _ingredientNameController = TextEditingController();
   final _ingredientAmountController = TextEditingController();
   final _ingredientUnitController = TextEditingController(text: 'g');
-  final _ingredientCategoryController = TextEditingController(text: 'Other');
   final _instructionController = TextEditingController();
 
   final _ingredientNameFocusNode = FocusNode();
@@ -36,7 +35,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
   final List<String> _marketCategories = const [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
-    'Pantry', 'Frozen', 'Drinks', 'Snacks', 'Other',
+    'Pantry', 'Frozen', 'Drinks', 'Snacks', 'Spices', 'Other',
   ];
 
   final List<String> _units = const [
@@ -68,7 +67,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _ingredientNameController.dispose();
     _ingredientAmountController.dispose();
     _ingredientUnitController.dispose();
-    _ingredientCategoryController.dispose();
     _instructionController.dispose();
     _ingredientNameFocusNode.dispose();
     _instructionFocusNode.dispose();
@@ -93,10 +91,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     final name = _ingredientNameController.text.trim();
     final amountText = _ingredientAmountController.text.trim();
     final unit = _ingredientUnitController.text.trim();
-    final category = _ingredientCategoryController.text.trim();
     final amount = double.tryParse(amountText.replaceAll(',', '.'));
 
-    if (name.isEmpty || amount == null || unit.isEmpty || category.isEmpty) {
+    if (name.isEmpty || amount == null || unit.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid ingredient.')),
       );
@@ -114,23 +111,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       );
       return;
     }
-    final alreadyExists = _ingredients.any(
-      (i) => i.name.trim().toLowerCase() == name.toLowerCase() &&
-          i.unit.trim().toLowerCase() == unit.toLowerCase() &&
-          i.category.trim().toLowerCase() == category.toLowerCase(),
-    );
-    if (alreadyExists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This ingredient already exists in the recipe.')),
-      );
-      return;
-    }
+
     setState(() {
-      _ingredients.add(Ingredient(name: name, amount: amount, unit: unit, category: category));
+      _ingredients.add(Ingredient(name: name, amount: amount, unit: unit));
       _ingredientNameController.clear();
       _ingredientAmountController.clear();
       _ingredientUnitController.text = 'g';
-      _ingredientCategoryController.text = 'Other';
     });
     _requestFocusAfterFrame(_ingredientNameFocusNode);
   }
@@ -139,12 +125,70 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     setState(() => _ingredients.removeAt(index));
   }
 
+  void _showCategoryPicker(int index) {
+    final ingredient = _ingredients[index];
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('Category for "${ingredient.name}"',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const Spacer(),
+                    if (!ingredient.isCategoryAuto)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _ingredients[index] = ingredient.copyWith(
+                              clearCategoryOverride: true,
+                            );
+                          });
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Reset to auto'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _marketCategories.map((cat) {
+                    final isSelected = ingredient.resolvedCategory == cat;
+                    return FilterChip(
+                      label: Text(cat),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        setState(() {
+                          _ingredients[index] = ingredient.copyWith(
+                            categoryOverride: cat,
+                          );
+                        });
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showEditIngredientDialog(int index) {
     final ingredient = _ingredients[index];
     final nameCtrl = TextEditingController(text: ingredient.name);
     final amountCtrl = TextEditingController(text: _formatAmount(ingredient.amount));
     String selectedUnit = _units.contains(ingredient.unit) ? ingredient.unit : 'g';
-    String selectedCategory = _marketCategories.contains(ingredient.category) ? ingredient.category : 'Other';
 
     showDialog(
       context: context,
@@ -159,7 +203,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   children: [
                     TextField(
                       controller: nameCtrl,
-                      decoration: const InputDecoration(labelText: 'Ingredient name', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Ingredient name',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -167,7 +214,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         Expanded(
                           child: TextField(
                             controller: amountCtrl,
-                            decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder()),
+                            decoration: const InputDecoration(
+                              labelText: 'Amount',
+                              border: OutlineInputBorder(),
+                            ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
                         ),
@@ -175,19 +225,15 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         Expanded(
                           child: DropdownButtonFormField<String>(
                             value: selectedUnit,
-                            decoration: const InputDecoration(labelText: 'Unit', border: OutlineInputBorder()),
+                            decoration: const InputDecoration(
+                              labelText: 'Unit',
+                              border: OutlineInputBorder(),
+                            ),
                             items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
                             onChanged: (v) { if (v != null) setDialogState(() => selectedUnit = v); },
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: selectedCategory,
-                      decoration: const InputDecoration(labelText: 'Market category', border: OutlineInputBorder()),
-                      items: _marketCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (v) { if (v != null) setDialogState(() => selectedCategory = v); },
                     ),
                   ],
                 ),
@@ -199,11 +245,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     final name = nameCtrl.text.trim();
                     final amount = double.tryParse(amountCtrl.text.trim().replaceAll(',', '.'));
                     if (name.length < 2 || amount == null || amount <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter valid values.')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter valid values.')),
+                      );
                       return;
                     }
                     setState(() {
-                      _ingredients[index] = Ingredient(name: name, amount: amount, unit: selectedUnit, category: selectedCategory);
+                      _ingredients[index] = Ingredient(
+                        name: name,
+                        amount: amount,
+                        unit: selectedUnit,
+                        categoryOverride: ingredient.categoryOverride,
+                      );
                     });
                     Navigator.of(context).pop();
                   },
@@ -220,11 +273,15 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   void _addInstruction() {
     final instruction = _instructionController.text.trim();
     if (instruction.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter an instruction step.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter an instruction step.')),
+      );
       return;
     }
     if (instruction.length < 5) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Instruction step must be at least 5 characters.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Instruction step must be at least 5 characters.')),
+      );
       return;
     }
     setState(() {
@@ -247,7 +304,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
           title: Text('Edit step ${index + 1}'),
           content: TextField(
             controller: instructionCtrl,
-            decoration: const InputDecoration(labelText: 'Instruction', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Instruction',
+              border: OutlineInputBorder(),
+            ),
             minLines: 2,
             maxLines: 5,
             autofocus: true,
@@ -258,7 +318,9 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               onPressed: () {
                 final text = instructionCtrl.text.trim();
                 if (text.length < 5) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Instruction must be at least 5 characters.')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Instruction must be at least 5 characters.')),
+                  );
                   return;
                 }
                 setState(() => _instructions[index] = text);
@@ -276,11 +338,15 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
     if (_ingredients.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add at least one ingredient.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one ingredient.')),
+      );
       return;
     }
     if (_instructions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please add at least one instruction.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one instruction.')),
+      );
       return;
     }
     final recipe = Recipe(
@@ -376,27 +442,101 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               Chip(label: Text('${_ingredients.length} item(s)')),
             ]),
             const SizedBox(height: 8),
+
             ..._ingredients.asMap().entries.map((entry) {
               final index = entry.key;
               final ingredient = entry.value;
+              final category = ingredient.resolvedCategory;
+              final isAuto = ingredient.isCategoryAuto;
+
               return Card(
-                child: ListTile(
-                  leading: const Icon(Icons.shopping_basket_outlined),
-                  title: Text(ingredient.name),
-                  subtitle: Text(ingredient.category),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
                     children: [
-                      Chip(label: Text('${_formatAmount(ingredient.amount)} ${ingredient.unit}')),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined),
-                        tooltip: 'Edit',
-                        onPressed: () => _showEditIngredientDialog(index),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ingredient.name,
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE8F5E9),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${_formatAmount(ingredient.amount)} ${ingredient.unit}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                // Kategori chip — tıklanabilir
+                                GestureDetector(
+                                  onTap: () => _showCategoryPicker(index),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: isAuto
+                                          ? const Color(0xFFF4F9F1)
+                                          : const Color(0xFFE3F2FD),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isAuto
+                                            ? const Color(0xFF2E7D32).withValues(alpha: 0.2)
+                                            : const Color(0xFF1565C0).withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          category,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: isAuto
+                                                ? const Color(0xFF558B2F)
+                                                : const Color(0xFF1565C0),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Icon(
+                                          isAuto ? Icons.auto_awesome_outlined : Icons.edit_outlined,
+                                          size: 10,
+                                          color: isAuto
+                                              ? const Color(0xFF558B2F)
+                                              : const Color(0xFF1565C0),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Delete',
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        onPressed: () => _showEditIngredientDialog(index),
+                        tooltip: 'Edit',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18),
                         onPressed: () => _removeIngredient(index),
+                        tooltip: 'Delete',
                       ),
                     ],
                   ),
@@ -406,7 +546,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
             const SizedBox(height: 8),
 
-            // Add ingredient
+            // Add ingredient — sadeleştirilmiş
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -422,7 +562,11 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     TextField(
                       controller: _ingredientNameController,
                       focusNode: _ingredientNameFocusNode,
-                      decoration: const InputDecoration(labelText: 'Ingredient name', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Ingredient name',
+                        border: OutlineInputBorder(),
+                        hintText: 'e.g. Tomato, Chicken, Pasta',
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -430,27 +574,30 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         Expanded(
                           child: TextField(
                             controller: _ingredientAmountController,
-                            decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder()),
+                            decoration: const InputDecoration(
+                              labelText: 'Amount',
+                              border: OutlineInputBorder(),
+                            ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            initialValue: _units.contains(_ingredientUnitController.text) ? _ingredientUnitController.text : 'g',
-                            decoration: const InputDecoration(labelText: 'Unit', border: OutlineInputBorder()),
+                            initialValue: _units.contains(_ingredientUnitController.text)
+                                ? _ingredientUnitController.text
+                                : 'g',
+                            decoration: const InputDecoration(
+                              labelText: 'Unit',
+                              border: OutlineInputBorder(),
+                            ),
                             items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                            onChanged: (v) { if (v != null) setState(() => _ingredientUnitController.text = v); },
+                            onChanged: (v) {
+                              if (v != null) setState(() => _ingredientUnitController.text = v);
+                            },
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: _marketCategories.contains(_ingredientCategoryController.text) ? _ingredientCategoryController.text : 'Other',
-                      decoration: const InputDecoration(labelText: 'Market category', border: OutlineInputBorder()),
-                      items: _marketCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (v) { if (v != null) setState(() => _ingredientCategoryController.text = v); },
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -481,20 +628,32 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               final index = entry.key;
               final instruction = entry.value;
               return Card(
+                margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  leading: CircleAvatar(child: Text('${index + 1}')),
+                  leading: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${index + 1}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
                   title: Text(instruction),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.edit_outlined),
-                        tooltip: 'Edit',
+                        icon: const Icon(Icons.edit_outlined, size: 18),
                         onPressed: () => _showEditInstructionDialog(index),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Delete',
+                        icon: const Icon(Icons.delete_outline, size: 18),
                         onPressed: () => _removeInstruction(index),
                       ),
                     ],
@@ -521,7 +680,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     TextField(
                       controller: _instructionController,
                       focusNode: _instructionFocusNode,
-                      decoration: const InputDecoration(labelText: 'Instruction', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Instruction',
+                        border: OutlineInputBorder(),
+                      ),
                       minLines: 2,
                       maxLines: 4,
                     ),
@@ -567,7 +729,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Enter total calories for the whole recipe. Per serving will be calculated automatically.',
+                      'Per serving will be calculated automatically.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -592,7 +754,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: _notesController,
-                      decoration: const InputDecoration(labelText: 'Optional notes', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Optional notes',
+                        border: OutlineInputBorder(),
+                      ),
                       minLines: 2,
                       maxLines: 4,
                     ),
