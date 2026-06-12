@@ -11,6 +11,8 @@ class RecipeListScreen extends StatefulWidget {
   final ValueChanged<Recipe> onRecipeUpdated;
   final ValueChanged<Recipe> onRecipeDeleted;
   final ValueChanged<Recipe> onFavoriteToggled;
+  final Set<String> quickRecipeIds;
+  final void Function(String recipeId) onToggleQuickRecipe;
 
   const RecipeListScreen({
     super.key,
@@ -20,6 +22,8 @@ class RecipeListScreen extends StatefulWidget {
     required this.onRecipeUpdated,
     required this.onRecipeDeleted,
     required this.onFavoriteToggled,
+    required this.quickRecipeIds,
+    required this.onToggleQuickRecipe,
   });
 
   @override
@@ -471,7 +475,11 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => RecipeDetailScreen(recipe: recipe),
+                    builder: (context) => RecipeDetailScreen(
+                      recipe: recipe,
+                      isInQuickList: widget.quickRecipeIds.contains(recipe.id),
+                      onToggleQuickList: () => widget.onToggleQuickRecipe(recipe.id),
+                    ),
                   ),
                 );
               },

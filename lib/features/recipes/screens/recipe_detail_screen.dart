@@ -2,10 +2,32 @@ import 'package:flutter/material.dart';
 
 import '../../../models/recipe.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
+  final bool isInQuickList;
+  final VoidCallback? onToggleQuickList;
 
-  const RecipeDetailScreen({super.key, required this.recipe});
+  const RecipeDetailScreen({
+    super.key,
+    required this.recipe,
+    this.isInQuickList = false,
+    this.onToggleQuickList,
+  });
+
+  @override
+  State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
+}
+
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+  late bool _isInQuickList;
+
+  @override
+  void initState() {
+    super.initState();
+    _isInQuickList = widget.isInQuickList;
+  }
+
+  Recipe get recipe => widget.recipe;
 
   String _formatAmount(double amount) {
     if (amount == amount.roundToDouble()) {
@@ -50,6 +72,20 @@ class RecipeDetailScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.only(right: 16),
               child: Icon(Icons.star, color: Color(0xFFF9A825)),
+            ),
+          if (widget.onToggleQuickList != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: Icon(
+                  _isInQuickList ? Icons.shopping_cart : Icons.shopping_cart_outlined,
+                ),
+                tooltip: _isInQuickList ? 'Remove from Quick List' : 'Add to Quick List',
+                onPressed: () {
+                  setState(() => _isInQuickList = !_isInQuickList);
+                  widget.onToggleQuickList!();
+                },
+              ),
             ),
         ],
       ),
@@ -153,6 +189,30 @@ class RecipeDetailScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          if (widget.onToggleQuickList != null) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: _isInQuickList
+                  ? OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() => _isInQuickList = false);
+                        widget.onToggleQuickList!();
+                      },
+                      icon: const Icon(Icons.shopping_cart),
+                      label: const Text('Remove from Shopping List'),
+                    )
+                  : FilledButton.icon(
+                      onPressed: () {
+                        setState(() => _isInQuickList = true);
+                        widget.onToggleQuickList!();
+                      },
+                      icon: const Icon(Icons.add_shopping_cart_outlined),
+                      label: const Text('Add to Shopping List'),
+                    ),
+            ),
+          ],
 
           const SizedBox(height: 20),
 

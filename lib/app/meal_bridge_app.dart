@@ -418,6 +418,8 @@ String get _title {
         onRecipeUpdated: _updateRecipe,
         onRecipeDeleted: _deleteRecipe,
         onFavoriteToggled: _toggleFavorite,
+        quickRecipeIds: _quickRecipeIds,
+        onToggleQuickRecipe: _toggleQuickRecipe,
       ),
       MealPlanScreen(
         recipes: _recipes,
