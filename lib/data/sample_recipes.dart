@@ -1,4 +1,7 @@
-import '../models/ingredient.dart';
+import '../models/recipe.dart';
+
+const List<Recipe> sampleRecipes = [];
+/*import '../models/ingredient.dart';
 import '../models/recipe.dart';
 
 const sampleRecipes = [
@@ -114,3 +117,4 @@ const sampleRecipes = [
     notes: 'Nice balanced meal.',
   ),
 ];
+*/

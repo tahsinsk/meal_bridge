@@ -8,6 +8,8 @@ import '../models/recipe.dart';
 import '../models/meal_type.dart';
 import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
+import '../features/settings/screens/settings_screen.dart';
+
 
 class MealBridgeApp extends StatelessWidget {
   const MealBridgeApp({super.key});
@@ -21,76 +23,185 @@ class MealBridgeApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF2E7D32),
           brightness: Brightness.light,
+        ).copyWith(
+          primary: const Color(0xFF2E7D32),
+          onPrimary: Colors.white,
+          primaryContainer: const Color(0xFFE8F5E9),
+          onPrimaryContainer: const Color(0xFF1B5E20),
+          surface: const Color(0xFFFAFDF7),
+          onSurface: const Color(0xFF1A1C19),
+          surfaceContainerHighest: const Color(0xFFE8F5E9),
         ),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF7FAF5),
+        scaffoldBackgroundColor: const Color(0xFFF4F9F1),
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0,
-          backgroundColor: Color(0xFFF7FAF5),
-          foregroundColor: Color(0xFF1B1B1B),
+          backgroundColor: Color(0xFF2E7D32),
+          foregroundColor: Colors.white,
+          iconTheme: IconThemeData(color: Colors.white),
+          actionsIconTheme: IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
         ),
         cardTheme: CardThemeData(
-          elevation: 1,
-          shadowColor: Colors.black.withValues(alpha: 0.08),
-          surfaceTintColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
           margin: EdgeInsets.zero,
           color: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+              width: 1,
+            ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Color(0xFF2E7D32),
+              width: 2,
+            ),
+          ),
+          labelStyle: const TextStyle(color: Color(0xFF388E3C)),
+          prefixIconColor: const Color(0xFF388E3C),
+          suffixIconColor: const Color(0xFF388E3C),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            minimumSize: const Size(0, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            backgroundColor: const Color(0xFF2E7D32),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
             ),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF2E7D32),
             minimumSize: const Size(0, 40),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            minimumSize: const Size(0, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            foregroundColor: const Color(0xFF2E7D32),
+            side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+            minimumSize: const Size(0, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
         chipTheme: ChipThemeData(
-          backgroundColor: const Color(0xFFEAF4E8),
-          labelStyle: const TextStyle(color: Color(0xFF1F3D1F)),
+          backgroundColor: const Color(0xFFE8F5E9),
+          labelStyle: const TextStyle(
+            color: Color(0xFF1B5E20),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
           ),
           side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          elevation: 2,
+          elevation: 3,
           backgroundColor: Color(0xFF2E7D32),
           foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
-          indicatorColor: const Color(0xFFDDEEDB),
-          labelTextStyle: WidgetStateProperty.all(
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          indicatorColor: const Color(0xFFE8F5E9),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: Color(0xFF2E7D32));
+            }
+            return const IconThemeData(color: Color(0xFF888888));
+          }),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2E7D32),
+              );
+            }
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF888888),
+            );
+          }),
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.black12,
+          elevation: 8,
+        ),
+        dividerTheme: DividerThemeData(
+          color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+          thickness: 1,
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: const Color(0xFF1B5E20),
+          contentTextStyle: const TextStyle(color: Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
+          behavior: SnackBarBehavior.floating,
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Color(0xFF2E7D32),
+          linearTrackColor: Color(0xFFE8F5E9),
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const Color(0xFF2E7D32);
+            }
+            return Colors.transparent;
+          }),
+          checkColor: WidgetStateProperty.all(Colors.white),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+          side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
         ),
       ),
       home: const MainShell(),
@@ -115,6 +226,7 @@ class _MainShellState extends State<MainShell> {
   Map<String, PlannedRecipe> _plannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
   Set<String> _quickRecipeIds = {};
+  List<String> _customQuickItems = [];
 
   @override
   void initState() {
@@ -129,6 +241,8 @@ class _MainShellState extends State<MainShell> {
         await _recipeStorageService.loadCheckedShoppingItems();
     final savedQuickRecipeIds =
         await _recipeStorageService.loadQuickRecipeIds();
+    final savedCustomQuickItems =
+        await _recipeStorageService.loadCustomQuickItems();
 
     final allRecipes = [...sampleRecipes, ...savedRecipes];
     final plannedRecipes = <String, PlannedRecipe>{};
@@ -152,6 +266,7 @@ class _MainShellState extends State<MainShell> {
       _plannedRecipes = plannedRecipes;
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
       _quickRecipeIds = savedQuickRecipeIds;
+      _customQuickItems = savedCustomQuickItems;
       _isLoadingData = false;
     });
   }
@@ -277,7 +392,18 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
   }
 
-  String get _title {
+  void _addCustomQuickItem(String name) {
+    if (_customQuickItems.contains(name)) return;
+    setState(() => _customQuickItems = [..._customQuickItems, name]);
+    _recipeStorageService.saveCustomQuickItems(_customQuickItems);
+  }
+
+  void _removeCustomQuickItem(String name) {
+    setState(() => _customQuickItems = _customQuickItems.where((i) => i != name).toList());
+    _recipeStorageService.saveCustomQuickItems(_customQuickItems);
+  }
+
+String get _title {
     switch (_selectedIndex) {
       case 0:
         return 'Recipes';
@@ -285,6 +411,8 @@ class _MainShellState extends State<MainShell> {
         return 'Weekly Plan';
       case 2:
         return 'Shopping List';
+      case 3:
+        return 'Settings';
       default:
         return 'MealBridge';
     }
@@ -295,6 +423,8 @@ class _MainShellState extends State<MainShell> {
     final quickRecipes =
         _recipes.where((r) => _quickRecipeIds.contains(r.id)).toList();
 
+
+
     final screens = [
       RecipeListScreen(
         recipes: _recipes,
@@ -302,7 +432,9 @@ class _MainShellState extends State<MainShell> {
         onRecipeAdded: _addRecipe,
         onRecipeUpdated: _updateRecipe,
         onRecipeDeleted: _deleteRecipe,
-        onFavoriteToggled: _toggleFavorite,   
+        onFavoriteToggled: _toggleFavorite,
+        quickRecipeIds: _quickRecipeIds,
+        onToggleQuickRecipe: _toggleQuickRecipe,
       ),
       MealPlanScreen(
         recipes: _recipes,
@@ -320,6 +452,12 @@ class _MainShellState extends State<MainShell> {
         onClearCheckedItems: _clearCheckedShoppingItems,
         onToggleQuickRecipe: _toggleQuickRecipe,
         onClearQuickRecipes: _clearQuickRecipes,
+        customQuickItems: _customQuickItems,
+        onAddCustomItem: _addCustomQuickItem,
+        onRemoveCustomItem: _removeCustomQuickItem,
+      ),
+      SettingsScreen(
+        onImportSuccess: () => _loadSavedData(),
       ),
     ];
 
@@ -333,7 +471,7 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
-        destinations: const [
+     destinations: const [
           NavigationDestination(
             icon: Icon(Icons.restaurant_menu_outlined),
             selectedIcon: Icon(Icons.restaurant_menu),
@@ -348,6 +486,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.shopping_cart_outlined),
             selectedIcon: Icon(Icons.shopping_cart),
             label: 'Shopping',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),

@@ -61,16 +61,16 @@ List<ShoppingListItem> generateShoppingListFromRecipes(
           name: _cleanDisplayText(ingredient.name),
           amount: baseAmount,
           unit: baseUnit,
-          category: _cleanDisplayText(ingredient.category).isEmpty
+          category: _cleanDisplayText(ingredient.resolvedCategory).isEmpty
               ? 'Other'
-              : _cleanDisplayText(ingredient.category),
+              : _cleanDisplayText(ingredient.resolvedCategory),
         );
       } else {
         mergedItems[key] = existingItem.copyWith(
           amount: existingItem.amount + baseAmount,
           category: _resolveMergedCategory(
             currentCategory: existingItem.category,
-            newCategory: ingredient.category,
+            newCategory: ingredient.resolvedCategory,
           ),
         );
       }
