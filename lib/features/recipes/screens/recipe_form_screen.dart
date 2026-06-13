@@ -18,7 +18,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
   late final TextEditingController _nameController;
   late final TextEditingController _categoryController;
-  late final TextEditingController _servingsController;
+  late int _servings;
   late final TextEditingController _notesController;
   late final TextEditingController _caloriesController;
 
@@ -48,7 +48,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     final recipe = widget.initialRecipe;
     _nameController = TextEditingController(text: recipe?.name ?? '');
     _categoryController = TextEditingController(text: recipe?.category ?? 'Dinner');
-    _servingsController = TextEditingController(text: recipe?.servings.toString() ?? '2');
+    _servings = recipe?.servings ?? 2;
     _notesController = TextEditingController(text: recipe?.notes ?? '');
     _caloriesController = TextEditingController(text: recipe?.calories?.toString() ?? '');
     if (recipe != null) {
@@ -61,7 +61,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   void dispose() {
     _nameController.dispose();
     _categoryController.dispose();
-    _servingsController.dispose();
     _notesController.dispose();
     _caloriesController.dispose();
     _ingredientNameController.dispose();
@@ -352,7 +351,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     final recipe = Recipe(
       id: widget.initialRecipe?.id ?? 'recipe-${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
-      servings: int.parse(_servingsController.text.trim()),
+      servings: _servings,
       category: _categoryController.text.trim(),
       ingredients: List.unmodifiable(_ingredients),
       instructions: List.unmodifiable(_instructions),
@@ -415,16 +414,57 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       },
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _servingsController,
-                      decoration: const InputDecoration(labelText: 'Servings', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (value) {
-                        final servings = int.tryParse(value ?? '');
-                        if (servings == null || servings <= 0) return 'Enter a valid serving amount.';
-                        return null;
-                      },
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Text('Servings', style: TextStyle(fontSize: 16, color: const Color(0xFF388E3C))),
+                          const Spacer(),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4F9F1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: _servings > 1 ? () => setState(() => _servings--) : null,
+                                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    child: Icon(Icons.remove, size: 16,
+                                      color: _servings > 1 ? const Color(0xFF2E7D32) : Colors.grey[400]),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Text('$_servings',
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF2E7D32))),
+                                ),
+                                InkWell(
+                                  onTap: _servings < 20 ? () => setState(() => _servings++) : null,
+                                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(20)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    child: Icon(Icons.add, size: 16,
+                                      color: _servings < 20 ? const Color(0xFF2E7D32) : Colors.grey[400]),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: Text('servings', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

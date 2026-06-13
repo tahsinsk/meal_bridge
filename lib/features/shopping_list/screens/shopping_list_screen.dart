@@ -277,85 +277,81 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  void _showRecipePicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return DraggableScrollableSheet(
-              initialChildSize: 0.6,
-              minChildSize: 0.4,
-              maxChildSize: 0.9,
-              expand: false,
-              builder: (context, scrollController) {
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.shopping_basket_outlined),
-                          const SizedBox(width: 8),
-                          Text('Select recipes', style: Theme.of(context).textTheme.titleLarge),
-                          const Spacer(),
-                          if (widget.quickRecipes.isNotEmpty)
-                            TextButton(
-                              onPressed: () {
-                                widget.onClearQuickRecipes();
-                                setModalState(() {});
-                              },
-                              child: const Text('Clear all'),
-                            ),
-                        ],
-                      ),
+  Widget _buildInlineRecipeSelector() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.restaurant_menu_outlined, size: 16, color: Color(0xFF2E7D32)),
+                const SizedBox(width: 6),
+                const Text('Recipes', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1C19))),
+                const Spacer(),
+                if (widget.quickRecipes.isNotEmpty)
+                  TextButton(
+                    onPressed: widget.onClearQuickRecipes,
+                    style: TextButton.styleFrom(
+                      minimumSize: Size.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: widget.allRecipes.isEmpty
-                          ? const Center(child: Text('No recipes yet. Add some first!'))
-                          : ListView.builder(
-                              controller: scrollController,
-                              padding: const EdgeInsets.all(8),
-                              itemCount: widget.allRecipes.length,
-                              itemBuilder: (context, index) {
-                                final recipe = widget.allRecipes[index];
-                                final isSelected = widget.quickRecipes.any((r) => r.id == recipe.id);
-                                return Card(
-                                  child: CheckboxListTile(
-                                    value: isSelected,
-                                    onChanged: (_) {
-                                      widget.onToggleQuickRecipe(recipe.id);
-                                      setModalState(() {});
-                                    },
-                                    title: Text(recipe.name),
-                                    subtitle: Text('${recipe.category} • ${recipe.servings} servings'),
-                                    secondary: const Icon(Icons.restaurant_menu_outlined),
-                                  ),
-                                );
-                              },
+                    child: const Text('Clear all', style: TextStyle(fontSize: 12)),
+                  ),
+              ],
+            ),
+            if (widget.allRecipes.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text('No recipes yet. Add some in the Recipes tab.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+              )
+            else
+              ...widget.allRecipes.map((recipe) {
+                final isSelected = widget.quickRecipes.any((r) => r.id == recipe.id);
+                return InkWell(
+                  onTap: () => widget.onToggleQuickRecipe(recipe.id),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    child: Row(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFF2E7D32) : Theme.of(context).dividerColor,
+                              width: 2,
                             ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(widget.quickRecipes.isEmpty
-                              ? 'Done'
-                              : 'Done (${widget.quickRecipes.length} selected)'),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(recipe.name,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: isSelected ? const Color(0xFF1A1C19) : Colors.grey[700],
+                            )),
+                        ),
+                        Text('${recipe.category} · ${recipe.servings} srv',
+                          style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                      ],
                     ),
-                  ],
+                  ),
                 );
-              },
-            );
-          },
-        );
-      },
+              }),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
     );
   }
 
@@ -745,7 +741,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
         const SizedBox(height: 8),
 
-        // Custom item input (quick mode only)
+        // Quick List: custom item input + inline recipe selector
         if (_isQuickMode) ...[
           Card(
             child: Padding(
@@ -782,51 +778,37 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
           ),
           const SizedBox(height: 8),
+          _buildInlineRecipeSelector(),
+          const SizedBox(height: 8),
         ],
 
-        // Empty state
+        // Empty state (weekly plan mode only)
         if (!hasContent) ...[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(20),
+          if (!_isQuickMode)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.shopping_basket_outlined, size: 40, color: Color(0xFF2E7D32)),
                     ),
-                    child: Icon(
-                      _isQuickMode ? Icons.bolt_outlined : Icons.shopping_basket_outlined,
-                      size: 40,
-                      color: const Color(0xFF2E7D32),
+                    const SizedBox(height: 20),
+                    Text('No shopping list yet', style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Plan recipes for the week and your shopping list will appear here automatically.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _isQuickMode ? 'No recipes selected' : 'No shopping list yet',
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isQuickMode
-                        ? 'Pick recipes or type a custom item above.'
-                        : 'Plan recipes for the week and your shopping list will appear here automatically.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 20),
-                  if (_isQuickMode)
-                    FilledButton.icon(
-                      onPressed: () => _showRecipePicker(context),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Select recipes'),
-                    )
-                  else
+                    const SizedBox(height: 20),
                     const Wrap(
                       alignment: WrapAlignment.center,
                       spacing: 8,
@@ -837,10 +819,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         ),
                       ],
                     ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
         ] else ...[
           // Progress card
           Card(
@@ -899,14 +881,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  if (_isQuickMode) ...[
-                    IconButton(
-                      onPressed: () => _showRecipePicker(context),
-                      icon: const Icon(Icons.edit_outlined),
-                      tooltip: 'Edit recipes',
-                    ),
-                    const VerticalDivider(width: 1),
-                  ],
                   Expanded(
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
