@@ -224,7 +224,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: selectedUnit,
+                            initialValue: selectedUnit,
                             decoration: const InputDecoration(
                               labelText: 'Unit',
                               border: OutlineInputBorder(),
@@ -398,7 +398,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: ['Breakfast', 'Lunch', 'Dinner', 'Other'].contains(_categoryController.text)
+                      initialValue: ['Breakfast', 'Lunch', 'Dinner', 'Other'].contains(_categoryController.text)
                           ? _categoryController.text
                           : 'Other',
                       decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),

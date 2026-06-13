@@ -73,7 +73,7 @@ String guessMarketCategory(String ingredientName) {
     'tomaat', 'komkommer', 'sla', 'wortel', 'ui', 'knoflook',
     'paprika', 'broccoli', 'spinazie', 'courgette', 'aubergine',
     'champignon', 'kool', 'bloemkool', 'erwt', 'boon', 'aardappel',
-  ].any(name.contains)) return 'Vegetables';
+  ].any(name.contains)) { return 'Vegetables'; }
 
   // Fruit — TR + EN + NL
   if ([
@@ -88,7 +88,7 @@ String guessMarketCategory(String ingredientName) {
     // NL
     'appel', 'banaan', 'sinaasappel', 'citroen', 'druif', 'aardbei',
     'bosbes', 'framboos', 'perzik', 'peer', 'watermeloen', 'kers',
-  ].any(name.contains)) return 'Fruit';
+  ].any(name.contains)) { return 'Fruit'; }
 
   // Meat — TR + EN + NL
   if ([
@@ -102,7 +102,7 @@ String guessMarketCategory(String ingredientName) {
     // NL
     'kip', 'rundvlees', 'varkensvlees', 'lam', 'kalkoen', 'tonijn',
     'zalm', 'garnaal', 'vis', 'vlees', 'gehakt', 'worst', 'ei', 'eieren',
-  ].any(name.contains)) return 'Meat';
+  ].any(name.contains)) { return 'Meat'; }
 
   // Dairy — TR + EN + NL
   if ([
@@ -115,7 +115,7 @@ String guessMarketCategory(String ingredientName) {
     // NL
     'melk', 'yoghurt', 'kaas', 'boter', 'room', 'zure room',
     'mozzarella', 'roomkaas',
-  ].any(name.contains)) return 'Dairy';
+  ].any(name.contains)) { return 'Dairy'; }
 
   // Bakery — TR + EN + NL
   if ([
@@ -126,7 +126,7 @@ String guessMarketCategory(String ingredientName) {
     'ekmek', 'tost', 'simit', 'pide', 'lavaş', 'bazlama',
     // NL
     'brood', 'toast', 'bagel', 'croissant', 'broodje', 'pita',
-  ].any(name.contains)) return 'Bakery';
+  ].any(name.contains)) { return 'Bakery'; }
 
   // Spices — TR + EN + NL
   if ([
@@ -141,7 +141,7 @@ String guessMarketCategory(String ingredientName) {
     // NL
     'zout', 'peper', 'paprika', 'kaneel', 'oregano', 'tijm',
     'basilicum', 'rozemarijn', 'kurkuma', 'gember', 'nootmuskaat',
-  ].any(name.contains)) return 'Spices';
+  ].any(name.contains)) { return 'Spices'; }
 
   // Pantry — TR + EN + NL
   if ([
@@ -159,7 +159,7 @@ String guessMarketCategory(String ingredientName) {
     'pasta', 'rijst', 'havermout', 'bloem', 'suiker', 'olie', 'azijn',
     'sojasaus', 'tomatensaus', 'ketchup', 'mosterd', 'honing',
     'jam', 'chocolade', 'cacao', 'bakpoeder', 'noedel',
-  ].any(name.contains)) return 'Pantry';
+  ].any(name.contains)) { return 'Pantry'; }
 
   // Drinks — TR + EN + NL
   if ([
@@ -172,12 +172,12 @@ String guessMarketCategory(String ingredientName) {
     // NL
     'water', 'sap', 'koffie', 'thee', 'wijn', 'bier', 'frisdrank',
     'limonade',
-  ].any(name.contains)) return 'Drinks';
+  ].any(name.contains)) { return 'Drinks'; }
 
   // Frozen
   if ([
     'frozen', 'dondurulmuş', 'diepvries', 'ice cream', 'dondurma', 'ijsje',
-  ].any(name.contains)) return 'Frozen';
+  ].any(name.contains)) { return 'Frozen'; }
 
   return 'Other';
 }

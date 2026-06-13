@@ -13,6 +13,7 @@ class BackupService {
   final RecipeStorageService _storageService = RecipeStorageService();
 
   Future<void> exportBackup(BuildContext context) async {
+    final screenSize = MediaQuery.of(context).size;
     try {
       final recipes = await _storageService.loadRecipes();
       final mealPlan = await _storageService.loadMealPlan();
@@ -36,14 +37,16 @@ class BackupService {
       final tempFile = File('${tempDir.path}/$fileName');
       await tempFile.writeAsString(jsonString);
 
-      await Share.shareXFiles(
-        [XFile(tempFile.path)],
-        subject: 'MealBridge Backup',
-        sharePositionOrigin: Rect.fromLTWH(
-          0,
-          0,
-          MediaQuery.of(context).size.width,
-          MediaQuery.of(context).size.height / 2,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(tempFile.path)],
+          subject: 'MealBridge Backup',
+          sharePositionOrigin: Rect.fromLTWH(
+            0,
+            0,
+            screenSize.width,
+            screenSize.height / 2,
+          ),
         ),
       );
 
