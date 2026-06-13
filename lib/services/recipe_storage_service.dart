@@ -9,6 +9,7 @@ class RecipeStorageService {
   static const String _mealPlanKey = 'meal_plan';
   static const String _checkedShoppingItemsKey = 'checked_shopping_items';
   static const String _quickRecipeIdsKey = 'quick_recipe_ids';
+  static const String _customQuickItemsKey = 'custom_quick_items';
 
   Future<List<Recipe>> loadRecipes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -93,5 +94,18 @@ class RecipeStorageService {
   Future<void> saveQuickRecipeIds(Set<String> recipeIds) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_quickRecipeIdsKey, jsonEncode(recipeIds.toList()));
+  }
+
+  Future<List<String>> loadCustomQuickItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_customQuickItemsKey);
+    if (jsonString == null || jsonString.isEmpty) return [];
+    final jsonList = jsonDecode(jsonString) as List<dynamic>;
+    return jsonList.map((item) => item as String).toList();
+  }
+
+  Future<void> saveCustomQuickItems(List<String> items) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_customQuickItemsKey, jsonEncode(items));
   }
 }

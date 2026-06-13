@@ -226,6 +226,7 @@ class _MainShellState extends State<MainShell> {
   Map<String, PlannedRecipe> _plannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
   Set<String> _quickRecipeIds = {};
+  List<String> _customQuickItems = [];
 
   @override
   void initState() {
@@ -240,6 +241,8 @@ class _MainShellState extends State<MainShell> {
         await _recipeStorageService.loadCheckedShoppingItems();
     final savedQuickRecipeIds =
         await _recipeStorageService.loadQuickRecipeIds();
+    final savedCustomQuickItems =
+        await _recipeStorageService.loadCustomQuickItems();
 
     final allRecipes = [...sampleRecipes, ...savedRecipes];
     final plannedRecipes = <String, PlannedRecipe>{};
@@ -263,6 +266,7 @@ class _MainShellState extends State<MainShell> {
       _plannedRecipes = plannedRecipes;
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
       _quickRecipeIds = savedQuickRecipeIds;
+      _customQuickItems = savedCustomQuickItems;
       _isLoadingData = false;
     });
   }
@@ -388,6 +392,17 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
   }
 
+  void _addCustomQuickItem(String name) {
+    if (_customQuickItems.contains(name)) return;
+    setState(() => _customQuickItems = [..._customQuickItems, name]);
+    _recipeStorageService.saveCustomQuickItems(_customQuickItems);
+  }
+
+  void _removeCustomQuickItem(String name) {
+    setState(() => _customQuickItems = _customQuickItems.where((i) => i != name).toList());
+    _recipeStorageService.saveCustomQuickItems(_customQuickItems);
+  }
+
 String get _title {
     switch (_selectedIndex) {
       case 0:
@@ -437,6 +452,9 @@ String get _title {
         onClearCheckedItems: _clearCheckedShoppingItems,
         onToggleQuickRecipe: _toggleQuickRecipe,
         onClearQuickRecipes: _clearQuickRecipes,
+        customQuickItems: _customQuickItems,
+        onAddCustomItem: _addCustomQuickItem,
+        onRemoveCustomItem: _removeCustomQuickItem,
       ),
       SettingsScreen(
         onImportSuccess: () => _loadSavedData(),

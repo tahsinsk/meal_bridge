@@ -35,6 +35,9 @@ class ShoppingListScreen extends StatefulWidget {
   final VoidCallback onClearCheckedItems;
   final void Function(String recipeId) onToggleQuickRecipe;
   final VoidCallback onClearQuickRecipes;
+  final List<String> customQuickItems;
+  final void Function(String itemName) onAddCustomItem;
+  final void Function(String itemName) onRemoveCustomItem;
 
   const ShoppingListScreen({
     super.key,
@@ -46,6 +49,9 @@ class ShoppingListScreen extends StatefulWidget {
     required this.onClearCheckedItems,
     required this.onToggleQuickRecipe,
     required this.onClearQuickRecipes,
+    required this.customQuickItems,
+    required this.onAddCustomItem,
+    required this.onRemoveCustomItem,
   });
 
   @override
@@ -55,7 +61,9 @@ class ShoppingListScreen extends StatefulWidget {
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _isQuickMode = false;
   bool _checkedAtBottom = true;
-  bool _groupByRecipe = true;
+  bool _groupByRecipe = false;
+
+  final TextEditingController _customItemController = TextEditingController();
 
   static const List<String> _categoryOrder = [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
@@ -68,6 +76,19 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   static const List<String> _mealOrder = ['breakfast', 'lunch', 'dinner'];
 
+  @override
+  void dispose() {
+    _customItemController.dispose();
+    super.dispose();
+  }
+
+  void _addCustomItem(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    widget.onAddCustomItem(trimmed);
+    _customItemController.clear();
+  }
+
   String _formatAmount(double amount) {
     if (amount == amount.roundToDouble()) return amount.toInt().toString();
     return amount.toString();
@@ -75,6 +96,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   String _itemKey(ShoppingListItem item) =>
       '${item.name.toLowerCase()}-${item.unit.toLowerCase()}';
+
+  String _customItemKey(String name) => '${name.toLowerCase()}-';
 
   String _formatPlanKey(String key) {
     final dash = key.lastIndexOf('-');
@@ -177,11 +200,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     for (final item in items) {
       widget.onItemCheckedChanged(_itemKey(item), true);
     }
+    for (final name in widget.customQuickItems) {
+      widget.onItemCheckedChanged(_customItemKey(name), true);
+    }
   }
 
   void _uncheckAll(List<ShoppingListItem> items) {
     for (final item in items) {
       widget.onItemCheckedChanged(_itemKey(item), false);
+    }
+    for (final name in widget.customQuickItems) {
+      widget.onItemCheckedChanged(_customItemKey(name), false);
     }
   }
 
@@ -206,7 +235,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       buffer.writeln(entry.key);
       for (final item in entry.value) {
         final isChecked = widget.checkedItemKeys.contains(_itemKey(item));
-        buffer.writeln('${isChecked ? '[x]' : '[ ]'} ${_formatAmount(item.amount)} ${item.unit} ${item.name}');
+        final amountStr = item.unit.isEmpty ? '' : '${_formatAmount(item.amount)} ${item.unit} ';
+        buffer.writeln('${isChecked ? '[x]' : '[ ]'} $amountStr${item.name}');
       }
       buffer.writeln();
     }
@@ -227,7 +257,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       if (unchecked.isEmpty) continue;
       buffer.writeln(entry.key);
       for (final item in unchecked) {
-        buffer.writeln('[ ] ${_formatAmount(item.amount)} ${item.unit} ${item.name}');
+        final amountStr = item.unit.isEmpty ? '' : '${_formatAmount(item.amount)} ${item.unit} ';
+        buffer.writeln('[ ] $amountStr${item.name}');
       }
       buffer.writeln();
     }
@@ -399,68 +430,154 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           ),
         ),
-        ...displayItems.map((item) {
-          final isChecked = widget.checkedItemKeys.contains(_itemKey(item));
-          return Card(
-            margin: const EdgeInsets.only(bottom: 6),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => widget.onItemCheckedChanged(_itemKey(item), !isChecked),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: isChecked ? const Color(0xFF2E7D32) : Colors.transparent,
-                        border: Border.all(
-                          color: isChecked ? const Color(0xFF2E7D32) : Theme.of(context).dividerColor,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: isChecked ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          decoration: isChecked ? TextDecoration.lineThrough : null,
-                          color: isChecked ? Theme.of(context).disabledColor : null,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isChecked
-                            ? Theme.of(context).disabledColor.withValues(alpha: 0.1)
-                            : const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${_formatAmount(item.amount)} ${item.unit}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isChecked ? Theme.of(context).disabledColor : const Color(0xFF2E7D32),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
+        ...displayItems.map((item) => _buildItemRow(item)),
         const SizedBox(height: 12),
       ],
+    );
+  }
+
+  Widget _buildCustomItemsSection() {
+    final displayNames = _checkedAtBottom
+        ? [
+            ...widget.customQuickItems.where((n) => !widget.checkedItemKeys.contains(_customItemKey(n))),
+            ...widget.customQuickItems.where((n) => widget.checkedItemKeys.contains(_customItemKey(n))),
+          ]
+        : widget.customQuickItems;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.list_alt_outlined, size: 18, color: Color(0xFF2E7D32)),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'My Items',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1C19)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ...displayNames.map((name) => _buildCustomItemRow(name)),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildItemRow(ShoppingListItem item) {
+    final isChecked = widget.checkedItemKeys.contains(_itemKey(item));
+    return Card(
+      margin: const EdgeInsets.only(bottom: 6),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => widget.onItemCheckedChanged(_itemKey(item), !isChecked),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              _checkbox(isChecked),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    decoration: isChecked ? TextDecoration.lineThrough : null,
+                    color: isChecked ? Theme.of(context).disabledColor : null,
+                  ),
+                ),
+              ),
+              if (item.unit.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isChecked
+                        ? Theme.of(context).disabledColor.withValues(alpha: 0.1)
+                        : const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_formatAmount(item.amount)} ${item.unit}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isChecked ? Theme.of(context).disabledColor : const Color(0xFF2E7D32),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomItemRow(String name) {
+    final key = _customItemKey(name);
+    final isChecked = widget.checkedItemKeys.contains(key);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 6),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => widget.onItemCheckedChanged(key, !isChecked),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 12, top: 6, bottom: 6, right: 4),
+          child: Row(
+            children: [
+              _checkbox(isChecked),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    decoration: isChecked ? TextDecoration.lineThrough : null,
+                    color: isChecked ? Theme.of(context).disabledColor : null,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => widget.onRemoveCustomItem(name),
+                icon: const Icon(Icons.close, size: 16),
+                color: Colors.grey[400],
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _checkbox(bool isChecked) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: isChecked ? const Color(0xFF2E7D32) : Colors.transparent,
+        border: Border.all(
+          color: isChecked ? const Color(0xFF2E7D32) : Theme.of(context).dividerColor,
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: isChecked ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
     );
   }
 
@@ -510,66 +627,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           ),
         ),
-        ...items.map((item) {
-          final isChecked = widget.checkedItemKeys.contains(_itemKey(item));
-          return Card(
-            margin: const EdgeInsets.only(bottom: 6),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => widget.onItemCheckedChanged(_itemKey(item), !isChecked),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: isChecked ? const Color(0xFF2E7D32) : Colors.transparent,
-                        border: Border.all(
-                          color: isChecked ? const Color(0xFF2E7D32) : Theme.of(context).dividerColor,
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: isChecked ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          decoration: isChecked ? TextDecoration.lineThrough : null,
-                          color: isChecked ? Theme.of(context).disabledColor : null,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isChecked
-                            ? Theme.of(context).disabledColor.withValues(alpha: 0.1)
-                            : const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${_formatAmount(item.amount)} ${item.unit}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isChecked ? Theme.of(context).disabledColor : const Color(0xFF2E7D32),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
+        ...items.map((item) => item.unit.isEmpty
+            ? _buildCustomItemRow(item.name)
+            : _buildItemRow(item)),
         const SizedBox(height: 12),
       ],
     );
@@ -588,14 +648,20 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       activeMultipliers = widget.plannedRecipes.values.map((pr) => pr.servingsMultiplier).toList();
     }
 
-    // Always compute merged items for progress + copy operations
-    final shoppingItems = generateShoppingListFromRecipes(activeRecipes, multipliers: activeMultipliers);
+    // Merge custom items when in quick mode
+    final recipeShoppingItems = generateShoppingListFromRecipes(activeRecipes, multipliers: activeMultipliers);
+    final customShoppingItems = (_isQuickMode && widget.customQuickItems.isNotEmpty)
+        ? widget.customQuickItems
+            .map((name) => ShoppingListItem(name: name, amount: 1, unit: '', category: 'Other'))
+            .toList()
+        : <ShoppingListItem>[];
+    final shoppingItems = [...recipeShoppingItems, ...customShoppingItems];
+
     final checkedCount = shoppingItems.where((i) => widget.checkedItemKeys.contains(_itemKey(i))).length;
     final totalCount = shoppingItems.length;
     final allChecked = totalCount > 0 && checkedCount == totalCount;
     final progress = totalCount > 0 ? checkedCount / totalCount : 0.0;
 
-    // For category view and copy operations
     final sortedItems = _checkedAtBottom
         ? [
             ...shoppingItems.where((i) => !widget.checkedItemKeys.contains(_itemKey(i))),
@@ -603,6 +669,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ]
         : shoppingItems;
     final groupedItems = _groupItemsByCategory(sortedItems);
+
+    final hasContent = activeRecipes.isNotEmpty ||
+        (_isQuickMode && widget.customQuickItems.isNotEmpty);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -637,38 +706,86 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
         const SizedBox(height: 8),
 
-        // View toggle
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(
-                  value: true,
-                  icon: Icon(Icons.restaurant_outlined),
-                  label: Text('By Recipe'),
+        // Sort order row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              Icon(Icons.sort_outlined, size: 15, color: Colors.grey[500]),
+              const SizedBox(width: 4),
+              Text(
+                'Sort by',
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+              const SizedBox(width: 2),
+              Theme(
+                data: Theme.of(context).copyWith(
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
                 ),
-                ButtonSegment(
-                  value: false,
-                  icon: Icon(Icons.category_outlined),
-                  label: Text('By Category'),
-                ),
-              ],
-              selected: {_groupByRecipe},
-              onSelectionChanged: (value) => setState(() => _groupByRecipe = value.first),
-              style: ButtonStyle(
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: DropdownButton<bool>(
+                  value: _groupByRecipe,
+                  underline: const SizedBox(),
+                  isDense: true,
+                  onChanged: (v) => setState(() => _groupByRecipe = v!),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: false, child: Text('Category')),
+                    DropdownMenuItem(value: true, child: Text('Recipe')),
+                  ],
                 ),
               ),
-            ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+
+        // Custom item input (quick mode only)
+        if (_isQuickMode) ...[
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(
+                children: [
+                  const Icon(Icons.add_shopping_cart_outlined, size: 20, color: Color(0xFF2E7D32)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _customItemController,
+                      decoration: const InputDecoration(
+                        hintText: 'Add custom item…',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        fillColor: Colors.transparent,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                      onSubmitted: _addCustomItem,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => _addCustomItem(_customItemController.text),
+                    icon: const Icon(Icons.add_circle_outlined),
+                    color: const Color(0xFF2E7D32),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
 
         // Empty state
-        if (activeRecipes.isEmpty) ...[
+        if (!hasContent) ...[
           Card(
             child: Padding(
               padding: const EdgeInsets.all(32),
@@ -697,7 +814,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _isQuickMode
-                        ? 'Pick recipes below to generate a shopping list instantly.'
+                        ? 'Pick recipes or type a custom item above.'
                         : 'Plan recipes for the week and your shopping list will appear here automatically.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
@@ -830,11 +947,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
           const SizedBox(height: 12),
 
-          // Content: by recipe or by category
-          if (_groupByRecipe)
-            ..._buildRecipeSections().map(_buildRecipeSectionWidget)
-          else
+          // Content
+          if (_groupByRecipe) ...[
+            ..._buildRecipeSections().map(_buildRecipeSectionWidget),
+            if (_isQuickMode && widget.customQuickItems.isNotEmpty)
+              _buildCustomItemsSection(),
+          ] else ...[
             ...groupedItems.entries.map((entry) => _buildCategorySection(entry.key, entry.value)),
+          ],
         ],
       ],
     );
