@@ -7,6 +7,8 @@ import '../../../models/recipe.dart';
 class MealPlanScreen extends StatelessWidget {
   final List<Recipe> recipes;
   final Map<String, PlannedRecipe> plannedRecipes;
+  final int weekOffset;
+  final void Function(int) onWeekChanged;
   final void Function(String day, Recipe recipe, [MealType? mealType]) onRecipeSelected;
   final void Function(String day, [MealType? mealType]) onRecipeRemoved;
   final void Function(String day, MealType? mealType, int delta) onServingsChanged;
@@ -15,10 +17,42 @@ class MealPlanScreen extends StatelessWidget {
     super.key,
     required this.recipes,
     required this.plannedRecipes,
+    required this.weekOffset,
+    required this.onWeekChanged,
     required this.onRecipeSelected,
     required this.onRecipeRemoved,
     required this.onServingsChanged,
   });
+
+  static DateTime _mondayForOffset(int offset) {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    return monday.add(Duration(days: 7 * offset));
+  }
+
+  static String _shortDate(DateTime d) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[d.month - 1]} ${d.day}';
+  }
+
+  static String _weekLabel(int offset) {
+    switch (offset) {
+      case -1: return 'Last week';
+      case 0: return 'This week';
+      case 1: return 'Next week';
+      default:
+        final monday = _mondayForOffset(offset);
+        final sunday = monday.add(const Duration(days: 6));
+        return '${_shortDate(monday)} – ${_shortDate(sunday)}';
+    }
+  }
+
+  static String _weekDateRange(int offset) {
+    final monday = _mondayForOffset(offset);
+    final sunday = monday.add(const Duration(days: 6));
+    return '${_shortDate(monday)} – ${_shortDate(sunday)}';
+  }
 
   static const List<String> _days = [
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
@@ -282,6 +316,45 @@ class MealPlanScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Week navigation
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () => onWeekChanged(weekOffset - 1),
+                  color: const Color(0xFF2E7D32),
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _weekLabel(weekOffset),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                      if (weekOffset.abs() <= 1)
+                        Text(
+                          _weekDateRange(weekOffset),
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => onWeekChanged(weekOffset + 1),
+                  color: const Color(0xFF2E7D32),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
         // Summary kartı — modernize edilmiş
         Card(
           child: Padding(

@@ -221,12 +221,43 @@ class _MainShellState extends State<MainShell> {
 
   int _selectedIndex = 0;
   bool _isLoadingData = true;
+  int _weekOffset = 0;
 
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
-  Map<String, PlannedRecipe> _plannedRecipes = {};
+  Map<String, PlannedRecipe> _allPlannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
   Set<String> _quickRecipeIds = {};
   List<String> _customQuickItems = [];
+
+  // ISO week key for a given offset from today's week (0 = this week)
+  String _isoWeekKeyForOffset(int offset) {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final targetMonday = monday.add(Duration(days: 7 * offset));
+    final thursday = targetMonday.add(const Duration(days: 3));
+    final year = thursday.year;
+    final jan4 = DateTime(year, 1, 4);
+    final mondayOfWeek1 = jan4.subtract(Duration(days: jan4.weekday - 1));
+    final weekNum = (targetMonday.difference(mondayOfWeek1).inDays ~/ 7) + 1;
+    return '$year-W${weekNum.toString().padLeft(2, '0')}';
+  }
+
+  // Current week's recipes with week prefix stripped (keys like "Monday-breakfast")
+  Map<String, PlannedRecipe> get _currentWeekPlannedRecipes {
+    final prefix = '${_isoWeekKeyForOffset(_weekOffset)}-';
+    return {
+      for (final e in _allPlannedRecipes.entries)
+        if (e.key.startsWith(prefix)) e.key.substring(prefix.length): e.value,
+    };
+  }
+
+  String _fullMealPlanKey(String day, [MealType? mealType]) {
+    final weekKey = _isoWeekKeyForOffset(_weekOffset);
+    if (mealType == null) return '$weekKey-$day';
+    return '$weekKey-$day-${mealType.name}';
+  }
+
+  void _setWeekOffset(int offset) => setState(() => _weekOffset = offset);
 
   @override
   void initState() {
@@ -245,16 +276,31 @@ class _MainShellState extends State<MainShell> {
         await _recipeStorageService.loadCustomQuickItems();
 
     final allRecipes = [...sampleRecipes, ...savedRecipes];
-    final plannedRecipes = <String, PlannedRecipe>{};
 
+    // Migrate old-format keys (e.g. "Monday-breakfast") to week-prefixed keys
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final currentWeekKey = _isoWeekKeyForOffset(0);
+    bool needsMigration = false;
+    final migratedPlan = <String, String>{};
     for (final entry in savedMealPlan.entries) {
-      final matchingRecipe =
-          allRecipes.where((recipe) => recipe.id == entry.value);
-      if (matchingRecipe.isNotEmpty) {
-        final recipe = matchingRecipe.first;
-        plannedRecipes[entry.key] = PlannedRecipe(
-          recipe: recipe,
-          targetServings: recipe.servings,
+      if (days.any((d) => entry.key.startsWith(d))) {
+        migratedPlan['$currentWeekKey-${entry.key}'] = entry.value;
+        needsMigration = true;
+      } else {
+        migratedPlan[entry.key] = entry.value;
+      }
+    }
+    if (needsMigration) {
+      await _recipeStorageService.saveMealPlan(migratedPlan);
+    }
+
+    final allPlannedRecipes = <String, PlannedRecipe>{};
+    for (final entry in migratedPlan.entries) {
+      final match = allRecipes.where((r) => r.id == entry.value);
+      if (match.isNotEmpty) {
+        allPlannedRecipes[entry.key] = PlannedRecipe(
+          recipe: match.first,
+          targetServings: match.first.servings,
         );
       }
     }
@@ -263,7 +309,7 @@ class _MainShellState extends State<MainShell> {
 
     setState(() {
       _recipes = allRecipes;
-      _plannedRecipes = plannedRecipes;
+      _allPlannedRecipes = allPlannedRecipes;
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
       _quickRecipeIds = savedQuickRecipeIds;
       _customQuickItems = savedCustomQuickItems;
@@ -280,15 +326,8 @@ class _MainShellState extends State<MainShell> {
     await _recipeStorageService.saveRecipes(customRecipes);
   }
 
-  String _mealPlanKey(String day, [MealType? mealType]) {
-    if (mealType == null) return day;
-    return '$day-${mealType.name}';
-  }
-
   Future<void> _saveMealPlan() async {
-    final mealPlan = _plannedRecipes.map(
-      (key, pr) => MapEntry(key, pr.recipe.id),
-    );
+    final mealPlan = _allPlannedRecipes.map((k, v) => MapEntry(k, v.recipe.id));
     await _recipeStorageService.saveMealPlan(mealPlan);
   }
 
@@ -301,10 +340,8 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       final idx = _recipes.indexWhere((r) => r.id == updatedRecipe.id);
       if (idx != -1) _recipes[idx] = updatedRecipe;
-      _plannedRecipes.updateAll((_, pr) {
-        if (pr.recipe.id == updatedRecipe.id) {
-          return pr.copyWith(recipe: updatedRecipe);
-        }
+      _allPlannedRecipes.updateAll((_, pr) {
+        if (pr.recipe.id == updatedRecipe.id) return pr.copyWith(recipe: updatedRecipe);
         return pr;
       });
     });
@@ -315,7 +352,7 @@ class _MainShellState extends State<MainShell> {
   void _deleteRecipe(Recipe recipe) {
     setState(() {
       _recipes.removeWhere((r) => r.id == recipe.id);
-      _plannedRecipes.removeWhere((_, pr) => pr.recipe.id == recipe.id);
+      _allPlannedRecipes.removeWhere((_, pr) => pr.recipe.id == recipe.id);
       _quickRecipeIds.remove(recipe.id);
     });
     _saveCustomRecipes();
@@ -333,29 +370,26 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _selectRecipeForDay(String day, Recipe recipe, [MealType? mealType]) {
-    final key = _mealPlanKey(day, mealType);
+    final key = _fullMealPlanKey(day, mealType);
     setState(() {
-      _plannedRecipes[key] = PlannedRecipe(
-        recipe: recipe,
-        targetServings: recipe.servings,
-      );
+      _allPlannedRecipes[key] = PlannedRecipe(recipe: recipe, targetServings: recipe.servings);
     });
     _saveMealPlan();
   }
 
   void _removeRecipeFromDay(String day, [MealType? mealType]) {
-    final key = _mealPlanKey(day, mealType);
-    setState(() => _plannedRecipes.remove(key));
+    final key = _fullMealPlanKey(day, mealType);
+    setState(() => _allPlannedRecipes.remove(key));
     _saveMealPlan();
   }
 
   void _updateServings(String day, MealType? mealType, int delta) {
-    final key = _mealPlanKey(day, mealType);
-    final current = _plannedRecipes[key];
+    final key = _fullMealPlanKey(day, mealType);
+    final current = _allPlannedRecipes[key];
     if (current == null) return;
     final newServings = (current.targetServings + delta).clamp(1, 20);
     setState(() {
-      _plannedRecipes[key] = current.copyWith(targetServings: newServings);
+      _allPlannedRecipes[key] = current.copyWith(targetServings: newServings);
     });
     _saveMealPlan();
   }
@@ -438,13 +472,15 @@ String get _title {
       ),
       MealPlanScreen(
         recipes: _recipes,
-        plannedRecipes: _plannedRecipes,
+        plannedRecipes: _currentWeekPlannedRecipes,
+        weekOffset: _weekOffset,
+        onWeekChanged: _setWeekOffset,
         onRecipeSelected: _selectRecipeForDay,
         onRecipeRemoved: _removeRecipeFromDay,
         onServingsChanged: _updateServings,
       ),
       ShoppingListScreen(
-        plannedRecipes: _plannedRecipes,
+        plannedRecipes: _currentWeekPlannedRecipes,
         quickRecipes: quickRecipes,
         allRecipes: _recipes,
         checkedItemKeys: _checkedShoppingItemKeys,
