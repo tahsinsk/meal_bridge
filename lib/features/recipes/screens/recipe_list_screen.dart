@@ -38,6 +38,27 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 
   static const _categories = ['Breakfast', 'Lunch', 'Dinner', 'Other'];
 
+  static const _categoryBg = {
+    'Breakfast': Color(0xFFFAEEDA),
+    'Lunch':     Color(0xFFE6F1FB),
+    'Dinner':    Color(0xFFEEEDFE),
+    'Other':     Color(0xFFEAF3DE),
+  };
+
+  static const _categoryIcon = {
+    'Breakfast': Icons.free_breakfast_outlined,
+    'Lunch':     Icons.set_meal_outlined,
+    'Dinner':    Icons.dinner_dining_outlined,
+    'Other':     Icons.restaurant_menu_outlined,
+  };
+
+  static const _categoryIconColor = {
+    'Breakfast': Color(0xFFBF360C),
+    'Lunch':     Color(0xFF1565C0),
+    'Dinner':    Color(0xFF4527A0),
+    'Other':     Color(0xFF2E7D32),
+  };
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -77,16 +98,14 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   Future<void> _confirmDeleteRecipe(BuildContext context, Recipe recipe) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete recipe?'),
-          content: Text('Are you sure you want to delete "${recipe.name}"?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text('Delete recipe?'),
+        content: Text('Are you sure you want to delete "${recipe.name}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+        ],
+      ),
     );
     if (shouldDelete == true) widget.onRecipeDeleted(recipe);
   }
@@ -95,155 +114,207 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.filter_list_outlined),
-                      const SizedBox(width: 8),
-                      Text('Filter recipes', style: Theme.of(context).textTheme.titleLarge),
-                      const Spacer(),
-                      if (_activeFilterCount > 0)
-                        TextButton(
-                          onPressed: () {
-                            _clearFilters();
-                            setSheetState(() {});
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Clear all'),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Category', style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _categories.map((cat) {
-                      final isSelected = _selectedCategory == cat;
-                      return FilterChip(
-                        label: Text(cat),
-                        selected: isSelected,
-                        onSelected: (val) {
-                          setState(() => _selectedCategory = val ? cat : null);
-                          setSheetState(() {});
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Show', style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Favorites only'),
-                    secondary: Icon(
-                      _showFavoritesOnly ? Icons.star : Icons.star_outline,
-                      color: _showFavoritesOnly ? const Color(0xFFF9A825) : null,
+                  const Icon(Icons.filter_list_outlined),
+                  const SizedBox(width: 8),
+                  Text('Filter recipes', style: Theme.of(context).textTheme.titleLarge),
+                  const Spacer(),
+                  if (_activeFilterCount > 0)
+                    TextButton(
+                      onPressed: () {
+                        _clearFilters();
+                        setSheetState(() {});
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Clear all'),
                     ),
-                    value: _showFavoritesOnly,
-                    onChanged: (val) {
-                      setState(() => _showFavoritesOnly = val);
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('Category', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _categories.map((cat) {
+                  final isSelected = _selectedCategory == cat;
+                  return FilterChip(
+                    label: Text(cat),
+                    selected: isSelected,
+                    onSelected: (val) {
+                      setState(() => _selectedCategory = val ? cat : null);
                       setSheetState(() {});
                     },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              Text('Show', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Favorites only'),
+                secondary: Icon(
+                  _showFavoritesOnly ? Icons.star : Icons.star_outline,
+                  color: _showFavoritesOnly ? const Color(0xFFF9A825) : null,
+                ),
+                value: _showFavoritesOnly,
+                onChanged: (val) {
+                  setState(() => _showFavoritesOnly = val);
+                  setSheetState(() {});
+                },
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    _activeFilterCount > 0
+                        ? 'Apply ($_activeFilterCount filter${_activeFilterCount > 1 ? 's' : ''})'
+                        : 'Done',
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        _activeFilterCount > 0
-                            ? 'Apply ($_activeFilterCount filter${_activeFilterCount > 1 ? 's' : ''})'
-                            : 'Done',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _subtitle(Recipe recipe) {
+    final parts = <String>[];
+    if (recipe.calories != null) {
+      parts.add('${(recipe.calories! / recipe.servings).round()} kcal');
+    }
+    parts.add('${recipe.instructions.length} step${recipe.instructions.length != 1 ? 's' : ''}');
+    return parts.join(' · ');
+  }
+
+  Widget _buildRecipeCard(BuildContext context, Recipe recipe) {
+    final isCustom = widget.canDeleteRecipe(recipe);
+    final bg = _categoryBg[recipe.category] ?? const Color(0xFFEAF3DE);
+    final icon = _categoryIcon[recipe.category] ?? Icons.restaurant_menu_outlined;
+    final iconColor = _categoryIconColor[recipe.category] ?? const Color(0xFF2E7D32);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => RecipeDetailScreen(
+              recipe: recipe,
+              isInQuickList: widget.quickRecipeIds.contains(recipe.id),
+              onToggleQuickList: () => widget.onToggleQuickRecipe(recipe.id),
+            ),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Colored header
+            Container(
+              height: 72,
+              color: bg,
+              child: Stack(
+                children: [
+                  Center(
+                    child: Icon(icon, size: 38, color: iconColor.withValues(alpha: 0.85)),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: IconButton(
+                      icon: Icon(
+                        recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                        size: 20,
+                        color: recipe.isFavorite
+                            ? const Color(0xFFF9A825)
+                            : iconColor.withValues(alpha: 0.35),
+                      ),
+                      onPressed: () => widget.onFavoriteToggled(recipe),
+                      padding: const EdgeInsets.all(6),
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.3),
+                        shape: const CircleBorder(),
                       ),
                     ),
                   ),
                 ],
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _categoryChip(String category) {
-    final colors = {
-      'Breakfast': (const Color(0xFFFFF8E1), const Color(0xFFF57F17)),
-      'Lunch': (const Color(0xFFE3F2FD), const Color(0xFF1565C0)),
-      'Dinner': (const Color(0xFFEDE7F6), const Color(0xFF4527A0)),
-      'Other': (const Color(0xFFE8F5E9), const Color(0xFF2E7D32)),
-    };
-    final pair = colors[category] ?? (const Color(0xFFE8F5E9), const Color(0xFF2E7D32));
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: pair.$1,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        category,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: pair.$2),
-      ),
-    );
-  }
-
-  Widget _calorieChip(Recipe recipe) {
-    final perServing = (recipe.calories! / recipe.servings).round();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E0),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.local_fire_department_outlined, size: 12, color: Color(0xFFE65100)),
-          const SizedBox(width: 3),
-          Text(
-            '$perServing kcal/serving',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFE65100)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoChip(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F9F1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: const Color(0xFF558B2F)),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF558B2F),
             ),
-          ),
-        ],
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.name,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _subtitle(recipe),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Spacer(),
+                    if (isCustom)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: PopupMenuButton<String>(
+                          icon: Icon(Icons.more_horiz, size: 18, color: Colors.grey[400]),
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          onSelected: (value) {
+                            if (value == 'edit') _openEditRecipeScreen(context, recipe);
+                            if (value == 'delete') _confirmDeleteRecipe(context, recipe);
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(children: [
+                                Icon(Icons.edit_outlined, size: 18),
+                                SizedBox(width: 10),
+                                Text('Edit'),
+                              ]),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(children: [
+                                Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                SizedBox(width: 10),
+                                Text('Delete', style: TextStyle(color: Colors.red)),
+                              ]),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -251,6 +322,9 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   @override
   Widget build(BuildContext context) {
     final query = _searchQuery.trim().toLowerCase();
+    final totalCount = widget.recipes.length;
+    final favoriteCount = widget.recipes.where((r) => r.isFavorite).length;
+    final hasActiveFilters = _activeFilterCount > 0 || query.isNotEmpty;
 
     final sortedRecipes = [...widget.recipes]..sort((a, b) {
         if (a.isFavorite && !b.isFavorite) return -1;
@@ -258,329 +332,215 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
         return a.name.toLowerCase().compareTo(b.name.toLowerCase());
       });
 
-    final filteredRecipes = sortedRecipes.where((recipe) {
+    final filteredRecipes = sortedRecipes.where((r) {
       final matchesQuery = query.isEmpty ||
-          recipe.name.toLowerCase().contains(query) ||
-          recipe.category.toLowerCase().contains(query);
-      final matchesFavorite = !_showFavoritesOnly || recipe.isFavorite;
-      final matchesCategory = _selectedCategory == null ||
-          recipe.category.toLowerCase() == _selectedCategory!.toLowerCase();
-      return matchesQuery && matchesFavorite && matchesCategory;
+          r.name.toLowerCase().contains(query) ||
+          r.category.toLowerCase().contains(query);
+      final matchesFav = !_showFavoritesOnly || r.isFavorite;
+      final matchesCat = _selectedCategory == null ||
+          r.category.toLowerCase() == _selectedCategory!.toLowerCase();
+      return matchesQuery && matchesFav && matchesCat;
     }).toList();
 
-    final hasRecipes = widget.recipes.isNotEmpty;
-    final favoriteCount = widget.recipes.where((r) => r.isFavorite).length;
-    final hasActiveFilters = _activeFilterCount > 0 || query.isNotEmpty;
-
     return Scaffold(
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: filteredRecipes.isEmpty ? 2 : filteredRecipes.length + 1,
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          labelText: 'Search recipes',
-                          hintText: 'Search by name or category',
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: query.isEmpty
-                              ? null
-                              : IconButton(
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                  icon: const Icon(Icons.clear),
-                                ),
-                          border: const OutlineInputBorder(),
+      body: CustomScrollView(
+        slivers: [
+          // Header + search
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Your recipes',
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: Color(0xFF1A1C19)),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    favoriteCount > 0
+                        ? '$totalCount recipe${totalCount != 1 ? 's' : ''} · $favoriteCount favorite${favoriteCount != 1 ? 's' : ''}'
+                        : '$totalCount recipe${totalCount != 1 ? 's' : ''}',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            labelText: 'Search recipes',
+                            hintText: 'Name or category',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: query.isEmpty
+                                ? null
+                                : IconButton(
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                    icon: const Icon(Icons.clear),
+                                  ),
+                            border: const OutlineInputBorder(),
+                          ),
+                          onChanged: (v) => setState(() => _searchQuery = v),
                         ),
-                        onChanged: (value) => setState(() => _searchQuery = value),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Stack(
-                      children: [
-                        IconButton.outlined(
-                          onPressed: () => _showFilterSheet(context),
-                          icon: const Icon(Icons.filter_list_outlined),
-                          style: IconButton.styleFrom(
-                            side: BorderSide(
-                              color: _activeFilterCount > 0
-                                  ? const Color(0xFF2E7D32)
-                                  : Theme.of(context).dividerColor,
-                              width: _activeFilterCount > 0 ? 2 : 1,
+                      const SizedBox(width: 8),
+                      Stack(
+                        children: [
+                          IconButton.outlined(
+                            onPressed: () => _showFilterSheet(context),
+                            icon: const Icon(Icons.filter_list_outlined),
+                            style: IconButton.styleFrom(
+                              side: BorderSide(
+                                color: _activeFilterCount > 0
+                                    ? const Color(0xFF2E7D32)
+                                    : Theme.of(context).dividerColor,
+                                width: _activeFilterCount > 0 ? 2 : 1,
+                              ),
                             ),
                           ),
-                        ),
-                        if (_activeFilterCount > 0)
-                          Positioned(
-                            right: 6,
-                            top: 6,
-                            child: Container(
-                              width: 16,
-                              height: 16,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF2E7D32),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '$_activeFilterCount',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                          if (_activeFilterCount > 0)
+                            Positioned(
+                              right: 6, top: 6,
+                              child: Container(
+                                width: 16, height: 16,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF2E7D32), shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '$_activeFilterCount',
+                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (hasActiveFilters) ...[
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        if (_selectedCategory != null)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Chip(
-                              label: Text(_selectedCategory!),
-                              avatar: const Icon(Icons.category_outlined, size: 16),
-                              onDeleted: () => setState(() => _selectedCategory = null),
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                            ),
-                          ),
-                        if (_showFavoritesOnly)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Chip(
-                              label: const Text('Favorites'),
-                              avatar: const Icon(Icons.star, size: 16, color: Color(0xFFF9A825)),
-                              onDeleted: () => setState(() => _showFavoritesOnly = false),
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                            ),
-                          ),
-                        if (hasActiveFilters)
-                          TextButton(onPressed: _clearFilters, child: const Text('Clear all')),
-                      ],
-                    ),
-                  ),
-                ],
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Text(
-                        '${filteredRecipes.length} recipe${filteredRecipes.length != 1 ? 's' : ''}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                        ],
                       ),
-                      if (favoriteCount > 0) ...[
-                        const Text(' • '),
-                        const Icon(Icons.star, size: 13, color: Color(0xFFF9A825)),
-                        const SizedBox(width: 2),
-                        Text(
-                          '$favoriteCount favorite${favoriteCount != 1 ? 's' : ''}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
                     ],
                   ),
-                ),
-                const SizedBox(height: 4),
-              ],
-            );
-          }
-
-          if (filteredRecipes.isEmpty) {
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Icon(
-                      _showFavoritesOnly
-                          ? Icons.star_outline
-                          : hasActiveFilters
-                              ? Icons.filter_list_off_outlined
-                              : hasRecipes
-                                  ? Icons.search_off_outlined
-                                  : Icons.restaurant_menu_outlined,
-                      size: 56,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _showFavoritesOnly
-                          ? 'No favorites yet'
-                          : hasActiveFilters
-                              ? 'No matching recipes'
-                              : hasRecipes
-                                  ? 'No results found'
-                                  : 'No recipes yet',
-                      style: Theme.of(context).textTheme.titleLarge,
-                      textAlign: TextAlign.center,
-                    ),
+                  if (hasActiveFilters) ...[
                     const SizedBox(height: 8),
-                    Text(
-                      _showFavoritesOnly
-                          ? 'Tap the ⭐ on any recipe to add it to favorites.'
-                          : hasActiveFilters
-                              ? 'Try adjusting your filters or search query.'
-                              : hasRecipes
-                                  ? 'No recipe matches your search.'
-                                  : 'Add your first recipe to start building your weekly meal plan.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                    if (hasActiveFilters) ...[
-                      const SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        onPressed: _clearFilters,
-                        icon: const Icon(Icons.filter_list_off_outlined),
-                        label: const Text('Clear filters'),
-                      ),
-                    ],
-                    if (!hasRecipes) ...[
-                      const SizedBox(height: 16),
-                      const Chip(
-                        avatar: Icon(Icons.add, size: 18),
-                        label: Text('Use Add Recipe'),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            );
-          }
-
-          final recipe = filteredRecipes[index - 1];
-          final isCustomRecipe = widget.canDeleteRecipe(recipe);
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => RecipeDetailScreen(
-                      recipe: recipe,
-                      isInQuickList: widget.quickRecipeIds.contains(recipe.id),
-                      onToggleQuickList: () => widget.onToggleQuickRecipe(recipe.id),
-                    ),
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.restaurant_menu_outlined,
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
                         children: [
-                          Text(
-                            recipe.name,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              _categoryChip(recipe.category),
-                              _infoChip(
-                                Icons.shopping_basket_outlined,
-                                '${recipe.ingredients.length} ingredients',
+                          if (_selectedCategory != null)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Chip(
+                                label: Text(_selectedCategory!),
+                                avatar: const Icon(Icons.category_outlined, size: 16),
+                                onDeleted: () => setState(() => _selectedCategory = null),
+                                deleteIcon: const Icon(Icons.close, size: 16),
                               ),
-                              _infoChip(
-                                Icons.format_list_numbered,
-                                '${recipe.instructions.length} steps',
+                            ),
+                          if (_showFavoritesOnly)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Chip(
+                                label: const Text('Favorites'),
+                                avatar: const Icon(Icons.star, size: 16, color: Color(0xFFF9A825)),
+                                onDeleted: () => setState(() => _showFavoritesOnly = false),
+                                deleteIcon: const Icon(Icons.close, size: 16),
                               ),
-                              if (recipe.calories != null)
-                                _calorieChip(recipe),
-                            ],
-                          ),
+                            ),
+                          TextButton(onPressed: _clearFilters, child: const Text('Clear all')),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: Icon(
-                        recipe.isFavorite ? Icons.star : Icons.star_outline,
-                        color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
-                      ),
-                      tooltip: recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites',
-                      onPressed: () => widget.onFavoriteToggled(recipe),
-                    ),
-                    if (isCustomRecipe)
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _openEditRecipeScreen(context, recipe);
-                          } else if (value == 'delete') {
-                            _confirmDeleteRecipe(context, recipe);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit_outlined, size: 20),
-                                SizedBox(width: 12),
-                                Text('Edit'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                                SizedBox(width: 12),
-                                Text('Delete', style: TextStyle(color: Colors.red)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
                   ],
-                ),
+                  const SizedBox(height: 12),
+                ],
               ),
             ),
-          );
-        },
+          ),
+
+          // Empty state
+          if (filteredRecipes.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        Icon(
+                          _showFavoritesOnly
+                              ? Icons.star_outline
+                              : hasActiveFilters
+                                  ? Icons.filter_list_off_outlined
+                                  : totalCount > 0
+                                      ? Icons.search_off_outlined
+                                      : Icons.restaurant_menu_outlined,
+                          size: 56,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _showFavoritesOnly
+                              ? 'No favorites yet'
+                              : hasActiveFilters
+                                  ? 'No matching recipes'
+                                  : totalCount > 0
+                                      ? 'No results found'
+                                      : 'No recipes yet',
+                          style: Theme.of(context).textTheme.titleLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _showFavoritesOnly
+                              ? 'Tap the star on any recipe card to add to favorites.'
+                              : hasActiveFilters
+                                  ? 'Try adjusting your filters or search query.'
+                                  : totalCount > 0
+                                      ? 'No recipe matches your search.'
+                                      : 'Add your first recipe to start building your meal plan.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        if (hasActiveFilters) ...[
+                          const SizedBox(height: 16),
+                          OutlinedButton.icon(
+                            onPressed: _clearFilters,
+                            icon: const Icon(Icons.filter_list_off_outlined),
+                            label: const Text('Clear filters'),
+                          ),
+                        ],
+                        if (totalCount == 0) ...[
+                          const SizedBox(height: 16),
+                          const Chip(
+                            avatar: Icon(Icons.add, size: 18),
+                            label: Text('Use Add Recipe'),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+              sliver: SliverGrid.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  mainAxisExtent: 178,
+                ),
+                itemCount: filteredRecipes.length,
+                itemBuilder: (context, index) =>
+                    _buildRecipeCard(context, filteredRecipes[index]),
+              ),
+            ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openAddRecipeScreen(context),
