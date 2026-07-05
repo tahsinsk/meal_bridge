@@ -9,6 +9,7 @@ import '../models/meal_type.dart';
 import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
+import '../shared/app_constants.dart';
 import '../shared/widgets/brand_logo.dart';
 
 
@@ -22,24 +23,26 @@ class MealBridgeApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2E7D32),
+          seedColor: AppColors.primaryDark,
           brightness: Brightness.light,
         ).copyWith(
-          primary: const Color(0xFF2E7D32),
+          primary: AppColors.primaryDark,
           onPrimary: Colors.white,
-          primaryContainer: const Color(0xFFE8F5E9),
+          secondary: AppColors.accentMid,
+          onSecondary: Colors.white,
+          primaryContainer: AppColors.surfaceSoft,
           onPrimaryContainer: const Color(0xFF1B5E20),
-          surface: const Color(0xFFFAFDF7),
+          surface: AppColors.creamBackground,
           onSurface: const Color(0xFF1A1C19),
-          surfaceContainerHighest: const Color(0xFFE8F5E9),
+          surfaceContainerHighest: AppColors.surfaceSoft,
         ),
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF4F9F1),
+        scaffoldBackgroundColor: AppColors.creamBackground,
         appBarTheme: const AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0,
-          backgroundColor: Color(0xFFF4F9F1),
+          backgroundColor: AppColors.creamBackground,
           foregroundColor: Color(0xFF1A1C19),
           iconTheme: IconThemeData(color: Color(0xFF1A1C19)),
           actionsIconTheme: IconThemeData(color: Color(0xFF1A1C19)),
@@ -62,7 +65,7 @@ class MealBridgeApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFFF1F7EE),
+          fillColor: AppColors.surfaceSoft,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -74,17 +77,17 @@ class MealBridgeApp extends StatelessWidget {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(
-              color: Color(0xFF2E7D32),
+              color: AppColors.primaryDark,
               width: 1.5,
             ),
           ),
-          labelStyle: const TextStyle(color: Color(0xFF388E3C)),
-          prefixIconColor: const Color(0xFF388E3C),
-          suffixIconColor: const Color(0xFF388E3C),
+          labelStyle: const TextStyle(color: AppColors.primaryDark),
+          prefixIconColor: AppColors.primaryDark,
+          suffixIconColor: AppColors.primaryDark,
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF2E7D32),
+            backgroundColor: AppColors.primaryDark,
             foregroundColor: Colors.white,
             minimumSize: const Size(0, 48),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -100,7 +103,7 @@ class MealBridgeApp extends StatelessWidget {
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF2E7D32),
+            foregroundColor: AppColors.primaryDark,
             minimumSize: const Size(0, 40),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             shape: RoundedRectangleBorder(
@@ -110,8 +113,8 @@ class MealBridgeApp extends StatelessWidget {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF2E7D32),
-            side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+            foregroundColor: AppColors.primaryDark,
+            side: const BorderSide(color: AppColors.primaryDark, width: 1.5),
             minimumSize: const Size(0, 48),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
@@ -120,7 +123,7 @@ class MealBridgeApp extends StatelessWidget {
           ),
         ),
         chipTheme: ChipThemeData(
-          backgroundColor: const Color(0xFFE8F5E9),
+          backgroundColor: AppColors.surfaceSoft,
           labelStyle: const TextStyle(
             color: Color(0xFF1B5E20),
             fontSize: 12,
@@ -134,7 +137,7 @@ class MealBridgeApp extends StatelessWidget {
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           elevation: 3,
-          backgroundColor: Color(0xFF2E7D32),
+          backgroundColor: AppColors.primaryDark,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16)),
@@ -142,10 +145,10 @@ class MealBridgeApp extends StatelessWidget {
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: Colors.white,
-          indicatorColor: const Color(0xFFE8F5E9),
+          indicatorColor: AppColors.surfaceSoft,
           iconTheme: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: Color(0xFF2E7D32));
+              return const IconThemeData(color: AppColors.primaryDark);
             }
             return const IconThemeData(color: Color(0xFF888888));
           }),
@@ -154,7 +157,7 @@ class MealBridgeApp extends StatelessWidget {
               return const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF2E7D32),
+                color: AppColors.primaryDark,
               );
             }
             return const TextStyle(
@@ -168,7 +171,7 @@ class MealBridgeApp extends StatelessWidget {
           elevation: 8,
         ),
         dividerTheme: DividerThemeData(
-          color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+          color: AppColors.primaryDark.withValues(alpha: 0.1),
           thickness: 1,
         ),
         snackBarTheme: SnackBarThemeData(
@@ -180,13 +183,13 @@ class MealBridgeApp extends StatelessWidget {
           behavior: SnackBarBehavior.floating,
         ),
         progressIndicatorTheme: const ProgressIndicatorThemeData(
-          color: Color(0xFF2E7D32),
-          linearTrackColor: Color(0xFFE8F5E9),
+          color: AppColors.primaryDark,
+          linearTrackColor: AppColors.surfaceSoft,
         ),
         checkboxTheme: CheckboxThemeData(
           fillColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return const Color(0xFF2E7D32);
+              return AppColors.primaryDark;
             }
             return Colors.transparent;
           }),
@@ -194,7 +197,7 @@ class MealBridgeApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(4),
           ),
-          side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+          side: const BorderSide(color: AppColors.primaryDark, width: 1.5),
         ),
       ),
       home: const MainShell(),
@@ -212,6 +215,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   final RecipeStorageService _recipeStorageService = RecipeStorageService();
   final _recipeListKey = GlobalKey<RecipeListScreenState>();
+  final _shoppingListKey = GlobalKey<ShoppingListScreenState>();
 
   int _selectedIndex = 0;
   bool _isLoadingData = true;
@@ -363,10 +367,10 @@ class _MainShellState extends State<MainShell> {
     _saveCustomRecipes();
   }
 
-  void _selectRecipeForDay(String day, Recipe recipe, [MealType? mealType]) {
+  void _selectRecipeForDay(String day, Recipe recipe, int servings, [MealType? mealType]) {
     final key = _fullMealPlanKey(day, mealType);
     setState(() {
-      _allPlannedRecipes[key] = PlannedRecipe(recipe: recipe, targetServings: recipe.servings);
+      _allPlannedRecipes[key] = PlannedRecipe(recipe: recipe, targetServings: servings);
     });
     _saveMealPlan();
   }
@@ -431,6 +435,119 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCustomQuickItems(_customQuickItems);
   }
 
+  /// Per-tab AppBar actions. Recipes gets a single "add recipe" action;
+  /// Shopping List gets "add item" plus an overflow menu for check-all,
+  /// clear-checked, sort order, and copy — keeping that screen's body down
+  /// to just the list.
+  List<Widget>? _buildAppBarActions() {
+    if (_selectedIndex == 0) {
+      return [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: IconButton.filledTonal(
+            icon: const Icon(Icons.add),
+            tooltip: 'Add recipe',
+            onPressed: () => _recipeListKey.currentState?.openAddRecipeScreen(),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surfaceSoft,
+              foregroundColor: const Color(0xFF1B5E20),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    if (_selectedIndex == 2) {
+      return [
+        IconButton.filledTonal(
+          icon: const Icon(Icons.add),
+          tooltip: 'Add item',
+          onPressed: () => _shoppingListKey.currentState?.openAddCustomItemSheet(),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surfaceSoft,
+            foregroundColor: const Color(0xFF1B5E20),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'More actions',
+            onSelected: (value) {
+              final state = _shoppingListKey.currentState;
+              if (state == null) return;
+              switch (value) {
+                case 'check_all':
+                  state.toggleCheckAll();
+                case 'clear_checked':
+                  state.clearChecked();
+                case 'sort_toggle':
+                  state.toggleCheckedAtBottom();
+                case 'copy':
+                  state.copyList();
+                case 'copy_unchecked':
+                  state.copyUnchecked();
+              }
+            },
+            itemBuilder: (context) {
+              final state = _shoppingListKey.currentState;
+              final allChecked = state?.allItemsChecked ?? false;
+              final hasChecked = state?.hasCheckedItems ?? false;
+              final atBottom = state?.checkedItemsAtBottom ?? true;
+              return [
+                PopupMenuItem(
+                  value: 'check_all',
+                  child: Row(children: [
+                    Icon(allChecked ? Icons.remove_done_outlined : Icons.done_all_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(allChecked ? 'Uncheck all' : 'Check all'),
+                  ]),
+                ),
+                if (hasChecked)
+                  const PopupMenuItem(
+                    value: 'clear_checked',
+                    child: Row(children: [
+                      Icon(Icons.cleaning_services_outlined, size: 18),
+                      SizedBox(width: 10),
+                      Text('Clear checked'),
+                    ]),
+                  ),
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: 'sort_toggle',
+                  child: Row(children: [
+                    Icon(atBottom ? Icons.check_box_outlined : Icons.check_box_outline_blank, size: 18),
+                    const SizedBox(width: 10),
+                    const Expanded(child: Text('Checked items at bottom')),
+                  ]),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'copy',
+                  child: Row(children: [
+                    Icon(Icons.copy_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Copy list'),
+                  ]),
+                ),
+                const PopupMenuItem(
+                  value: 'copy_unchecked',
+                  child: Row(children: [
+                    Icon(Icons.playlist_add_check_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text('Copy unchecked'),
+                  ]),
+                ),
+              ];
+            },
+          ),
+        ),
+      ];
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final quickRecipes =
@@ -460,6 +577,7 @@ class _MainShellState extends State<MainShell> {
         onServingsChanged: _updateServings,
       ),
       ShoppingListScreen(
+        key: _shoppingListKey,
         plannedRecipes: _currentWeekPlannedRecipes,
         quickRecipes: quickRecipes,
         allRecipes: _recipes,
@@ -484,22 +602,7 @@ class _MainShellState extends State<MainShell> {
       appBar: AppBar(
         title: const BrandLogo(size: 19),
         centerTitle: false,
-        actions: _selectedIndex == 0
-            ? [
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: IconButton.filledTonal(
-                    icon: const Icon(Icons.add),
-                    tooltip: 'Add recipe',
-                    onPressed: () => _recipeListKey.currentState?.openAddRecipeScreen(),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFE8F5E9),
-                      foregroundColor: const Color(0xFF1B5E20),
-                    ),
-                  ),
-                ),
-              ]
-            : null,
+        actions: _buildAppBarActions(),
       ),
       body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())

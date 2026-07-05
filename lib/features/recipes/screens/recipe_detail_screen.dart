@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/meal_type.dart';
 import '../../../models/recipe.dart';
+import '../../../shared/app_constants.dart';
+import '../../../shared/meal_type_style.dart';
+import 'recipe_form_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
   final bool isInQuickList;
   final VoidCallback? onToggleQuickList;
+  final ValueChanged<Recipe>? onFavoriteToggled;
+  final bool canEdit;
+  final ValueChanged<Recipe>? onRecipeUpdated;
 
   const RecipeDetailScreen({
     super.key,
     required this.recipe,
     this.isInQuickList = false,
     this.onToggleQuickList,
+    this.onFavoriteToggled,
+    this.canEdit = false,
+    this.onRecipeUpdated,
   });
 
   @override
@@ -20,14 +30,16 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late bool _isInQuickList;
+  late Recipe _recipe;
 
   @override
   void initState() {
     super.initState();
     _isInQuickList = widget.isInQuickList;
+    _recipe = widget.recipe;
   }
 
-  Recipe get recipe => widget.recipe;
+  Recipe get recipe => _recipe;
 
   String _formatAmount(double amount) {
     if (amount == amount.roundToDouble()) {
@@ -36,30 +48,53 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return amount.toString();
   }
 
+  // Same green-family treatment as the Weekly Plan / Shopping List meal
+  // slots and the Recipes grid's category pill, so a category reads the
+  // same color everywhere in the app.
   Color _categoryColor(String category) {
     switch (category.toLowerCase()) {
       case 'breakfast':
-        return const Color(0xFFF57F17);
+        return MealType.breakfast.onSurfaceColor;
       case 'lunch':
-        return const Color(0xFF1565C0);
+        return MealType.lunch.onSurfaceColor;
       case 'dinner':
-        return const Color(0xFF4527A0);
+        return MealType.dinner.onSurfaceColor;
       default:
-        return const Color(0xFF2E7D32);
+        return AppColors.primaryDark;
     }
   }
 
   Color _categoryBgColor(String category) {
     switch (category.toLowerCase()) {
       case 'breakfast':
-        return const Color(0xFFFFF8E1);
+        return MealType.breakfast.surfaceColor;
       case 'lunch':
-        return const Color(0xFFE3F2FD);
+        return MealType.lunch.surfaceColor;
       case 'dinner':
-        return const Color(0xFFEDE7F6);
+        return MealType.dinner.surfaceColor;
       default:
-        return const Color(0xFFE8F5E9);
+        return AppColors.surfaceSoft;
     }
+  }
+
+  void _handleFavoriteToggle() {
+    final current = _recipe;
+    setState(() => _recipe = _recipe.copyWith(isFavorite: !_recipe.isFavorite));
+    widget.onFavoriteToggled?.call(current);
+  }
+
+  Future<void> _handleEdit() async {
+    final updated = await Navigator.of(context).push<Recipe>(
+      MaterialPageRoute(builder: (context) => RecipeFormScreen(initialRecipe: _recipe)),
+    );
+    if (updated == null) return;
+    setState(() => _recipe = updated);
+    widget.onRecipeUpdated?.call(updated);
+  }
+
+  void _handleQuickListToggle() {
+    setState(() => _isInQuickList = !_isInQuickList);
+    widget.onToggleQuickList!();
   }
 
   @override
@@ -68,24 +103,43 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       appBar: AppBar(
         title: Text(recipe.name),
         actions: [
-          if (recipe.isFavorite)
-            const Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: Icon(Icons.star, color: Color(0xFFF9A825)),
+          IconButton(
+            icon: Icon(
+              recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+            ),
+            color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
+            tooltip: recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+            onPressed: _handleFavoriteToggle,
+          ),
+          if (widget.canEdit)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit recipe',
+              onPressed: _handleEdit,
             ),
           if (widget.onToggleQuickList != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: IconButton(
-                icon: Icon(
-                  _isInQuickList ? Icons.shopping_cart : Icons.shopping_cart_outlined,
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'quick_list') _handleQuickListToggle();
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'quick_list',
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isInQuickList
+                            ? Icons.remove_shopping_cart_outlined
+                            : Icons.add_shopping_cart_outlined,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(_isInQuickList ? 'Remove from Quick List' : 'Add to Quick List'),
+                    ],
+                  ),
                 ),
-                tooltip: _isInQuickList ? 'Remove from Quick List' : 'Add to Quick List',
-                onPressed: () {
-                  setState(() => _isInQuickList = !_isInQuickList);
-                  widget.onToggleQuickList!();
-                },
-              ),
+              ],
             ),
         ],
       ),
@@ -190,30 +244,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ),
           ),
 
-          if (widget.onToggleQuickList != null) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: _isInQuickList
-                  ? OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() => _isInQuickList = false);
-                        widget.onToggleQuickList!();
-                      },
-                      icon: const Icon(Icons.shopping_cart),
-                      label: const Text('Remove from Shopping List'),
-                    )
-                  : FilledButton.icon(
-                      onPressed: () {
-                        setState(() => _isInQuickList = true);
-                        widget.onToggleQuickList!();
-                      },
-                      icon: const Icon(Icons.add_shopping_cart_outlined),
-                      label: const Text('Add to Shopping List'),
-                    ),
-            ),
-          ],
-
           const SizedBox(height: 20),
 
           // Ingredients
@@ -233,13 +263,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: AppColors.surfaceSoft,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.eco_outlined,
                         size: 18,
-                        color: Color(0xFF2E7D32),
+                        color: AppColors.primaryDark,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -264,7 +294,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: AppColors.surfaceSoft,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -272,7 +302,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.primaryDark,
                         ),
                       ),
                     ),
@@ -301,7 +331,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2E7D32),
+                        color: AppColors.primaryDark,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(
@@ -375,14 +405,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFF2E7D32), size: 22),
+          Icon(icon, color: AppColors.primaryDark, size: 22),
           const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2E7D32),
+              color: AppColors.primaryDark,
             ),
           ),
           Text(
@@ -398,7 +428,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return Container(
       width: 1,
       height: 40,
-      color: const Color(0xFFE8F5E9),
+      color: AppColors.surfaceSoft,
     );
   }
 
@@ -413,10 +443,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F5E9),
+            color: AppColors.surfaceSoft,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF2E7D32)),
+          child: Icon(icon, size: 18, color: AppColors.primaryDark),
         ),
         const SizedBox(width: 10),
         Text(

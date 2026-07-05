@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/meal_type.dart';
 import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/recipe_image.dart';
 import 'recipe_detail_screen.dart';
 import 'recipe_form_screen.dart';
@@ -40,19 +42,20 @@ class RecipeListScreenState extends State<RecipeListScreen> {
 
   static const _categories = ['Breakfast', 'Lunch', 'Dinner', 'Other'];
 
-  static const _categoryBg = {
-    'Breakfast': Color(0xFFFAEEDA),
-    'Lunch':     Color(0xFFE6F1FB),
-    'Dinner':    Color(0xFFEEEDFE),
-    'Other':     Color(0xFFEAF3DE),
-  };
-
-  static const _categoryIconColor = {
-    'Breakfast': Color(0xFFBF360C),
-    'Lunch':     Color(0xFF1565C0),
-    'Dinner':    Color(0xFF4527A0),
-    'Other':     Color(0xFF2E7D32),
-  };
+  // Same green-family treatment as the Weekly Plan / Shopping List meal
+  // slots, so a category reads the same color everywhere in the app.
+  (Color bg, Color fg) _categoryColors(String category) {
+    switch (category.toLowerCase()) {
+      case 'breakfast':
+        return (MealType.breakfast.surfaceColor, MealType.breakfast.onSurfaceColor);
+      case 'lunch':
+        return (MealType.lunch.surfaceColor, MealType.lunch.onSurfaceColor);
+      case 'dinner':
+        return (MealType.dinner.surfaceColor, MealType.dinner.onSurfaceColor);
+      default:
+        return (AppColors.surfaceSoft, AppColors.primaryDark);
+    }
+  }
 
   @override
   void dispose() {
@@ -196,24 +199,10 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     return parts.join(' · ');
   }
 
-  Widget _overlayIconButton({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return IconButton(
-      icon: Icon(icon, size: 20, color: color),
-      onPressed: onPressed,
-      padding: const EdgeInsets.all(6),
-      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.black.withValues(alpha: 0.28),
-        shape: const CircleBorder(),
-      ),
-    );
-  }
-
-  Widget _buildCardMenu(BuildContext context, Recipe recipe) {
+  // Shared 32x32 circular glyph used by both overlay buttons, so the star
+  // and the 3-dot menu line up pixel-for-pixel instead of each button
+  // centering its icon through slightly different internal machinery.
+  Widget _overlayCircle(IconData icon, Color color) {
     return Container(
       width: 32,
       height: 32,
@@ -221,40 +210,61 @@ class RecipeListScreenState extends State<RecipeListScreen> {
         color: Colors.black.withValues(alpha: 0.28),
         shape: BoxShape.circle,
       ),
-      child: PopupMenuButton<String>(
-        icon: const Icon(Icons.more_vert, size: 18, color: Colors.white),
-        padding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        onSelected: (value) {
-          if (value == 'edit') _openEditRecipeScreen(context, recipe);
-          if (value == 'delete') _confirmDeleteRecipe(context, recipe);
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'edit',
-            child: Row(children: [
-              Icon(Icons.edit_outlined, size: 18),
-              SizedBox(width: 10),
-              Text('Edit'),
-            ]),
-          ),
-          const PopupMenuItem(
-            value: 'delete',
-            child: Row(children: [
-              Icon(Icons.delete_outline, size: 18, color: Colors.red),
-              SizedBox(width: 10),
-              Text('Delete', style: TextStyle(color: Colors.red)),
-            ]),
-          ),
-        ],
+      child: Center(
+        child: Icon(icon, size: 18, color: color),
       ),
+    );
+  }
+
+  Widget _overlayIconButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        child: _overlayCircle(icon, color),
+      ),
+    );
+  }
+
+  Widget _buildCardMenu(BuildContext context, Recipe recipe) {
+    return PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: _overlayCircle(Icons.more_vert, Colors.white),
+      onSelected: (value) {
+        if (value == 'edit') _openEditRecipeScreen(context, recipe);
+        if (value == 'delete') _confirmDeleteRecipe(context, recipe);
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'edit',
+          child: Row(children: [
+            Icon(Icons.edit_outlined, size: 18),
+            SizedBox(width: 10),
+            Text('Edit'),
+          ]),
+        ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(children: [
+            Icon(Icons.delete_outline, size: 18, color: Colors.red),
+            SizedBox(width: 10),
+            Text('Delete', style: TextStyle(color: Colors.red)),
+          ]),
+        ),
+      ],
     );
   }
 
   Widget _buildRecipeCard(BuildContext context, Recipe recipe) {
     final isCustom = widget.canDeleteRecipe(recipe);
-    final categoryBg = _categoryBg[recipe.category] ?? const Color(0xFFEAF3DE);
-    final categoryColor = _categoryIconColor[recipe.category] ?? const Color(0xFF2E7D32);
+    final (categoryBg, categoryColor) = _categoryColors(recipe.category);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -266,6 +276,9 @@ class RecipeListScreenState extends State<RecipeListScreen> {
               recipe: recipe,
               isInQuickList: widget.quickRecipeIds.contains(recipe.id),
               onToggleQuickList: () => widget.onToggleQuickRecipe(recipe.id),
+              onFavoriteToggled: widget.onFavoriteToggled,
+              canEdit: isCustom,
+              onRecipeUpdated: widget.onRecipeUpdated,
             ),
           ),
         ),
@@ -421,7 +434,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                               child: Container(
                                 width: 16, height: 16,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFF2E7D32), shape: BoxShape.circle,
+                                  color: AppColors.primaryDark, shape: BoxShape.circle,
                                 ),
                                 child: Center(
                                   child: Text(

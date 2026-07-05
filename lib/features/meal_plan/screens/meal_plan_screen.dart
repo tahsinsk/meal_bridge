@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../models/meal_type.dart';
 import '../../../models/planned_recipe.dart';
 import '../../../models/recipe.dart';
+import '../../../shared/app_constants.dart';
+import '../../../shared/meal_type_style.dart';
+import 'add_to_plan_sheet.dart';
 
 class MealPlanScreen extends StatelessWidget {
   final List<Recipe> recipes;
   final Map<String, PlannedRecipe> plannedRecipes;
   final int weekOffset;
   final void Function(int) onWeekChanged;
-  final void Function(String day, Recipe recipe, [MealType? mealType]) onRecipeSelected;
+  final void Function(String day, Recipe recipe, int servings, [MealType? mealType]) onRecipeSelected;
   final void Function(String day, [MealType? mealType]) onRecipeRemoved;
   final void Function(String day, MealType? mealType, int delta) onServingsChanged;
 
@@ -73,120 +76,24 @@ class MealPlanScreen extends StatelessWidget {
     return '$day-${mealType.name}';
   }
 
-  IconData _mealIcon(MealType mealType) {
-    switch (mealType) {
-      case MealType.breakfast: return Icons.free_breakfast_outlined;
-      case MealType.lunch:     return Icons.set_meal_outlined;
-      case MealType.dinner:    return Icons.dinner_dining_outlined;
+  String _recipeMetaInfo(Recipe recipe) {
+    if (recipe.calories != null) {
+      return '${(recipe.calories! / recipe.servings).round()} kcal/serving';
     }
+    return '${recipe.ingredients.length} ingredients';
   }
 
-  Color _mealColor(MealType mealType) {
-    switch (mealType) {
-      case MealType.breakfast: return const Color(0xFFBF360C);
-      case MealType.lunch:     return const Color(0xFF1565C0);
-      case MealType.dinner:    return const Color(0xFF4527A0);
-    }
-  }
-
-  Color _mealBgColor(MealType mealType) {
-    switch (mealType) {
-      case MealType.breakfast: return const Color(0xFFFFF3E0);
-      case MealType.lunch:     return const Color(0xFFE3F2FD);
-      case MealType.dinner:    return const Color(0xFFEDE7F6);
-    }
-  }
-
-  void _selectRecipeForDay(BuildContext context, String day, [MealType? mealType]) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Row(
-                    children: [
-                      if (mealType != null) ...[
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: _mealBgColor(mealType),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(_mealIcon(mealType), color: _mealColor(mealType), size: 20),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        child: Text(
-                          mealType == null
-                              ? 'Select recipe for $day'
-                              : '${mealType.label} for $day',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: recipes.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Text('No recipes yet. Add a recipe first.'),
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.all(8),
-                          itemCount: recipes.length,
-                          itemBuilder: (context, index) {
-                            final recipe = recipes[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              child: ListTile(
-                                leading: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE8F5E9),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.restaurant_menu_outlined,
-                                      color: Color(0xFF2E7D32), size: 20),
-                                ),
-                                title: Text(recipe.name),
-                                subtitle: Text('${recipe.category} · ${recipe.servings} servings'),
-                                trailing: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32)),
-                                onTap: () {
-                                  onRecipeSelected(day, recipe, mealType);
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+  void _openAddToPlanSheet(BuildContext context, String day, MealType mealType) {
+    showAddToPlanSheet(
+      context,
+      recipes: recipes,
+      day: day,
+      mealType: mealType,
+      onAdd: (recipe, servings) => onRecipeSelected(day, recipe, servings, mealType),
     );
   }
 
-  Widget _buildMiniStepper(BuildContext context, String day, MealType? mealType, PlannedRecipe pr) {
-    final color = mealType != null ? _mealColor(mealType) : const Color(0xFF2E7D32);
+  Widget _buildMiniStepper(BuildContext context, String day, MealType? mealType, PlannedRecipe pr, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -223,12 +130,12 @@ class MealPlanScreen extends StatelessWidget {
 
   Widget _buildMealRow(BuildContext context, String day, MealType mealType) {
     final pr = plannedRecipes[_mealPlanKey(day, mealType)];
-    final bg = _mealBgColor(mealType);
-    final iconColor = _mealColor(mealType);
+    final bg = mealType.surfaceColor;
+    final onBg = mealType.onSurfaceColor;
     final isPlanned = pr != null;
 
     return GestureDetector(
-      onTap: isPlanned ? null : () => _selectRecipeForDay(context, day, mealType),
+      onTap: isPlanned ? null : () => _openAddToPlanSheet(context, day, mealType),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
@@ -239,7 +146,7 @@ class MealPlanScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           child: Row(
             children: [
-              Icon(_mealIcon(mealType), size: 18, color: iconColor),
+              Icon(mealType.icon, size: 18, color: onBg),
               const SizedBox(width: 8),
               Expanded(
                 child: isPlanned
@@ -248,14 +155,14 @@ class MealPlanScreen extends StatelessWidget {
                         children: [
                           Text(
                             pr.recipe.name,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onBg),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            '${pr.recipe.ingredients.length} ingredients',
-                            style: TextStyle(fontSize: 11, color: iconColor.withValues(alpha: 0.7)),
+                            _recipeMetaInfo(pr.recipe),
+                            style: TextStyle(fontSize: 11, color: onBg.withValues(alpha: 0.75)),
                           ),
                         ],
                       )
@@ -263,28 +170,20 @@ class MealPlanScreen extends StatelessWidget {
                         'Add ${mealType.label}',
                         style: TextStyle(
                           fontSize: 13,
-                          color: iconColor.withValues(alpha: 0.6),
+                          color: onBg.withValues(alpha: 0.7),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
               ),
               if (isPlanned) ...[
-                _buildMiniStepper(context, day, mealType, pr),
-                const SizedBox(width: 6),
+                _buildMiniStepper(context, day, mealType, pr, onBg),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => onRecipeRemoved(day, mealType),
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.close, size: 13, color: iconColor),
-                  ),
+                  child: Icon(Icons.close, size: 16, color: onBg.withValues(alpha: 0.45)),
                 ),
               ] else
-                Icon(Icons.add, size: 16, color: iconColor.withValues(alpha: 0.5)),
+                Icon(Icons.add, size: 16, color: onBg.withValues(alpha: 0.5)),
             ],
           ),
         ),
@@ -296,14 +195,14 @@ class MealPlanScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
+        color: AppColors.surfaceSoft,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         child: Row(
           children: [
-            const Icon(Icons.restaurant_menu_outlined, size: 18, color: Color(0xFF2E7D32)),
+            const Icon(Icons.restaurant_menu_outlined, size: 18, color: AppColors.primaryDark),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -317,25 +216,17 @@ class MealPlanScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 1),
                   Text(
-                    '${pr.recipe.ingredients.length} ingredients',
-                    style: TextStyle(fontSize: 11, color: const Color(0xFF2E7D32).withValues(alpha: 0.7)),
+                    _recipeMetaInfo(pr.recipe),
+                    style: TextStyle(fontSize: 11, color: AppColors.primaryDark.withValues(alpha: 0.7)),
                   ),
                 ],
               ),
             ),
-            _buildMiniStepper(context, day, null, pr),
-            const SizedBox(width: 6),
+            _buildMiniStepper(context, day, null, pr, AppColors.primaryDark),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => onRecipeRemoved(day),
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, size: 13, color: Color(0xFF2E7D32)),
-              ),
+              child: Icon(Icons.close, size: 16, color: AppColors.primaryDark.withValues(alpha: 0.45)),
             ),
           ],
         ),
@@ -349,8 +240,6 @@ class MealPlanScreen extends StatelessWidget {
         .map((m) => MapEntry(m, plannedRecipes[_mealPlanKey(day, m)]))
         .where((e) => e.value != null)
         .toList();
-    final mealsPlanned = mealEntries.length + (legacyPr != null && mealEntries.isEmpty ? 1 : 0);
-    final isDayPlanned = mealsPlanned > 0;
 
     // Highlight today's card
     final monday = _mondayForOffset(weekOffset);
@@ -366,7 +255,7 @@ class MealPlanScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: isToday
-            ? const BorderSide(color: Color(0xFF2E7D32), width: 2)
+            ? const BorderSide(color: AppColors.primaryDark, width: 2)
             : BorderSide.none,
       ),
       child: Padding(
@@ -374,62 +263,40 @@ class MealPlanScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Day header row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            // Day header
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          day,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: isToday ? const Color(0xFF2E7D32) : null,
-                          ),
-                        ),
-                        if (isToday) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2E7D32),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'Today',
-                              style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
                     Text(
-                      _dayDate(day),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                if (isDayPlanned)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '$mealsPlanned meal${mealsPlanned != 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF2E7D32),
-                        fontWeight: FontWeight.w600,
+                      day,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: isToday ? AppColors.primaryDark : null,
                       ),
                     ),
-                  ),
+                    if (isToday) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryDark,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Today',
+                          style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Text(
+                  _dayDate(day),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                ),
               ],
             ),
 
@@ -449,17 +316,10 @@ class MealPlanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final plannedDayCount = _days.where((day) {
-      return plannedRecipes.containsKey(_mealPlanKey(day)) ||
-          _mealTypes.any((m) => plannedRecipes.containsKey(_mealPlanKey(day, m)));
-    }).length;
-    final plannedMealCount = plannedRecipes.length;
-    final progress = plannedDayCount / _days.length;
-
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Week navigation
+        // Week navigation + general add
         Card(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -468,7 +328,7 @@ class MealPlanScreen extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () => onWeekChanged(weekOffset - 1),
-                  color: const Color(0xFF2E7D32),
+                  color: AppColors.primaryDark,
                 ),
                 Expanded(
                   child: Column(
@@ -489,84 +349,8 @@ class MealPlanScreen extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () => onWeekChanged(weekOffset + 1),
-                  color: const Color(0xFF2E7D32),
+                  color: AppColors.primaryDark,
                 ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Summary card
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            plannedDayCount == 0
-                                ? 'Nothing planned yet'
-                                : plannedDayCount == 7
-                                    ? 'Full week planned!'
-                                    : '$plannedDayCount of 7 days planned',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          if (plannedMealCount > 0) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              '$plannedMealCount meal${plannedMealCount != 1 ? 's' : ''} total',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: _days.map((day) {
-                        final hasAny = plannedRecipes.containsKey(_mealPlanKey(day)) ||
-                            _mealTypes.any((m) => plannedRecipes.containsKey(_mealPlanKey(day, m)));
-                        return Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(left: 4),
-                          decoration: BoxDecoration(
-                            color: hasAny ? const Color(0xFF2E7D32) : const Color(0xFFE8F5E9),
-                            shape: BoxShape.circle,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: const Color(0xFFE8F5E9),
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      plannedDayCount == 7
-                          ? const Color(0xFF2E7D32)
-                          : const Color(0xFF81C784),
-                    ),
-                  ),
-                ),
-                if (plannedDayCount == 0) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    'Tap "Add breakfast/lunch/dinner" on any day to start.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
               ],
             ),
           ),

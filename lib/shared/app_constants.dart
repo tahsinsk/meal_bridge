@@ -1,5 +1,15 @@
 import 'package:flutter/material.dart';
 
+/// Single source of truth for the MealBridge brand palette. All screens
+/// should reference these instead of introducing their own green shades (or
+/// unrelated hues) so the app reads as one consistent palette.
+class AppColors {
+  static const Color primaryDark = Color(0xFF2E7D32);
+  static const Color accentMid = Color(0xFF66BB6A);
+  static const Color surfaceSoft = Color(0xFFE8F3E9);
+  static const Color creamBackground = Color(0xFFFAFBF7);
+}
+
 class AppRadius {
   static const double small = 12;
   static const double medium = 20;
