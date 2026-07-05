@@ -10,6 +10,7 @@ class Recipe {
   final String? notes;
   final bool isFavorite;
   final int? calories;
+  final String? imagePath;
 
   const Recipe({
     required this.id,
@@ -21,6 +22,7 @@ class Recipe {
     this.notes,
     this.isFavorite = false,
     this.calories,
+    this.imagePath,
   });
 
   Recipe copyWith({
@@ -33,6 +35,7 @@ class Recipe {
     String? notes,
     bool? isFavorite,
     int? calories,
+    String? imagePath,
   }) {
     return Recipe(
       id: id ?? this.id,
@@ -44,6 +47,7 @@ class Recipe {
       notes: notes ?? this.notes,
       isFavorite: isFavorite ?? this.isFavorite,
       calories: calories ?? this.calories,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 
@@ -58,6 +62,7 @@ class Recipe {
       'notes': notes,
       'isFavorite': isFavorite,
       'calories': calories,
+      'imagePath': imagePath,
     };
   }
 
@@ -77,6 +82,7 @@ class Recipe {
       notes: json['notes'] as String?,
       isFavorite: json['isFavorite'] as bool? ?? false,
       calories: json['calories'] as int?,
+      imagePath: json['imagePath'] as String?,
     );
   }
 }

@@ -556,7 +556,7 @@ class MealPlanScreen extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(
                       plannedDayCount == 7
                           ? const Color(0xFF2E7D32)
-                          : const Color(0xFF66BB6A),
+                          : const Color(0xFF81C784),
                     ),
                   ),
                 ),

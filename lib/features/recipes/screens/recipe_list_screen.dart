@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/recipe.dart';
+import '../../../shared/app_constants.dart';
+import '../../../shared/widgets/recipe_image.dart';
 import 'recipe_detail_screen.dart';
 import 'recipe_form_screen.dart';
 
@@ -27,10 +29,10 @@ class RecipeListScreen extends StatefulWidget {
   });
 
   @override
-  State<RecipeListScreen> createState() => _RecipeListScreenState();
+  State<RecipeListScreen> createState() => RecipeListScreenState();
 }
 
-class _RecipeListScreenState extends State<RecipeListScreen> {
+class RecipeListScreenState extends State<RecipeListScreen> {
   final _searchController = TextEditingController();
   var _searchQuery = '';
   var _showFavoritesOnly = false;
@@ -43,13 +45,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     'Lunch':     Color(0xFFE6F1FB),
     'Dinner':    Color(0xFFEEEDFE),
     'Other':     Color(0xFFEAF3DE),
-  };
-
-  static const _categoryIcon = {
-    'Breakfast': Icons.free_breakfast_outlined,
-    'Lunch':     Icons.set_meal_outlined,
-    'Dinner':    Icons.dinner_dining_outlined,
-    'Other':     Icons.restaurant_menu_outlined,
   };
 
   static const _categoryIconColor = {
@@ -81,7 +76,8 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     });
   }
 
-  Future<void> _openAddRecipeScreen(BuildContext context) async {
+  /// Public so [MainShell]'s AppBar "+" action can trigger it via a GlobalKey.
+  Future<void> openAddRecipeScreen() async {
     final newRecipe = await Navigator.of(context).push<Recipe>(
       MaterialPageRoute(builder: (context) => const RecipeFormScreen()),
     );
@@ -200,11 +196,65 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     return parts.join(' · ');
   }
 
+  Widget _overlayIconButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      icon: Icon(icon, size: 20, color: color),
+      onPressed: onPressed,
+      padding: const EdgeInsets.all(6),
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.black.withValues(alpha: 0.28),
+        shape: const CircleBorder(),
+      ),
+    );
+  }
+
+  Widget _buildCardMenu(BuildContext context, Recipe recipe) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.28),
+        shape: BoxShape.circle,
+      ),
+      child: PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert, size: 18, color: Colors.white),
+        padding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onSelected: (value) {
+          if (value == 'edit') _openEditRecipeScreen(context, recipe);
+          if (value == 'delete') _confirmDeleteRecipe(context, recipe);
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem(
+            value: 'edit',
+            child: Row(children: [
+              Icon(Icons.edit_outlined, size: 18),
+              SizedBox(width: 10),
+              Text('Edit'),
+            ]),
+          ),
+          const PopupMenuItem(
+            value: 'delete',
+            child: Row(children: [
+              Icon(Icons.delete_outline, size: 18, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Delete', style: TextStyle(color: Colors.red)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRecipeCard(BuildContext context, Recipe recipe) {
     final isCustom = widget.canDeleteRecipe(recipe);
-    final bg = _categoryBg[recipe.category] ?? const Color(0xFFEAF3DE);
-    final icon = _categoryIcon[recipe.category] ?? Icons.restaurant_menu_outlined;
-    final iconColor = _categoryIconColor[recipe.category] ?? const Color(0xFF2E7D32);
+    final categoryBg = _categoryBg[recipe.category] ?? const Color(0xFFEAF3DE);
+    final categoryColor = _categoryIconColor[recipe.category] ?? const Color(0xFF2E7D32);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -222,95 +272,66 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Colored header
-            Container(
-              height: 72,
-              color: bg,
+            // Photo area — favorite + (for custom recipes) edit/delete float on top,
+            // keeping the text content below free of a fragile bottom action row.
+            SizedBox(
+              height: 104,
+              width: double.infinity,
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Center(
-                    child: Icon(icon, size: 38, color: iconColor.withValues(alpha: 0.85)),
-                  ),
+                  RecipeImage(imagePath: recipe.imagePath, iconSize: 34),
                   Positioned(
-                    top: 4,
-                    right: 4,
-                    child: IconButton(
-                      icon: Icon(
-                        recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-                        size: 20,
-                        color: recipe.isFavorite
-                            ? const Color(0xFFF9A825)
-                            : iconColor.withValues(alpha: 0.35),
-                      ),
+                    top: 6,
+                    right: 6,
+                    child: _overlayIconButton(
+                      icon: recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: recipe.isFavorite ? const Color(0xFFF9A825) : Colors.white,
                       onPressed: () => widget.onFavoriteToggled(recipe),
-                      padding: const EdgeInsets.all(6),
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.3),
-                        shape: const CircleBorder(),
-                      ),
                     ),
                   ),
+                  if (isCustom)
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: _buildCardMenu(context, recipe),
+                    ),
                 ],
               ),
             ),
 
             // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      recipe.name,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recipe.name,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.25),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: categoryBg,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _subtitle(recipe),
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Text(
+                      recipe.category,
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: categoryColor),
                     ),
-                    const Spacer(),
-                    if (isCustom)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: PopupMenuButton<String>(
-                          icon: Icon(Icons.more_horiz, size: 18, color: Colors.grey[400]),
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          onSelected: (value) {
-                            if (value == 'edit') _openEditRecipeScreen(context, recipe);
-                            if (value == 'delete') _confirmDeleteRecipe(context, recipe);
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Row(children: [
-                                Icon(Icons.edit_outlined, size: 18),
-                                SizedBox(width: 10),
-                                Text('Edit'),
-                              ]),
-                            ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(children: [
-                                Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                SizedBox(width: 10),
-                                Text('Delete', style: TextStyle(color: Colors.red)),
-                              ]),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _subtitle(recipe),
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],
@@ -352,16 +373,13 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Your recipes',
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: Color(0xFF1A1C19)),
-                  ),
+                  const Text('Your recipes', style: AppTextStyles.pageHeading),
                   const SizedBox(height: 2),
                   Text(
                     favoriteCount > 0
                         ? '$totalCount recipe${totalCount != 1 ? 's' : ''} · $favoriteCount favorite${favoriteCount != 1 ? 's' : ''}'
                         : '$totalCount recipe${totalCount != 1 ? 's' : ''}',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: AppTextStyles.pageSubtitle,
                   ),
                   const SizedBox(height: 14),
                   Row(
@@ -370,8 +388,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            labelText: 'Search recipes',
-                            hintText: 'Name or category',
+                            hintText: 'Search recipes by name or category',
                             prefixIcon: const Icon(Icons.search),
                             suffixIcon: query.isEmpty
                                 ? null
@@ -382,7 +399,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                                     },
                                     icon: const Icon(Icons.clear),
                                   ),
-                            border: const OutlineInputBorder(),
                           ),
                           onChanged: (v) => setState(() => _searchQuery = v),
                         ),
@@ -390,18 +406,15 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                       const SizedBox(width: 8),
                       Stack(
                         children: [
-                          IconButton.outlined(
-                            onPressed: () => _showFilterSheet(context),
-                            icon: const Icon(Icons.filter_list_outlined),
-                            style: IconButton.styleFrom(
-                              side: BorderSide(
-                                color: _activeFilterCount > 0
-                                    ? const Color(0xFF2E7D32)
-                                    : Theme.of(context).dividerColor,
-                                width: _activeFilterCount > 0 ? 2 : 1,
-                              ),
-                            ),
-                          ),
+                          _activeFilterCount > 0
+                              ? IconButton.filled(
+                                  onPressed: () => _showFilterSheet(context),
+                                  icon: const Icon(Icons.filter_list),
+                                )
+                              : IconButton.filledTonal(
+                                  onPressed: () => _showFilterSheet(context),
+                                  icon: const Icon(Icons.filter_list_outlined),
+                                ),
                           if (_activeFilterCount > 0)
                             Positioned(
                               right: 6, top: 6,
@@ -513,10 +526,14 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                           ),
                         ],
                         if (totalCount == 0) ...[
-                          const SizedBox(height: 16),
-                          const Chip(
-                            avatar: Icon(Icons.add, size: 18),
-                            label: Text('Use Add Recipe'),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: openAddRecipeScreen,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add your first recipe'),
+                            ),
                           ),
                         ],
                       ],
@@ -527,13 +544,13 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               sliver: SliverGrid.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  mainAxisExtent: 178,
+                  mainAxisExtent: 210,
                 ),
                 itemCount: filteredRecipes.length,
                 itemBuilder: (context, index) =>
@@ -541,11 +558,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               ),
             ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openAddRecipeScreen(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Recipe'),
       ),
     );
   }

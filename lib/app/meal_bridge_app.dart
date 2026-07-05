@@ -9,6 +9,7 @@ import '../models/meal_type.dart';
 import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
+import '../shared/widgets/brand_logo.dart';
 
 
 class MealBridgeApp extends StatelessWidget {
@@ -38,51 +39,43 @@ class MealBridgeApp extends StatelessWidget {
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0,
-          backgroundColor: Color(0xFF2E7D32),
-          foregroundColor: Colors.white,
-          iconTheme: IconThemeData(color: Colors.white),
-          actionsIconTheme: IconThemeData(color: Colors.white),
+          backgroundColor: Color(0xFFF4F9F1),
+          foregroundColor: Color(0xFF1A1C19),
+          iconTheme: IconThemeData(color: Color(0xFF1A1C19)),
+          actionsIconTheme: IconThemeData(color: Color(0xFF1A1C19)),
           titleTextStyle: TextStyle(
-            color: Colors.white,
+            color: Color(0xFF1A1C19),
             fontSize: 20,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
           ),
         ),
         cardTheme: CardThemeData(
-          elevation: 0,
-          shadowColor: Colors.transparent,
+          elevation: 1.5,
+          shadowColor: Colors.black.withValues(alpha: 0.06),
           surfaceTintColor: Colors.transparent,
           margin: EdgeInsets.zero,
           color: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFF1F7EE),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
-            ),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
-            ),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(
               color: Color(0xFF2E7D32),
-              width: 2,
+              width: 1.5,
             ),
           ),
           labelStyle: const TextStyle(color: Color(0xFF388E3C)),
@@ -96,7 +89,7 @@ class MealBridgeApp extends StatelessWidget {
             minimumSize: const Size(0, 48),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
             textStyle: const TextStyle(
               fontSize: 15,
@@ -122,7 +115,7 @@ class MealBridgeApp extends StatelessWidget {
             minimumSize: const Size(0, 48),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
         ),
@@ -218,6 +211,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   final RecipeStorageService _recipeStorageService = RecipeStorageService();
+  final _recipeListKey = GlobalKey<RecipeListScreenState>();
 
   int _selectedIndex = 0;
   bool _isLoadingData = true;
@@ -437,21 +431,6 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCustomQuickItems(_customQuickItems);
   }
 
-String get _title {
-    switch (_selectedIndex) {
-      case 0:
-        return 'Recipes';
-      case 1:
-        return 'Weekly Plan';
-      case 2:
-        return 'Shopping List';
-      case 3:
-        return 'Settings';
-      default:
-        return 'MealBridge';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final quickRecipes =
@@ -461,6 +440,7 @@ String get _title {
 
     final screens = [
       RecipeListScreen(
+        key: _recipeListKey,
         recipes: _recipes,
         canDeleteRecipe: _isCustomRecipe,
         onRecipeAdded: _addRecipe,
@@ -498,7 +478,29 @@ String get _title {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(_title), centerTitle: false),
+      // Each screen keeps its own large in-content heading as the real
+      // title ("Your recipes", the week title, etc.); the AppBar just shows
+      // the MealBridge brand mark on every tab instead of a duplicated title.
+      appBar: AppBar(
+        title: const BrandLogo(size: 19),
+        centerTitle: false,
+        actions: _selectedIndex == 0
+            ? [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: IconButton.filledTonal(
+                    icon: const Icon(Icons.add),
+                    tooltip: 'Add recipe',
+                    onPressed: () => _recipeListKey.currentState?.openAddRecipeScreen(),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFE8F5E9),
+                      foregroundColor: const Color(0xFF1B5E20),
+                    ),
+                  ),
+                ),
+              ]
+            : null,
+      ),
       body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())
           : screens[_selectedIndex],

@@ -864,7 +864,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       minHeight: 8,
                       backgroundColor: const Color(0xFFE8F5E9),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        allChecked ? const Color(0xFF2E7D32) : const Color(0xFF66BB6A),
+                        allChecked ? const Color(0xFF2E7D32) : const Color(0xFF81C784),
                       ),
                     ),
                   ),
