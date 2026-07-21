@@ -11,6 +11,7 @@ import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../shared/app_constants.dart';
+import '../shared/widgets/brand_logo.dart';
 
 
 class MealBridgeApp extends StatelessWidget {
@@ -517,24 +518,28 @@ class _MainShellState extends State<MainShell> {
       ),
     ];
 
+    final appBarActions = _buildAppBarActions();
+    // Only reserve an AppBar when there's a logo (Recipes) or actions
+    // (Shopping) to show in it — otherwise it's just a blank bar pushing
+    // content down for no reason, so we skip it and let the body sit at
+    // the top (behind a SafeArea, since there's no AppBar to clear the
+    // status bar for us).
+    final showAppBar = _selectedIndex == 0 || (appBarActions?.isNotEmpty ?? false);
+
     return Scaffold(
       // Each screen keeps its own large in-content heading as the real
       // title ("Your recipes", the week title, etc.); the AppBar only shows
       // the brand logo on the Recipes tab, and stays title-less elsewhere.
-      appBar: AppBar(
-        title: _selectedIndex == 0
-            ? Image.asset(
-                'assets/images/logo_full_horizontal_transparent.png',
-                height: 30,
-                fit: BoxFit.contain,
-              )
-            : null,
-        centerTitle: false,
-        actions: _buildAppBarActions(),
-      ),
+      appBar: showAppBar
+          ? AppBar(
+              title: _selectedIndex == 0 ? const BrandLogo(size: 34) : null,
+              centerTitle: false,
+              actions: appBarActions,
+            )
+          : null,
       body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())
-          : screens[_selectedIndex],
+          : (showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex])),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
