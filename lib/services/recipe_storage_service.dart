@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/ingredient.dart';
 import '../models/recipe.dart';
 
 class RecipeStorageService {
@@ -10,6 +11,7 @@ class RecipeStorageService {
   static const String _checkedShoppingItemsKey = 'checked_shopping_items';
   static const String _quickRecipeIdsKey = 'quick_recipe_ids';
   static const String _customQuickItemsKey = 'custom_quick_items';
+  static const String _recipeGridViewKey = 'recipe_grid_view';
 
   Future<List<Recipe>> loadRecipes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -96,16 +98,34 @@ class RecipeStorageService {
     await prefs.setString(_quickRecipeIdsKey, jsonEncode(recipeIds.toList()));
   }
 
-  Future<List<String>> loadCustomQuickItems() async {
+  Future<List<Ingredient>> loadCustomQuickItems() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_customQuickItemsKey);
     if (jsonString == null || jsonString.isEmpty) return [];
     final jsonList = jsonDecode(jsonString) as List<dynamic>;
-    return jsonList.map((item) => item as String).toList();
+    return jsonList.map((item) {
+      // Backward compatible with the old format, which stored bare item
+      // names (List<String>) with no amount/unit.
+      if (item is String) return Ingredient(name: item, amount: 1, unit: '');
+      return Ingredient.fromJson(item as Map<String, dynamic>);
+    }).toList();
   }
 
-  Future<void> saveCustomQuickItems(List<String> items) async {
+  Future<void> saveCustomQuickItems(List<Ingredient> items) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_customQuickItemsKey, jsonEncode(items));
+    await prefs.setString(
+      _customQuickItemsKey,
+      jsonEncode(items.map((i) => i.toJson()).toList()),
+    );
+  }
+
+  Future<bool> loadRecipeGridView() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_recipeGridViewKey) ?? true;
+  }
+
+  Future<void> saveRecipeGridView(bool isGridView) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_recipeGridViewKey, isGridView);
   }
 }

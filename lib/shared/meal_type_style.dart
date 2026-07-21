@@ -11,9 +11,9 @@ extension MealTypeStyle on MealType {
       case MealType.breakfast:
         return Icons.egg_outlined;
       case MealType.lunch:
-        return Icons.rice_bowl_outlined;
+        return Icons.lunch_dining;
       case MealType.dinner:
-        return Icons.dinner_dining_outlined;
+        return Icons.dinner_dining;
     }
   }
 

@@ -4,6 +4,7 @@ class ShoppingListItem {
   final String unit;
   final String category;
   final bool isChecked;
+  final bool isCustom;
 
   const ShoppingListItem({
     required this.name,
@@ -11,6 +12,7 @@ class ShoppingListItem {
     required this.unit,
     required this.category,
     this.isChecked = false,
+    this.isCustom = false,
   });
 
   ShoppingListItem copyWith({
@@ -19,6 +21,7 @@ class ShoppingListItem {
     String? unit,
     String? category,
     bool? isChecked,
+    bool? isCustom,
   }) {
     return ShoppingListItem(
       name: name ?? this.name,
@@ -26,6 +29,7 @@ class ShoppingListItem {
       unit: unit ?? this.unit,
       category: category ?? this.category,
       isChecked: isChecked ?? this.isChecked,
+      isCustom: isCustom ?? this.isCustom,
     );
   }
 }

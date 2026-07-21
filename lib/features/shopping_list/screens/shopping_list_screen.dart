@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../data/shopping_list_generator.dart';
+import '../../../models/ingredient.dart';
 import '../../../models/meal_type.dart';
 import '../../../models/planned_recipe.dart';
 import '../../../models/recipe.dart';
@@ -36,11 +36,10 @@ class ShoppingListScreen extends StatefulWidget {
   final List<Recipe> allRecipes;
   final Set<String> checkedItemKeys;
   final void Function(String itemKey, bool isChecked) onItemCheckedChanged;
-  final VoidCallback onClearCheckedItems;
   final void Function(String recipeId) onToggleQuickRecipe;
   final VoidCallback onClearQuickRecipes;
-  final List<String> customQuickItems;
-  final void Function(String itemName) onAddCustomItem;
+  final List<Ingredient> customQuickItems;
+  final void Function(Ingredient item) onAddCustomItem;
   final void Function(String itemName) onRemoveCustomItem;
 
   const ShoppingListScreen({
@@ -50,7 +49,6 @@ class ShoppingListScreen extends StatefulWidget {
     required this.allRecipes,
     required this.checkedItemKeys,
     required this.onItemCheckedChanged,
-    required this.onClearCheckedItems,
     required this.onToggleQuickRecipe,
     required this.onClearQuickRecipes,
     required this.customQuickItems,
@@ -64,8 +62,11 @@ class ShoppingListScreen extends StatefulWidget {
 
 class ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _isQuickMode = false;
-  bool _checkedAtBottom = true;
   bool _groupByRecipe = false;
+
+  // Checked items always sink to the bottom of each section/category —
+  // there's no user-facing toggle for this anymore, just a sane default.
+  static const _checkedAtBottom = true;
 
   static const List<String> _categoryOrder = [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
@@ -94,15 +95,22 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     }
 
     final recipeShoppingItems = generateShoppingListFromRecipes(activeRecipes, multipliers: activeMultipliers);
-    final customShoppingItems = widget.customQuickItems.isNotEmpty
-        ? widget.customQuickItems
-            .map((name) => ShoppingListItem(name: name, amount: 1, unit: '', category: 'Other'))
-            .toList()
-        : <ShoppingListItem>[];
-    final items = [...recipeShoppingItems, ...customShoppingItems];
+    final items = [...recipeShoppingItems, ..._customShoppingItems()];
     final hasContent = activeRecipes.isNotEmpty || widget.customQuickItems.isNotEmpty;
 
     return (items: items, hasContent: hasContent);
+  }
+
+  List<ShoppingListItem> _customShoppingItems() {
+    return widget.customQuickItems
+        .map((i) => ShoppingListItem(
+              name: i.name,
+              amount: i.amount,
+              unit: i.unit,
+              category: i.resolvedCategory,
+              isCustom: true,
+            ))
+        .toList();
   }
 
   Map<String, List<ShoppingListItem>> _computeGroupedItems(List<ShoppingListItem> items) {
@@ -115,9 +123,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     return _groupItemsByCategory(sorted);
   }
 
-  // --- Public API for MainShell's AppBar actions on this tab ---
-
-  bool get hasCheckedItems => widget.checkedItemKeys.isNotEmpty;
+  // --- Public API for MainShell's AppBar "add item" action on this tab ---
 
   bool get allItemsChecked {
     final items = _computeShoppingItems().items;
@@ -135,18 +141,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  void clearChecked() => widget.onClearCheckedItems();
-
-  bool get checkedItemsAtBottom => _checkedAtBottom;
-
-  void toggleCheckedAtBottom() => setState(() => _checkedAtBottom = !_checkedAtBottom);
-
-  Future<void> copyList() =>
-      _copyShoppingList(context, _computeGroupedItems(_computeShoppingItems().items));
-
-  Future<void> copyUnchecked() =>
-      _copyUncheckedShoppingList(context, _computeGroupedItems(_computeShoppingItems().items));
-
   void openAddCustomItemSheet() {
     showAddCustomItemSheet(
       context,
@@ -163,8 +157,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
 
   String _itemKey(ShoppingListItem item) =>
       '${item.name.toLowerCase()}-${item.unit.toLowerCase()}';
-
-  String _customItemKey(String name) => '${name.toLowerCase()}-';
 
   String _formatPlanKey(String key) {
     final dash = key.lastIndexOf('-');
@@ -267,17 +259,11 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     for (final item in items) {
       widget.onItemCheckedChanged(_itemKey(item), true);
     }
-    for (final name in widget.customQuickItems) {
-      widget.onItemCheckedChanged(_customItemKey(name), true);
-    }
   }
 
   void _uncheckAll(List<ShoppingListItem> items) {
     for (final item in items) {
       widget.onItemCheckedChanged(_itemKey(item), false);
-    }
-    for (final name in widget.customQuickItems) {
-      widget.onItemCheckedChanged(_customItemKey(name), false);
     }
   }
 
@@ -291,57 +277,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     for (final item in items) {
       widget.onItemCheckedChanged(_itemKey(item), check);
     }
-  }
-
-  Future<void> _copyShoppingList(
-    BuildContext context,
-    Map<String, List<ShoppingListItem>> groupedItems,
-  ) async {
-    final buffer = StringBuffer('MealBridge Shopping List\n\n');
-    for (final entry in groupedItems.entries) {
-      buffer.writeln(entry.key);
-      for (final item in entry.value) {
-        final isChecked = widget.checkedItemKeys.contains(_itemKey(item));
-        final amountStr = item.unit.isEmpty ? '' : '${_formatAmount(item.amount)} ${item.unit} ';
-        buffer.writeln('${isChecked ? '[x]' : '[ ]'} $amountStr${item.name}');
-      }
-      buffer.writeln();
-    }
-    await Clipboard.setData(ClipboardData(text: buffer.toString().trim()));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Shopping list copied.')),
-    );
-  }
-
-  Future<void> _copyUncheckedShoppingList(
-    BuildContext context,
-    Map<String, List<ShoppingListItem>> groupedItems,
-  ) async {
-    final buffer = StringBuffer('MealBridge Shopping List\n\n');
-    for (final entry in groupedItems.entries) {
-      final unchecked = entry.value.where((i) => !widget.checkedItemKeys.contains(_itemKey(i)));
-      if (unchecked.isEmpty) continue;
-      buffer.writeln(entry.key);
-      for (final item in unchecked) {
-        final amountStr = item.unit.isEmpty ? '' : '${_formatAmount(item.amount)} ${item.unit} ';
-        buffer.writeln('[ ] $amountStr${item.name}');
-      }
-      buffer.writeln();
-    }
-    final text = buffer.toString().trim();
-    if (text == 'MealBridge Shopping List') {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No unchecked items to copy.')),
-      );
-      return;
-    }
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Unchecked shopping items copied.')),
-    );
   }
 
   Widget _buildInlineRecipeSelector() {
@@ -500,12 +435,13 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _buildCustomItemsSection() {
-    final displayNames = _checkedAtBottom
+    final customItems = _customShoppingItems();
+    final displayItems = _checkedAtBottom
         ? [
-            ...widget.customQuickItems.where((n) => !widget.checkedItemKeys.contains(_customItemKey(n))),
-            ...widget.customQuickItems.where((n) => widget.checkedItemKeys.contains(_customItemKey(n))),
+            ...customItems.where((i) => !widget.checkedItemKeys.contains(_itemKey(i))),
+            ...customItems.where((i) => widget.checkedItemKeys.contains(_itemKey(i))),
           ]
-        : widget.customQuickItems;
+        : customItems;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -533,7 +469,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           ),
         ),
-        ...displayNames.map((name) => _buildCustomItemRow(name)),
+        ...displayItems.map((item) => _buildItemRow(item)),
         const SizedBox(height: 12),
       ],
     );
@@ -547,7 +483,12 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         borderRadius: BorderRadius.circular(16),
         onTap: () => widget.onItemCheckedChanged(_itemKey(item), !isChecked),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: EdgeInsets.only(
+            left: 12,
+            top: 10,
+            bottom: 10,
+            right: item.isCustom ? 4 : 12,
+          ),
           child: Row(
             children: [
               _checkbox(isChecked),
@@ -581,45 +522,14 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                     ),
                   ),
                 ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCustomItemRow(String name) {
-    final key = _customItemKey(name);
-    final isChecked = widget.checkedItemKeys.contains(key);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => widget.onItemCheckedChanged(key, !isChecked),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 12, top: 6, bottom: 6, right: 4),
-          child: Row(
-            children: [
-              _checkbox(isChecked),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    decoration: isChecked ? TextDecoration.lineThrough : null,
-                    color: isChecked ? Theme.of(context).disabledColor : null,
-                  ),
+              if (item.isCustom)
+                IconButton(
+                  onPressed: () => widget.onRemoveCustomItem(item.name),
+                  icon: const Icon(Icons.close, size: 16),
+                  color: Colors.grey[400],
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
-              ),
-              IconButton(
-                onPressed: () => widget.onRemoveCustomItem(name),
-                icon: const Icon(Icons.close, size: 16),
-                color: Colors.grey[400],
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              ),
             ],
           ),
         ),
@@ -690,9 +600,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           ),
         ),
-        ...items.map((item) => item.unit.isEmpty
-            ? _buildCustomItemRow(item.name)
-            : _buildItemRow(item)),
+        ...items.map((item) => _buildItemRow(item)),
         const SizedBox(height: 12),
       ],
     );
@@ -738,38 +646,33 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
 
         const SizedBox(height: 8),
 
-        // Sort order row
+        // Select all + sort control
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
             children: [
-              Icon(Icons.sort_outlined, size: 15, color: Colors.grey[500]),
-              const SizedBox(width: 4),
-              Text(
-                'Sort by',
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              SizedBox(
+                height: 24,
+                width: 24,
+                child: Checkbox(
+                  value: hasContent && allItemsChecked,
+                  onChanged: hasContent ? (_) => toggleCheckAll() : null,
+                ),
               ),
-              const SizedBox(width: 2),
-              Theme(
-                data: Theme.of(context).copyWith(
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                ),
-                child: DropdownButton<bool>(
-                  value: _groupByRecipe,
-                  underline: const SizedBox(),
-                  isDense: true,
-                  onChanged: (v) => setState(() => _groupByRecipe = v!),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryDark,
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: false, child: Text('Category')),
-                    DropdownMenuItem(value: true, child: Text('Recipe')),
-                  ],
-                ),
+              const SizedBox(width: 8),
+              Text(
+                'Select all',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+              ),
+              const Spacer(),
+              PopupMenuButton<bool>(
+                icon: const Icon(Icons.swap_vert, color: AppColors.primaryDark),
+                tooltip: 'Sort: ${_groupByRecipe ? 'Recipe' : 'Category'}',
+                onSelected: (v) => setState(() => _groupByRecipe = v),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: false, child: Text('Category')),
+                  PopupMenuItem(value: true, child: Text('Recipe')),
+                ],
               ),
             ],
           ),

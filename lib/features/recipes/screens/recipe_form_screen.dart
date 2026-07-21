@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../models/ingredient.dart';
 import '../../../models/recipe.dart';
+import '../../../shared/app_constants.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? initialRecipe;
@@ -342,12 +343,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       );
       return;
     }
-    if (_instructions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one instruction.')),
-      );
-      return;
-    }
     final recipe = Recipe(
       id: widget.initialRecipe?.id ?? 'recipe-${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
@@ -417,18 +412,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
+                        border: Border.all(color: AppColors.primaryDark.withValues(alpha: 0.25)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          Text('Servings', style: TextStyle(fontSize: 16, color: const Color(0xFF388E3C))),
+                          Text('Servings', style: TextStyle(fontSize: 16, color: AppColors.primaryDark)),
                           const Spacer(),
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF4F9F1),
+                              color: AppColors.creamBackground,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
+                              border: Border.all(color: AppColors.primaryDark.withValues(alpha: 0.2)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -439,13 +434,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     child: Icon(Icons.remove, size: 16,
-                                      color: _servings > 1 ? const Color(0xFF2E7D32) : Colors.grey[400]),
+                                      color: _servings > 1 ? AppColors.primaryDark : Colors.grey[400]),
                                   ),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 10),
                                   child: Text('$_servings',
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF2E7D32))),
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.primaryDark)),
                                 ),
                                 InkWell(
                                   onTap: _servings < 20 ? () => setState(() => _servings++) : null,
@@ -453,7 +448,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     child: Icon(Icons.add, size: 16,
-                                      color: _servings < 20 ? const Color(0xFF2E7D32) : Colors.grey[400]),
+                                      color: _servings < 20 ? AppColors.primaryDark : Colors.grey[400]),
                                   ),
                                 ),
                                 Padding(
@@ -478,8 +473,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               const Icon(Icons.shopping_basket_outlined),
               const SizedBox(width: 8),
               Text('Ingredients', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(width: 8),
-              Chip(label: Text('${_ingredients.length} item(s)')),
             ]),
             const SizedBox(height: 8),
 
@@ -509,7 +502,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE8F5E9),
+                                    color: AppColors.surfaceSoft,
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
@@ -517,7 +510,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: Color(0xFF2E7D32),
+                                      color: AppColors.primaryDark,
                                     ),
                                   ),
                                 ),
@@ -529,12 +522,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: isAuto
-                                          ? const Color(0xFFF4F9F1)
+                                          ? AppColors.creamBackground
                                           : const Color(0xFFE3F2FD),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
                                         color: isAuto
-                                            ? const Color(0xFF2E7D32).withValues(alpha: 0.2)
+                                            ? AppColors.primaryDark.withValues(alpha: 0.2)
                                             : const Color(0xFF1565C0).withValues(alpha: 0.3),
                                       ),
                                     ),
@@ -660,8 +653,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               const Icon(Icons.format_list_numbered),
               const SizedBox(width: 8),
               Text('Instructions', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(width: 8),
-              Chip(label: Text('${_instructions.length} step(s)')),
             ]),
             const SizedBox(height: 8),
             ..._instructions.asMap().entries.map((entry) {
@@ -674,7 +665,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2E7D32),
+                      color: AppColors.primaryDark,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(

@@ -4,13 +4,13 @@ import '../data/sample_recipes.dart';
 import '../features/meal_plan/screens/meal_plan_screen.dart';
 import '../features/recipes/screens/recipe_list_screen.dart';
 import '../features/shopping_list/screens/shopping_list_screen.dart';
+import '../models/ingredient.dart';
 import '../models/recipe.dart';
 import '../models/meal_type.dart';
 import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../shared/app_constants.dart';
-import '../shared/widgets/brand_logo.dart';
 
 
 class MealBridgeApp extends StatelessWidget {
@@ -225,7 +225,7 @@ class _MainShellState extends State<MainShell> {
   Map<String, PlannedRecipe> _allPlannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
   Set<String> _quickRecipeIds = {};
-  List<String> _customQuickItems = [];
+  List<Ingredient> _customQuickItems = [];
 
   // ISO week key for a given offset from today's week (0 = this week)
   String _isoWeekKeyForOffset(int offset) {
@@ -403,11 +403,6 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
   }
 
-  void _clearCheckedShoppingItems() {
-    setState(() => _checkedShoppingItemKeys.clear());
-    _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
-  }
-
   void _toggleQuickRecipe(String recipeId) {
     setState(() {
       if (_quickRecipeIds.contains(recipeId)) {
@@ -424,21 +419,20 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
   }
 
-  void _addCustomQuickItem(String name) {
-    if (_customQuickItems.contains(name)) return;
-    setState(() => _customQuickItems = [..._customQuickItems, name]);
+  void _addCustomQuickItem(Ingredient item) {
+    if (_customQuickItems.any((i) => i.name.toLowerCase() == item.name.toLowerCase())) return;
+    setState(() => _customQuickItems = [..._customQuickItems, item]);
     _recipeStorageService.saveCustomQuickItems(_customQuickItems);
   }
 
   void _removeCustomQuickItem(String name) {
-    setState(() => _customQuickItems = _customQuickItems.where((i) => i != name).toList());
+    setState(() => _customQuickItems = _customQuickItems.where((i) => i.name != name).toList());
     _recipeStorageService.saveCustomQuickItems(_customQuickItems);
   }
 
   /// Per-tab AppBar actions. Recipes gets a single "add recipe" action;
-  /// Shopping List gets "add item" plus an overflow menu for check-all,
-  /// clear-checked, sort order, and copy — keeping that screen's body down
-  /// to just the list.
+  /// Shopping List gets a single "add item" action — check-all now lives as
+  /// a checkbox in that screen's own body, right by the sort control.
   List<Widget>? _buildAppBarActions() {
     if (_selectedIndex == 0) {
       return [
@@ -459,87 +453,16 @@ class _MainShellState extends State<MainShell> {
 
     if (_selectedIndex == 2) {
       return [
-        IconButton.filledTonal(
-          icon: const Icon(Icons.add),
-          tooltip: 'Add item',
-          onPressed: () => _shoppingListKey.currentState?.openAddCustomItemSheet(),
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.surfaceSoft,
-            foregroundColor: const Color(0xFF1B5E20),
-          ),
-        ),
         Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            tooltip: 'More actions',
-            onSelected: (value) {
-              final state = _shoppingListKey.currentState;
-              if (state == null) return;
-              switch (value) {
-                case 'check_all':
-                  state.toggleCheckAll();
-                case 'clear_checked':
-                  state.clearChecked();
-                case 'sort_toggle':
-                  state.toggleCheckedAtBottom();
-                case 'copy':
-                  state.copyList();
-                case 'copy_unchecked':
-                  state.copyUnchecked();
-              }
-            },
-            itemBuilder: (context) {
-              final state = _shoppingListKey.currentState;
-              final allChecked = state?.allItemsChecked ?? false;
-              final hasChecked = state?.hasCheckedItems ?? false;
-              final atBottom = state?.checkedItemsAtBottom ?? true;
-              return [
-                PopupMenuItem(
-                  value: 'check_all',
-                  child: Row(children: [
-                    Icon(allChecked ? Icons.remove_done_outlined : Icons.done_all_outlined, size: 18),
-                    const SizedBox(width: 10),
-                    Text(allChecked ? 'Uncheck all' : 'Check all'),
-                  ]),
-                ),
-                if (hasChecked)
-                  const PopupMenuItem(
-                    value: 'clear_checked',
-                    child: Row(children: [
-                      Icon(Icons.cleaning_services_outlined, size: 18),
-                      SizedBox(width: 10),
-                      Text('Clear checked'),
-                    ]),
-                  ),
-                const PopupMenuDivider(),
-                PopupMenuItem(
-                  value: 'sort_toggle',
-                  child: Row(children: [
-                    Icon(atBottom ? Icons.check_box_outlined : Icons.check_box_outline_blank, size: 18),
-                    const SizedBox(width: 10),
-                    const Expanded(child: Text('Checked items at bottom')),
-                  ]),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'copy',
-                  child: Row(children: [
-                    Icon(Icons.copy_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Copy list'),
-                  ]),
-                ),
-                const PopupMenuItem(
-                  value: 'copy_unchecked',
-                  child: Row(children: [
-                    Icon(Icons.playlist_add_check_outlined, size: 18),
-                    SizedBox(width: 10),
-                    Text('Copy unchecked'),
-                  ]),
-                ),
-              ];
-            },
+          padding: const EdgeInsets.only(right: 12),
+          child: IconButton.filledTonal(
+            icon: const Icon(Icons.add),
+            tooltip: 'Add item',
+            onPressed: () => _shoppingListKey.currentState?.openAddCustomItemSheet(),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surfaceSoft,
+              foregroundColor: const Color(0xFF1B5E20),
+            ),
           ),
         ),
       ];
@@ -583,7 +506,6 @@ class _MainShellState extends State<MainShell> {
         allRecipes: _recipes,
         checkedItemKeys: _checkedShoppingItemKeys,
         onItemCheckedChanged: _setShoppingItemChecked,
-        onClearCheckedItems: _clearCheckedShoppingItems,
         onToggleQuickRecipe: _toggleQuickRecipe,
         onClearQuickRecipes: _clearQuickRecipes,
         customQuickItems: _customQuickItems,
@@ -597,10 +519,16 @@ class _MainShellState extends State<MainShell> {
 
     return Scaffold(
       // Each screen keeps its own large in-content heading as the real
-      // title ("Your recipes", the week title, etc.); the AppBar just shows
-      // the MealBridge brand mark on every tab instead of a duplicated title.
+      // title ("Your recipes", the week title, etc.); the AppBar only shows
+      // the brand logo on the Recipes tab, and stays title-less elsewhere.
       appBar: AppBar(
-        title: const BrandLogo(size: 19),
+        title: _selectedIndex == 0
+            ? Image.asset(
+                'assets/images/logo_full_horizontal_transparent.png',
+                height: 30,
+                fit: BoxFit.contain,
+              )
+            : null,
         centerTitle: false,
         actions: _buildAppBarActions(),
       ),

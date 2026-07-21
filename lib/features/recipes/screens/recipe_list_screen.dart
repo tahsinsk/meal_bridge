@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/meal_type.dart';
 import '../../../models/recipe.dart';
+import '../../../services/recipe_storage_service.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/recipe_image.dart';
@@ -36,9 +37,28 @@ class RecipeListScreen extends StatefulWidget {
 
 class RecipeListScreenState extends State<RecipeListScreen> {
   final _searchController = TextEditingController();
+  final _storageService = RecipeStorageService();
   var _searchQuery = '';
   var _showFavoritesOnly = false;
+  var _isGridView = true;
   String? _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadViewMode();
+  }
+
+  Future<void> _loadViewMode() async {
+    final isGridView = await _storageService.loadRecipeGridView();
+    if (!mounted) return;
+    setState(() => _isGridView = isGridView);
+  }
+
+  void _toggleViewMode() {
+    setState(() => _isGridView = !_isGridView);
+    _storageService.saveRecipeGridView(_isGridView);
+  }
 
   static const _categories = ['Breakfast', 'Lunch', 'Dinner', 'Other'];
 
@@ -353,6 +373,92 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     );
   }
 
+  Widget _buildRecipeListTile(BuildContext context, Recipe recipe) {
+    final isCustom = widget.canDeleteRecipe(recipe);
+    final (categoryBg, categoryColor) = _categoryColors(recipe.category);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => RecipeDetailScreen(
+              recipe: recipe,
+              isInQuickList: widget.quickRecipeIds.contains(recipe.id),
+              onToggleQuickList: () => widget.onToggleQuickRecipe(recipe.id),
+              onFavoriteToggled: widget.onFavoriteToggled,
+              canEdit: isCustom,
+              onRecipeUpdated: widget.onRecipeUpdated,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: RecipeImage(imagePath: recipe.imagePath, iconSize: 26),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.name,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: categoryBg,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: Text(
+                            recipe.category,
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: categoryColor),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            _subtitle(recipe),
+                            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: Icon(
+                  recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: recipe.isFavorite ? const Color(0xFFF9A825) : Colors.grey[400],
+                ),
+                onPressed: () => widget.onFavoriteToggled(recipe),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final query = _searchQuery.trim().toLowerCase();
@@ -445,6 +551,12 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                               ),
                             ),
                         ],
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        onPressed: _toggleViewMode,
+                        tooltip: _isGridView ? 'Switch to list view' : 'Switch to grid view',
+                        icon: Icon(_isGridView ? Icons.view_list_outlined : Icons.grid_view_outlined),
                       ),
                     ],
                   ),
@@ -558,17 +670,25 @@ class RecipeListScreenState extends State<RecipeListScreen> {
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              sliver: SliverGrid.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  mainAxisExtent: 210,
-                ),
-                itemCount: filteredRecipes.length,
-                itemBuilder: (context, index) =>
-                    _buildRecipeCard(context, filteredRecipes[index]),
-              ),
+              sliver: _isGridView
+                  ? SliverGrid.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: 210,
+                      ),
+                      itemCount: filteredRecipes.length,
+                      itemBuilder: (context, index) =>
+                          _buildRecipeCard(context, filteredRecipes[index]),
+                    )
+                  : SliverList.builder(
+                      itemCount: filteredRecipes.length,
+                      itemBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _buildRecipeListTile(context, filteredRecipes[index]),
+                      ),
+                    ),
             ),
         ],
       ),

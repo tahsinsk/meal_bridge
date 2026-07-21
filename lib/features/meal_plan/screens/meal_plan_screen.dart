@@ -177,10 +177,13 @@ class MealPlanScreen extends StatelessWidget {
               ),
               if (isPlanned) ...[
                 _buildMiniStepper(context, day, mealType, pr, onBg),
-                const SizedBox(width: 8),
+                const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () => onRecipeRemoved(day, mealType),
-                  child: Icon(Icons.close, size: 16, color: onBg.withValues(alpha: 0.45)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 16, color: onBg.withValues(alpha: 0.45)),
+                  ),
                 ),
               ] else
                 Icon(Icons.add, size: 16, color: onBg.withValues(alpha: 0.5)),
@@ -223,10 +226,13 @@ class MealPlanScreen extends StatelessWidget {
               ),
             ),
             _buildMiniStepper(context, day, null, pr, AppColors.primaryDark),
-            const SizedBox(width: 8),
+            const SizedBox(width: 16),
             GestureDetector(
               onTap: () => onRecipeRemoved(day),
-              child: Icon(Icons.close, size: 16, color: AppColors.primaryDark.withValues(alpha: 0.45)),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(Icons.close, size: 16, color: AppColors.primaryDark.withValues(alpha: 0.45)),
+              ),
             ),
           ],
         ),

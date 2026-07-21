@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/ingredient.dart';
 import '../../../shared/app_constants.dart';
 
-/// Clean "add an extra item to the shopping list" bottom sheet — same spirit
-/// as the ingredient-add flow in the recipe form: a name field + add button,
-/// with already-added items listed below so you can add several in a row.
-/// Works regardless of Weekly Plan / Quick List mode.
+/// Clean "add an extra item to the shopping list" bottom sheet — same
+/// fields and flow as the ingredient-add flow in the recipe form (name,
+/// amount, unit), so items land in the right smart-guessed category and
+/// show the same amount badge as recipe ingredients. Works regardless of
+/// Weekly Plan / Quick List mode.
 Future<void> showAddCustomItemSheet(
   BuildContext context, {
-  required List<String> existingItems,
-  required void Function(String name) onAdd,
+  required List<Ingredient> existingItems,
+  required void Function(Ingredient item) onAdd,
   required void Function(String name) onRemove,
 }) {
   return showModalBottomSheet(
@@ -25,8 +27,8 @@ Future<void> showAddCustomItemSheet(
 }
 
 class _AddCustomItemSheet extends StatefulWidget {
-  final List<String> existingItems;
-  final void Function(String name) onAdd;
+  final List<Ingredient> existingItems;
+  final void Function(Ingredient item) onAdd;
   final void Function(String name) onRemove;
 
   const _AddCustomItemSheet({
@@ -40,9 +42,15 @@ class _AddCustomItemSheet extends StatefulWidget {
 }
 
 class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
-  final _controller = TextEditingController();
-  final _focusNode = FocusNode();
-  List<String> _items = [];
+  final _nameController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _unitController = TextEditingController(text: 'g');
+  final _nameFocusNode = FocusNode();
+  List<Ingredient> _items = [];
+
+  static const _units = [
+    'g', 'kg', 'ml', 'l', 'pcs', 'tbsp', 'tsp', 'cup', 'slice', 'can', 'pack',
+  ];
 
   @override
   void initState() {
@@ -52,39 +60,79 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
 
   @override
   void dispose() {
-    _controller.dispose();
-    _focusNode.dispose();
+    _nameController.dispose();
+    _amountController.dispose();
+    _unitController.dispose();
+    _nameFocusNode.dispose();
     super.dispose();
   }
 
-  void _add() {
-    final name = _controller.text.trim();
-    if (name.isEmpty) return;
-    if (_items.any((i) => i.toLowerCase() == name.toLowerCase())) {
-      _controller.clear();
-      return;
-    }
-    widget.onAdd(name);
-    setState(() {
-      _items.add(name);
-      _controller.clear();
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) FocusScope.of(context).requestFocus(_focusNode);
+  String _formatAmount(double amount) {
+    if (amount == amount.roundToDouble()) return amount.toInt().toString();
+    return amount.toString();
+  }
+
+  void _requestFocusAfterFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+      FocusScope.of(context).requestFocus(_nameFocusNode);
     });
   }
 
-  void _remove(String name) {
-    widget.onRemove(name);
-    setState(() => _items.remove(name));
+  void _add() {
+    final name = _nameController.text.trim();
+    final unit = _unitController.text.trim();
+    final amount = double.tryParse(_amountController.text.trim().replaceAll(',', '.'));
+
+    if (name.isEmpty || amount == null || unit.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid item.')),
+      );
+      return;
+    }
+    if (name.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item name must be at least 2 characters.')),
+      );
+      return;
+    }
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item amount must be greater than 0.')),
+      );
+      return;
+    }
+    if (_items.any((i) => i.name.toLowerCase() == name.toLowerCase())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('That item is already on the list.')),
+      );
+      return;
+    }
+
+    final item = Ingredient(name: name, amount: amount, unit: unit);
+    widget.onAdd(item);
+    setState(() {
+      _items.add(item);
+      _nameController.clear();
+      _amountController.clear();
+      _unitController.text = 'g';
+    });
+    _requestFocusAfterFrame();
+  }
+
+  void _remove(Ingredient item) {
+    widget.onRemove(item.name);
+    setState(() => _items.remove(item));
   }
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.4,
-      maxChildSize: 0.9,
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.94,
       expand: false,
       builder: (context, scrollController) {
         return Container(
@@ -117,62 +165,112 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        autofocus: true,
-                        decoration: const InputDecoration(hintText: 'e.g. Trash bags, Napkins'),
-                        textCapitalization: TextCapitalization.sentences,
-                        onSubmitted: (_) => _add(),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: _add,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(48, 48),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-              ),
               Expanded(
-                child: _items.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'No extra items yet — add your first one above.',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  children: [
+                    TextField(
+                      controller: _nameController,
+                      focusNode: _nameFocusNode,
+                      autofocus: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Item name',
+                        hintText: 'e.g. Milk, Trash bags, Napkins',
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _amountController,
+                            decoration: const InputDecoration(labelText: 'Amount'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onSubmitted: (_) => _add(),
                           ),
                         ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                        itemCount: _items.length,
-                        itemBuilder: (context, index) {
-                          final name = _items[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: ListTile(
-                              title: Text(name),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.close, size: 18),
-                                onPressed: () => _remove(name),
-                              ),
-                            ),
-                          );
-                        },
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _units.contains(_unitController.text)
+                                ? _unitController.text
+                                : 'g',
+                            decoration: const InputDecoration(labelText: 'Unit'),
+                            items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                            onChanged: (v) {
+                              if (v != null) setState(() => _unitController.text = v);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _add,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Item'),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_items.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'No extra items yet — add your first one above.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      )
+                    else
+                      ..._items.map((item) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item.name, style: Theme.of(context).textTheme.titleSmall),
+                                      Text(
+                                        item.resolvedCategory,
+                                        style: Theme.of(context).textTheme.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceSoft,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${_formatAmount(item.amount)} ${item.unit}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryDark,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18),
+                                  onPressed: () => _remove(item),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                  ],
+                ),
               ),
             ],
           ),
