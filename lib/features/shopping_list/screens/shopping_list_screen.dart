@@ -150,6 +150,104 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
+  void _showSortSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.large)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text('Sort by', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  _buildSortOptionRow(
+                    context: context,
+                    icon: Icons.category_outlined,
+                    label: 'Category',
+                    selected: !_groupByRecipe,
+                    onTap: () {
+                      setState(() => _groupByRecipe = false);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  _buildSortOptionRow(
+                    context: context,
+                    icon: Icons.restaurant_menu_outlined,
+                    label: 'Recipe',
+                    selected: _groupByRecipe,
+                    onTap: () {
+                      setState(() => _groupByRecipe = true);
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSortOptionRow({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.surfaceSoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.primaryDark),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ),
+            if (selected) const Icon(Icons.check, size: 20, color: AppColors.primaryDark),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _formatAmount(double amount) {
     if (amount == amount.roundToDouble()) return amount.toInt().toString();
     return amount.toString();
@@ -639,6 +737,19 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 shape: WidgetStateProperty.all(
                   RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                backgroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return AppColors.primaryDark;
+                  return AppColors.surfaceSoft;
+                }),
+                foregroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return Colors.white;
+                  return AppColors.primaryDark;
+                }),
+                iconColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return Colors.white;
+                  return AppColors.primaryDark;
+                }),
+                side: const WidgetStatePropertyAll(BorderSide.none),
               ),
             ),
           ),
@@ -665,14 +776,11 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[700]),
               ),
               const Spacer(),
-              PopupMenuButton<bool>(
-                icon: const Icon(Icons.swap_vert, color: AppColors.primaryDark),
+              IconButton(
+                icon: const Icon(Icons.swap_vert),
+                color: AppColors.primaryDark,
                 tooltip: 'Sort: ${_groupByRecipe ? 'Recipe' : 'Category'}',
-                onSelected: (v) => setState(() => _groupByRecipe = v),
-                itemBuilder: (context) => const [
-                  PopupMenuItem(value: false, child: Text('Category')),
-                  PopupMenuItem(value: true, child: Text('Recipe')),
-                ],
+                onPressed: () => _showSortSheet(context),
               ),
             ],
           ),

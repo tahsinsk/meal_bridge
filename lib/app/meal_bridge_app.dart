@@ -445,7 +445,7 @@ class _MainShellState extends State<MainShell> {
             onPressed: () => _recipeListKey.currentState?.openAddRecipeScreen(),
             style: IconButton.styleFrom(
               backgroundColor: AppColors.surfaceSoft,
-              foregroundColor: const Color(0xFF1B5E20),
+              foregroundColor: AppColors.primaryDark,
             ),
           ),
         ),
@@ -462,7 +462,7 @@ class _MainShellState extends State<MainShell> {
             onPressed: () => _shoppingListKey.currentState?.openAddCustomItemSheet(),
             style: IconButton.styleFrom(
               backgroundColor: AppColors.surfaceSoft,
-              foregroundColor: const Color(0xFF1B5E20),
+              foregroundColor: AppColors.primaryDark,
             ),
           ),
         ),

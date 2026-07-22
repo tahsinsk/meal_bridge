@@ -165,6 +165,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     return FilterChip(
                       label: Text(cat),
                       selected: isSelected,
+                      selectedColor: AppColors.primaryDark,
+                      checkmarkColor: Colors.white,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.primaryDark,
+                        fontWeight: FontWeight.w600,
+                      ),
                       onSelected: (_) {
                         setState(() {
                           _ingredients[index] = ingredient.copyWith(
@@ -540,7 +546,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                             fontSize: 11,
                                             fontWeight: FontWeight.w500,
                                             color: isAuto
-                                                ? const Color(0xFF558B2F)
+                                                ? AppColors.primaryDark
                                                 : const Color(0xFF1565C0),
                                           ),
                                         ),
@@ -549,7 +555,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                                           isAuto ? Icons.auto_awesome_outlined : Icons.edit_outlined,
                                           size: 10,
                                           color: isAuto
-                                              ? const Color(0xFF558B2F)
+                                              ? AppColors.primaryDark
                                               : const Color(0xFF1565C0),
                                         ),
                                       ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../models/meal_type.dart';
 import '../../../models/recipe.dart';
@@ -168,6 +169,12 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                   return FilterChip(
                     label: Text(cat),
                     selected: isSelected,
+                    selectedColor: AppColors.primaryDark,
+                    checkmarkColor: Colors.white,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : AppColors.primaryDark,
+                      fontWeight: FontWeight.w600,
+                    ),
                     onSelected: (val) {
                       setState(() => _selectedCategory = val ? cat : null);
                       setSheetState(() {});
@@ -377,7 +384,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     final isCustom = widget.canDeleteRecipe(recipe);
     final (categoryBg, categoryColor) = _categoryColors(recipe.category);
 
-    return Card(
+    final card = Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -457,6 +464,35 @@ class RecipeListScreenState extends State<RecipeListScreen> {
         ),
       ),
     );
+
+    if (!isCustom) return card;
+
+    // Swipe-to-reveal Edit/Delete — list mode only (grid keeps its own
+    // overlay menu); only custom recipes are editable/deletable.
+    return Slidable(
+      key: ValueKey(recipe.id),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: 0.42,
+        children: [
+          SlidableAction(
+            onPressed: (_) => _openEditRecipeScreen(context, recipe),
+            backgroundColor: AppColors.primaryDark,
+            foregroundColor: Colors.white,
+            icon: Icons.edit_outlined,
+            label: 'Edit',
+          ),
+          SlidableAction(
+            onPressed: (_) => _confirmDeleteRecipe(context, recipe),
+            backgroundColor: const Color(0xFFD32F2F),
+            foregroundColor: Colors.white,
+            icon: Icons.delete_outline,
+            label: 'Delete',
+          ),
+        ],
+      ),
+      child: card,
+    );
   }
 
   @override
@@ -529,10 +565,18 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                               ? IconButton.filled(
                                   onPressed: () => _showFilterSheet(context),
                                   icon: const Icon(Icons.filter_list),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: AppColors.primaryDark,
+                                    foregroundColor: Colors.white,
+                                  ),
                                 )
                               : IconButton.filledTonal(
                                   onPressed: () => _showFilterSheet(context),
                                   icon: const Icon(Icons.filter_list_outlined),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: AppColors.surfaceSoft,
+                                    foregroundColor: AppColors.primaryDark,
+                                  ),
                                 ),
                           if (_activeFilterCount > 0)
                             Positioned(
@@ -557,6 +601,10 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                         onPressed: _toggleViewMode,
                         tooltip: _isGridView ? 'Switch to list view' : 'Switch to grid view',
                         icon: Icon(_isGridView ? Icons.view_list_outlined : Icons.grid_view_outlined),
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.surfaceSoft,
+                          foregroundColor: AppColors.primaryDark,
+                        ),
                       ),
                     ],
                   ),
