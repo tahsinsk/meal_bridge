@@ -46,10 +46,13 @@ class _AddToPlanSheet extends StatefulWidget {
 }
 
 class _AddToPlanSheetState extends State<_AddToPlanSheet> {
+  static const _categories = ['Breakfast', 'Lunch', 'Dinner', 'Other'];
+
   Recipe? _recipe;
   int _servings = 1;
   final _searchController = TextEditingController();
   var _query = '';
+  String? _categoryFilter;
 
   @override
   void dispose() {
@@ -72,9 +75,12 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
   @override
   Widget build(BuildContext context) {
     final query = _query.trim().toLowerCase();
-    final filteredRecipes = query.isEmpty
-        ? widget.recipes
-        : widget.recipes.where((r) => r.name.toLowerCase().contains(query)).toList();
+    final filteredRecipes = widget.recipes.where((r) {
+      final matchesQuery = query.isEmpty || r.name.toLowerCase().contains(query);
+      final matchesCategory = _categoryFilter == null ||
+          r.category.toLowerCase() == _categoryFilter!.toLowerCase();
+      return matchesQuery && matchesCategory;
+    }).toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -132,23 +138,50 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                   children: [
                     Text('Recipe', style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(height: 8),
-                    if (widget.recipes.length > 5) ...[
-                      TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          hintText: 'Search recipes',
-                          prefixIcon: Icon(Icons.search),
-                          isDense: true,
-                        ),
-                        onChanged: (v) => setState(() => _query = v),
+                    TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Search recipes',
+                        prefixIcon: Icon(Icons.search),
+                        isDense: true,
                       ),
-                      const SizedBox(height: 8),
-                    ],
+                      onChanged: (v) => setState(() => _query = v),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _categories.map((cat) {
+                        final isSelected = _categoryFilter == cat;
+                        return FilterChip(
+                          label: Text(cat),
+                          selected: isSelected,
+                          selectedColor: AppColors.primaryDark,
+                          checkmarkColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : AppColors.primaryDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          onSelected: (val) {
+                            setState(() => _categoryFilter = val ? cat : null);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8),
                     if (widget.recipes.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Text(
                           'No recipes yet. Add a recipe first.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      )
+                    else if (filteredRecipes.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'No recipes match your search/filter.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       )

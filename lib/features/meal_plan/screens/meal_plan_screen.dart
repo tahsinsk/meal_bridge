@@ -15,6 +15,9 @@ class MealPlanScreen extends StatelessWidget {
   final void Function(String day, Recipe recipe, int servings, [MealType? mealType]) onRecipeSelected;
   final void Function(String day, [MealType? mealType]) onRecipeRemoved;
   final void Function(String day, MealType? mealType, int delta) onServingsChanged;
+  final bool hasCopiedDay;
+  final void Function(String day) onCopyDay;
+  final void Function(String day) onPasteDay;
 
   const MealPlanScreen({
     super.key,
@@ -25,6 +28,9 @@ class MealPlanScreen extends StatelessWidget {
     required this.onRecipeSelected,
     required this.onRecipeRemoved,
     required this.onServingsChanged,
+    required this.hasCopiedDay,
+    required this.onCopyDay,
+    required this.onPasteDay,
   });
 
   static const List<String> _days = [
@@ -81,6 +87,31 @@ class MealPlanScreen extends StatelessWidget {
       return '${(recipe.calories! / recipe.servings).round()} kcal/serving';
     }
     return '${recipe.ingredients.length} ingredients';
+  }
+
+  void _handleCopyDay(BuildContext context, String day) {
+    onCopyDay(day);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Copied $day\'s meals')),
+    );
+  }
+
+  Future<void> _handlePasteDay(BuildContext context, String day, bool dayHasMeals) async {
+    if (dayHasMeals) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Overwrite this day?'),
+          content: Text('$day already has planned meals. Pasting will replace them.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Overwrite')),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    onPasteDay(day);
   }
 
   void _openAddToPlanSheet(BuildContext context, String day, MealType mealType) {
@@ -270,38 +301,75 @@ class MealPlanScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Day header
-            Column(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      day,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: isToday ? AppColors.primaryDark : null,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            day,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: isToday ? AppColors.primaryDark : null,
+                            ),
+                          ),
+                          if (isToday) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryDark,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'Today',
+                                style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ),
-                    if (isToday) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryDark,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Today',
-                          style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
-                        ),
+                      Text(
+                        _dayDate(day),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-                Text(
-                  _dayDate(day),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(Icons.more_vert, color: Colors.grey[500], size: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  onSelected: (value) {
+                    if (value == 'copy') _handleCopyDay(context, day);
+                    if (value == 'paste') {
+                      _handlePasteDay(context, day, legacyPr != null || mealEntries.isNotEmpty);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'copy',
+                      child: Row(children: [
+                        Icon(Icons.copy_outlined, size: 18),
+                        SizedBox(width: 10),
+                        Text('Copy day'),
+                      ]),
+                    ),
+                    if (hasCopiedDay)
+                      const PopupMenuItem(
+                        value: 'paste',
+                        child: Row(children: [
+                          Icon(Icons.content_paste_outlined, size: 18),
+                          SizedBox(width: 10),
+                          Text('Paste day'),
+                        ]),
+                      ),
+                  ],
                 ),
               ],
             ),

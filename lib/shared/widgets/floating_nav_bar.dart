@@ -14,10 +14,10 @@ class FloatingNavDestination {
   });
 }
 
-/// Floating pill-shaped bottom navigation bar. The selected destination
-/// renders as a filled brand-green capsule with icon + label; unselected
-/// destinations are a plain muted icon. Replaces [NavigationBar], which
-/// can't produce the floating-pill + inline-label-capsule look cleanly.
+/// Floating pill-shaped bottom navigation bar. Every destination renders as
+/// an icon-over-label column; the selected one sits on a filled brand-green
+/// capsule, unselected ones stay muted with no background. Replaces
+/// [NavigationBar], which can't produce the floating-pill capsule look.
 class FloatingNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
@@ -36,7 +36,6 @@ class FloatingNavBar extends StatelessWidget {
       top: false,
       minimum: const EdgeInsets.fromLTRB(16, 0, 16, 14),
       child: Container(
-        height: 64,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -49,9 +48,9 @@ class FloatingNavBar extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             for (var i = 0; i < destinations.length; i++)
@@ -83,52 +82,42 @@ class _FloatingNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Intentionally NOT an Expanded/equal-width cell: the selected capsule
-    // needs more room than an unselected icon, so each item sizes to its
-    // own content and the outer Row spaces them out instead. Forcing equal
-    // widths here is what caused the selected (wider) capsule to overflow.
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-          onTap: onTap,
-          child: Center(
-            child: AnimatedContainer(
-              duration: _duration,
-              curve: _curve,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: selected ? AppColors.primaryDark : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
+    // Icon-over-label column for every item (not just the selected one),
+    // so widths stay near-uniform and the Row never needs to fight for
+    // horizontal space the way the old icon-beside-label layout did.
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: _duration,
+          curve: _curve,
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primaryDark : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                selected ? destination.selectedIcon : destination.icon,
+                size: 22,
+                color: selected ? Colors.white : Colors.grey[500],
               ),
-              child: AnimatedSize(
-                duration: _duration,
-                curve: _curve,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      selected ? destination.selectedIcon : destination.icon,
-                      size: 22,
-                      color: selected ? Colors.white : Colors.grey[500],
-                    ),
-                    if (selected) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        destination.label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ],
+              const SizedBox(height: 3),
+              Text(
+                destination.label,
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.grey[500],
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 11,
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),

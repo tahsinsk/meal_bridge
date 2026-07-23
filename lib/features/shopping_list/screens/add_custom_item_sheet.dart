@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/ingredient.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/widgets/option_picker_sheet.dart';
 
 /// Clean "add an extra item to the shopping list" bottom sheet — same
 /// fields and flow as the ingredient-add flow in the recipe form (name,
@@ -193,15 +194,14 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _units.contains(_unitController.text)
+                          child: OptionPickerField<String>(
+                            label: 'Unit',
+                            value: _units.contains(_unitController.text)
                                 ? _unitController.text
                                 : 'g',
-                            decoration: const InputDecoration(labelText: 'Unit'),
-                            items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                            onChanged: (v) {
-                              if (v != null) setState(() => _unitController.text = v);
-                            },
+                            options: _units,
+                            labelBuilder: (u) => u,
+                            onChanged: (v) => setState(() => _unitController.text = v),
                           ),
                         ),
                       ],

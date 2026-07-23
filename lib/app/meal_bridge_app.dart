@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../data/sample_recipes.dart';
 import '../features/meal_plan/screens/meal_plan_screen.dart';
@@ -39,6 +40,9 @@ class MealBridgeApp extends StatelessWidget {
           surfaceContainerHighest: AppColors.surfaceSoft,
         ),
         useMaterial3: true,
+        // Global body/heading font. BrandLogo sets its own explicit
+        // GoogleFonts.quicksand style, which overrides this fallback.
+        textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.light().textTheme),
         scaffoldBackgroundColor: AppColors.creamBackground,
         appBarTheme: const AppBarTheme(
           centerTitle: false,
@@ -201,6 +205,11 @@ class _MainShellState extends State<MainShell> {
   Set<String> _checkedShoppingItemKeys = {};
   Set<String> _quickRecipeIds = {};
   List<Ingredient> _customQuickItems = [];
+
+  // "Copy day" clipboard — lives here (not in the stateless MealPlanScreen)
+  // so it survives week navigation and screen rebuilds.
+  Map<MealType, PlannedRecipe>? _copiedDayMeals;
+  bool get _hasCopiedDay => _copiedDayMeals != null && _copiedDayMeals!.isNotEmpty;
 
   // ISO week key for a given offset from today's week (0 = this week)
   String _isoWeekKeyForOffset(int offset) {
@@ -367,6 +376,33 @@ class _MainShellState extends State<MainShell> {
     _saveMealPlan();
   }
 
+  void _copyDay(String day) {
+    final weekMeals = _currentWeekPlannedRecipes;
+    final copied = <MealType, PlannedRecipe>{};
+    for (final mealType in MealType.values) {
+      final pr = weekMeals['$day-${mealType.name}'];
+      if (pr != null) copied[mealType] = pr;
+    }
+    setState(() => _copiedDayMeals = copied);
+  }
+
+  void _pasteDay(String day) {
+    final copied = _copiedDayMeals;
+    if (copied == null) return;
+    setState(() {
+      for (final mealType in MealType.values) {
+        final key = _fullMealPlanKey(day, mealType);
+        final pr = copied[mealType];
+        if (pr != null) {
+          _allPlannedRecipes[key] = pr;
+        } else {
+          _allPlannedRecipes.remove(key);
+        }
+      }
+    });
+    _saveMealPlan();
+  }
+
   void _setShoppingItemChecked(String itemKey, bool isChecked) {
     setState(() {
       if (isChecked) {
@@ -405,9 +441,9 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCustomQuickItems(_customQuickItems);
   }
 
-  /// Per-tab AppBar actions. Recipes gets a single "add recipe" action;
-  /// Shopping List gets a single "add item" action — check-all now lives as
-  /// a checkbox in that screen's own body, right by the sort control.
+  /// Per-tab AppBar actions. Only Recipes needs one (its "add recipe"
+  /// action) — Shopping List now shows its own "add item"/"share" actions
+  /// in its in-content heading instead of the AppBar.
   List<Widget>? _buildAppBarActions() {
     if (_selectedIndex == 0) {
       return [
@@ -417,23 +453,6 @@ class _MainShellState extends State<MainShell> {
             icon: const Icon(Icons.add),
             tooltip: 'Add recipe',
             onPressed: () => _recipeListKey.currentState?.openAddRecipeScreen(),
-            style: IconButton.styleFrom(
-              backgroundColor: AppColors.surfaceSoft,
-              foregroundColor: AppColors.primaryDark,
-            ),
-          ),
-        ),
-      ];
-    }
-
-    if (_selectedIndex == 2) {
-      return [
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: IconButton.filledTonal(
-            icon: const Icon(Icons.add),
-            tooltip: 'Add item',
-            onPressed: () => _shoppingListKey.currentState?.openAddCustomItemSheet(),
             style: IconButton.styleFrom(
               backgroundColor: AppColors.surfaceSoft,
               foregroundColor: AppColors.primaryDark,
@@ -473,6 +492,9 @@ class _MainShellState extends State<MainShell> {
         onRecipeSelected: _selectRecipeForDay,
         onRecipeRemoved: _removeRecipeFromDay,
         onServingsChanged: _updateServings,
+        hasCopiedDay: _hasCopiedDay,
+        onCopyDay: _copyDay,
+        onPasteDay: _pasteDay,
       ),
       ShoppingListScreen(
         key: _shoppingListKey,

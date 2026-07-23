@@ -13,7 +13,7 @@ extension MealTypeStyle on MealType {
       case MealType.lunch:
         return Icons.lunch_dining;
       case MealType.dinner:
-        return Icons.dinner_dining;
+        return Icons.restaurant;
     }
   }
 

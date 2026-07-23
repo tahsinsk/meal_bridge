@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../models/ingredient.dart';
 import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/widgets/option_picker_sheet.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? initialRecipe;
@@ -229,14 +230,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: selectedUnit,
-                            decoration: const InputDecoration(
-                              labelText: 'Unit',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                            onChanged: (v) { if (v != null) setDialogState(() => selectedUnit = v); },
+                          child: OptionPickerField<String>(
+                            label: 'Unit',
+                            value: selectedUnit,
+                            options: _units,
+                            labelBuilder: (u) => u,
+                            onChanged: (v) => setDialogState(() => selectedUnit = v),
                           ),
                         ),
                       ],
@@ -381,7 +380,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      const Icon(Icons.info_outline),
+                      const Icon(Icons.edit_note),
                       const SizedBox(width: 8),
                       Text('Basic info', style: Theme.of(context).textTheme.titleMedium),
                     ]),
@@ -397,22 +396,14 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       },
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: ['Breakfast', 'Lunch', 'Dinner', 'Other'].contains(_categoryController.text)
+                    OptionPickerField<String>(
+                      label: 'Category',
+                      value: ['Breakfast', 'Lunch', 'Dinner', 'Other'].contains(_categoryController.text)
                           ? _categoryController.text
                           : 'Other',
-                      decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                      items: ['Breakfast', 'Lunch', 'Dinner', 'Other']
-                          .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => _categoryController.text = value);
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Category is required.';
-                        return null;
-                      },
+                      options: const ['Breakfast', 'Lunch', 'Dinner', 'Other'],
+                      labelBuilder: (cat) => cat,
+                      onChanged: (value) => setState(() => _categoryController.text = value),
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -622,18 +613,14 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _units.contains(_ingredientUnitController.text)
+                          child: OptionPickerField<String>(
+                            label: 'Unit',
+                            value: _units.contains(_ingredientUnitController.text)
                                 ? _ingredientUnitController.text
                                 : 'g',
-                            decoration: const InputDecoration(
-                              labelText: 'Unit',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                            onChanged: (v) {
-                              if (v != null) setState(() => _ingredientUnitController.text = v);
-                            },
+                            options: _units,
+                            labelBuilder: (u) => u,
+                            onChanged: (v) => setState(() => _ingredientUnitController.text = v),
                           ),
                         ),
                       ],

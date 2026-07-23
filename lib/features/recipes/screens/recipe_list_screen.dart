@@ -499,7 +499,6 @@ class RecipeListScreenState extends State<RecipeListScreen> {
   Widget build(BuildContext context) {
     final query = _searchQuery.trim().toLowerCase();
     final totalCount = widget.recipes.length;
-    final favoriteCount = widget.recipes.where((r) => r.isFavorite).length;
     final hasActiveFilters = _activeFilterCount > 0 || query.isNotEmpty;
 
     final sortedRecipes = [...widget.recipes]..sort((a, b) {
@@ -528,14 +527,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Your recipes', style: AppTextStyles.pageHeading),
-                  const SizedBox(height: 2),
-                  Text(
-                    favoriteCount > 0
-                        ? '$totalCount recipe${totalCount != 1 ? 's' : ''} · $favoriteCount favorite${favoriteCount != 1 ? 's' : ''}'
-                        : '$totalCount recipe${totalCount != 1 ? 's' : ''}',
-                    style: AppTextStyles.pageSubtitle,
-                  ),
+                  const Text('Recipes', style: AppTextStyles.pageHeading),
                   const SizedBox(height: 14),
                   Row(
                     children: [

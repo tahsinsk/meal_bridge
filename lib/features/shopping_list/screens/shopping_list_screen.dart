@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../data/shopping_list_generator.dart';
 import '../../../models/ingredient.dart';
@@ -64,10 +65,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _isQuickMode = false;
   bool _groupByRecipe = false;
 
-  // Checked items always sink to the bottom of each section/category —
-  // there's no user-facing toggle for this anymore, just a sane default.
-  static const _checkedAtBottom = true;
-
   static const List<String> _categoryOrder = [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
     'Pantry', 'Frozen', 'Drinks', 'Snacks', 'Other',
@@ -113,16 +110,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         .toList();
   }
 
-  Map<String, List<ShoppingListItem>> _computeGroupedItems(List<ShoppingListItem> items) {
-    final sorted = _checkedAtBottom
-        ? [
-            ...items.where((i) => !widget.checkedItemKeys.contains(_itemKey(i))),
-            ...items.where((i) => widget.checkedItemKeys.contains(_itemKey(i))),
-          ]
-        : items;
-    return _groupItemsByCategory(sorted);
-  }
-
   // --- Public API for MainShell's AppBar "add item" action on this tab ---
 
   bool get allItemsChecked {
@@ -147,6 +134,36 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       existingItems: widget.customQuickItems,
       onAdd: widget.onAddCustomItem,
       onRemove: widget.onRemoveCustomItem,
+    );
+  }
+
+  /// Shares the current shopping list (respecting Weekly Plan / Quick List
+  /// mode) as plain text, grouped by category with amounts — mirrors what's
+  /// shown on screen when sorted by category.
+  void _shareShoppingList() {
+    final items = _computeShoppingItems().items;
+    if (items.isEmpty) return;
+    final grouped = _groupItemsByCategory(items);
+
+    final buffer = StringBuffer('Shopping List\n');
+    for (final entry in grouped.entries) {
+      buffer.writeln();
+      buffer.writeln(entry.key);
+      for (final item in entry.value) {
+        final amount = item.unit.isNotEmpty
+            ? ' (${_formatAmount(item.amount)} ${item.unit})'
+            : '';
+        buffer.writeln('- ${item.name}$amount');
+      }
+    }
+
+    final screenSize = MediaQuery.of(context).size;
+    SharePlus.instance.share(
+      ShareParams(
+        text: buffer.toString().trim(),
+        subject: 'Shopping List',
+        sharePositionOrigin: Rect.fromLTWH(0, 0, screenSize.width, screenSize.height / 2),
+      ),
     );
   }
 
@@ -459,13 +476,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     final allChecked = section.items.isNotEmpty &&
         section.items.every((i) => widget.checkedItemKeys.contains(_itemKey(i)));
     final checkedCount = section.items.where((i) => widget.checkedItemKeys.contains(_itemKey(i))).length;
-
-    final displayItems = _checkedAtBottom
-        ? [
-            ...section.items.where((i) => !widget.checkedItemKeys.contains(_itemKey(i))),
-            ...section.items.where((i) => widget.checkedItemKeys.contains(_itemKey(i))),
-          ]
-        : section.items;
+    final displayItems = section.items;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,12 +545,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Widget _buildCustomItemsSection() {
     final customItems = _customShoppingItems();
-    final displayItems = _checkedAtBottom
-        ? [
-            ...customItems.where((i) => !widget.checkedItemKeys.contains(_itemKey(i))),
-            ...customItems.where((i) => widget.checkedItemKeys.contains(_itemKey(i))),
-          ]
-        : customItems;
+    final displayItems = customItems;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -709,11 +715,42 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     final computed = _computeShoppingItems();
     final shoppingItems = computed.items;
     final hasContent = computed.hasContent;
-    final groupedItems = _computeGroupedItems(shoppingItems);
+    final groupedItems = _groupItemsByCategory(shoppingItems);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Heading + share/add actions
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text('Shopping list', style: AppTextStyles.pageHeading),
+              ),
+              IconButton.filledTonal(
+                icon: const Icon(Icons.ios_share_outlined),
+                tooltip: 'Share list',
+                onPressed: hasContent ? _shareShoppingList : null,
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.surfaceSoft,
+                  foregroundColor: AppColors.primaryDark,
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                icon: const Icon(Icons.add),
+                tooltip: 'Add item',
+                onPressed: openAddCustomItemSheet,
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.surfaceSoft,
+                  foregroundColor: AppColors.primaryDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+
         // Mode toggle
         Card(
           child: Padding(
