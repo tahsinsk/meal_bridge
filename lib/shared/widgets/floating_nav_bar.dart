@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+
+import '../app_constants.dart';
+
+class FloatingNavDestination {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+
+  const FloatingNavDestination({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
+}
+
+/// Floating pill-shaped bottom navigation bar. The selected destination
+/// renders as a filled brand-green capsule with icon + label; unselected
+/// destinations are a plain muted icon. Replaces [NavigationBar], which
+/// can't produce the floating-pill + inline-label-capsule look cleanly.
+class FloatingNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final List<FloatingNavDestination> destinations;
+
+  const FloatingNavBar({
+    super.key,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.destinations,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (var i = 0; i < destinations.length; i++)
+              _FloatingNavItem(
+                destination: destinations[i],
+                selected: i == selectedIndex,
+                onTap: () => onDestinationSelected(i),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingNavItem extends StatelessWidget {
+  final FloatingNavDestination destination;
+  final bool selected;
+  final VoidCallback onTap;
+
+  static const _duration = Duration(milliseconds: 220);
+  static const _curve = Curves.easeOut;
+
+  const _FloatingNavItem({
+    required this.destination,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Intentionally NOT an Expanded/equal-width cell: the selected capsule
+    // needs more room than an unselected icon, so each item sizes to its
+    // own content and the outer Row spaces them out instead. Forcing equal
+    // widths here is what caused the selected (wider) capsule to overflow.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          onTap: onTap,
+          child: Center(
+            child: AnimatedContainer(
+              duration: _duration,
+              curve: _curve,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.primaryDark : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+              child: AnimatedSize(
+                duration: _duration,
+                curve: _curve,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      selected ? destination.selectedIcon : destination.icon,
+                      size: 22,
+                      color: selected ? Colors.white : Colors.grey[500],
+                    ),
+                    if (selected) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        destination.label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -12,6 +12,7 @@ import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../shared/app_constants.dart';
 import '../shared/widgets/brand_logo.dart';
+import '../shared/widgets/floating_nav_bar.dart';
 
 
 class MealBridgeApp extends StatelessWidget {
@@ -143,33 +144,6 @@ class MealBridgeApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16)),
           ),
-        ),
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: Colors.white,
-          indicatorColor: AppColors.surfaceSoft,
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: AppColors.primaryDark);
-            }
-            return const IconThemeData(color: Color(0xFF888888));
-          }),
-          labelTextStyle: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryDark,
-              );
-            }
-            return const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF888888),
-            );
-          }),
-          surfaceTintColor: Colors.transparent,
-          shadowColor: Colors.black12,
-          elevation: 8,
         ),
         dividerTheme: DividerThemeData(
           color: AppColors.primaryDark.withValues(alpha: 0.1),
@@ -540,30 +514,30 @@ class _MainShellState extends State<MainShell> {
       body: _isLoadingData
           ? const Center(child: CircularProgressIndicator())
           : (showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex])),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: FloatingNavBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
-     destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.restaurant_menu_outlined),
-            selectedIcon: Icon(Icons.restaurant_menu),
+        destinations: const [
+          FloatingNavDestination(
+            icon: Icons.restaurant_menu_outlined,
+            selectedIcon: Icons.restaurant_menu,
             label: 'Recipes',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
+          FloatingNavDestination(
+            icon: Icons.calendar_month_outlined,
+            selectedIcon: Icons.calendar_month,
             label: 'Plan',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.shopping_cart_outlined),
-            selectedIcon: Icon(Icons.shopping_cart),
+          FloatingNavDestination(
+            icon: Icons.shopping_cart_outlined,
+            selectedIcon: Icons.shopping_cart,
             label: 'Shopping',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
+          FloatingNavDestination(
+            icon: Icons.settings_outlined,
+            selectedIcon: Icons.settings,
             label: 'Settings',
           ),
         ],
