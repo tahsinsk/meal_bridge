@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../data/sample_recipes.dart';
 import '../features/meal_plan/screens/meal_plan_screen.dart';
+import '../features/onboarding/screens/onboarding_screen.dart';
 import '../features/recipes/screens/recipe_list_screen.dart';
 import '../features/shopping_list/screens/shopping_list_screen.dart';
 import '../models/ingredient.dart';
@@ -198,6 +199,7 @@ class _MainShellState extends State<MainShell> {
 
   int _selectedIndex = 0;
   bool _isLoadingData = true;
+  bool _onboardingCompleted = false;
   int _weekOffset = 0;
 
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
@@ -256,6 +258,8 @@ class _MainShellState extends State<MainShell> {
         await _recipeStorageService.loadQuickRecipeIds();
     final savedCustomQuickItems =
         await _recipeStorageService.loadCustomQuickItems();
+    final onboardingCompleted =
+        await _recipeStorageService.loadOnboardingCompleted();
 
     final allRecipes = [...sampleRecipes, ...savedRecipes];
 
@@ -295,8 +299,22 @@ class _MainShellState extends State<MainShell> {
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
       _quickRecipeIds = savedQuickRecipeIds;
       _customQuickItems = savedCustomQuickItems;
+      _onboardingCompleted = onboardingCompleted;
       _isLoadingData = false;
     });
+  }
+
+  Future<void> _completeOnboarding() async {
+    setState(() {
+      _onboardingCompleted = true;
+      _selectedIndex = 0;
+    });
+    await _recipeStorageService.saveOnboardingCompleted(true);
+  }
+
+  Future<void> _resetOnboarding() async {
+    setState(() => _onboardingCompleted = false);
+    await _recipeStorageService.saveOnboardingCompleted(false);
   }
 
   bool _isCustomRecipe(Recipe recipe) {
@@ -467,10 +485,18 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingData) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Onboarding decision is made from the same load that just finished,
+    // so there's no frame where the main app flashes before this appears.
+    if (!_onboardingCompleted) {
+      return OnboardingScreen(onFinished: _completeOnboarding);
+    }
+
     final quickRecipes =
         _recipes.where((r) => _quickRecipeIds.contains(r.id)).toList();
-
-
 
     final screens = [
       RecipeListScreen(
@@ -511,6 +537,7 @@ class _MainShellState extends State<MainShell> {
       ),
       SettingsScreen(
         onImportSuccess: () => _loadSavedData(),
+        onResetOnboarding: _resetOnboarding,
       ),
     ];
 
@@ -533,9 +560,7 @@ class _MainShellState extends State<MainShell> {
               actions: appBarActions,
             )
           : null,
-      body: _isLoadingData
-          ? const Center(child: CircularProgressIndicator())
-          : (showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex])),
+      body: showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex]),
       bottomNavigationBar: FloatingNavBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {

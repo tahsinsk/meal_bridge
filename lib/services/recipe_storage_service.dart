@@ -12,6 +12,7 @@ class RecipeStorageService {
   static const String _quickRecipeIdsKey = 'quick_recipe_ids';
   static const String _customQuickItemsKey = 'custom_quick_items';
   static const String _recipeGridViewKey = 'recipe_grid_view';
+  static const String _onboardingCompletedKey = 'onboarding_completed';
 
   Future<List<Recipe>> loadRecipes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -127,5 +128,15 @@ class RecipeStorageService {
   Future<void> saveRecipeGridView(bool isGridView) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_recipeGridViewKey, isGridView);
+  }
+
+  Future<bool> loadOnboardingCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_onboardingCompletedKey) ?? false;
+  }
+
+  Future<void> saveOnboardingCompleted(bool completed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingCompletedKey, completed);
   }
 }

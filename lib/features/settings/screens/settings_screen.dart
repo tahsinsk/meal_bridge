@@ -4,8 +4,13 @@ import '../../../services/backup_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   final VoidCallback onImportSuccess;
+  final VoidCallback onResetOnboarding;
 
-  const SettingsScreen({super.key, required this.onImportSuccess});
+  const SettingsScreen({
+    super.key,
+    required this.onImportSuccess,
+    required this.onResetOnboarding,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -219,6 +224,25 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   title: const Text('Storage'),
                   subtitle: const Text('All data stored locally on your device'),
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
+                ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.replay_outlined,
+                      color: Color(0xFFEF6C00),
+                    ),
+                  ),
+                  title: const Text('Reset onboarding'),
+                  subtitle: const Text('Clear the flag and show the intro screens again'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: onResetOnboarding,
                 ),
               ],
             ),
