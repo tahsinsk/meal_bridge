@@ -47,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
-                        'MealBridge v0.3.0',
+                        'MealBridge v0.5.0',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -206,7 +206,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   title: const Text('MealBridge'),
-                  subtitle: const Text('Version 0.3.0'),
+                  subtitle: const Text('Version 0.5.0'),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 ListTile(
