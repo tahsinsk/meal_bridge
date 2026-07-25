@@ -12,6 +12,7 @@ import '../../../models/shopping_list_item.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
 import '../../../shared/day_labels.dart';
+import '../../../shared/ingredient_key.dart';
 import '../../../shared/iso_week.dart';
 import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/shop_link_sheet.dart';
@@ -45,7 +46,9 @@ class ShoppingListScreen extends StatefulWidget {
   final void Function(String itemKey, bool isChecked) onItemCheckedChanged;
   final Set<String> excludedItemKeys;
   final void Function(String itemKey) onExcludeItem;
+  final Map<String, Set<String>> quickSelectedIngredientKeys;
   final void Function(String recipeId) onToggleQuickRecipe;
+  final void Function(String recipeId, String ingredientKey) onToggleQuickIngredient;
   final VoidCallback onClearQuickRecipes;
   final List<Ingredient> customQuickItems;
   final void Function(Ingredient item) onAddCustomItem;
@@ -61,7 +64,9 @@ class ShoppingListScreen extends StatefulWidget {
     required this.onItemCheckedChanged,
     required this.excludedItemKeys,
     required this.onExcludeItem,
+    required this.quickSelectedIngredientKeys,
     required this.onToggleQuickRecipe,
+    required this.onToggleQuickIngredient,
     required this.onClearQuickRecipes,
     required this.customQuickItems,
     required this.onAddCustomItem,
@@ -76,6 +81,10 @@ class ShoppingListScreen extends StatefulWidget {
 class ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _isQuickMode = false;
   bool _groupByRecipe = false;
+
+  // Ephemeral UI-only state: which recipe rows are expanded in the Quick
+  // List picker (not persisted — collapses again next visit, which is fine).
+  final Set<String> _expandedQuickRecipeIds = {};
 
   static const List<String> _categoryOrder = [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
@@ -96,7 +105,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     final List<double>? activeMultipliers;
 
     if (_isQuickMode) {
-      activeRecipes = widget.quickRecipes;
+      activeRecipes = _quickFilteredRecipes();
       activeMultipliers = null;
     } else {
       activeRecipes = widget.plannedRecipes.values.map((pr) => pr.recipe).toList();
@@ -121,6 +130,23 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
               category: i.resolvedCategory,
               isCustom: true,
             ))
+        .toList();
+  }
+
+  /// Quick List recipes trimmed down to only their specifically selected
+  /// ingredients (partial selections included), so generation only ever
+  /// sees what the user actually picked — never the whole recipe by
+  /// default. Recipes left with nothing selected are dropped entirely.
+  List<Recipe> _quickFilteredRecipes() {
+    return widget.quickRecipes
+        .map((recipe) {
+          final selected = widget.quickSelectedIngredientKeys[recipe.id] ?? const <String>{};
+          final filteredIngredients = recipe.ingredients
+              .where((i) => selected.contains(ingredientKey(i.name, i.unit)))
+              .toList();
+          return recipe.copyWith(ingredients: filteredIngredients);
+        })
+        .where((r) => r.ingredients.isNotEmpty)
         .toList();
   }
 
@@ -301,8 +327,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     return '${l10n.planWeekNumberLabel(weekNum)} · ${shortDate.format(monday)} – ${shortDate.format(sunday)}';
   }
 
-  String _itemKey(ShoppingListItem item) =>
-      '${item.name.toLowerCase()}-${item.unit.toLowerCase()}';
+  String _itemKey(ShoppingListItem item) => ingredientKey(item.name, item.unit);
 
   String _formatPlanKey(AppLocalizations l10n, String key) {
     final dash = key.lastIndexOf('-');
@@ -340,7 +365,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   List<_RecipeSection> _buildRecipeSections() {
     final l10n = AppLocalizations.of(context)!;
     if (_isQuickMode) {
-      return widget.quickRecipes.map((recipe) {
+      return _quickFilteredRecipes().map((recipe) {
         final items = generateShoppingListFromRecipes([recipe]);
         return _RecipeSection(
           sectionKey: 'quick-${recipe.id}',
@@ -460,49 +485,138 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                   style: TextStyle(fontSize: 13, color: Colors.grey[500])),
               )
             else
-              ...widget.allRecipes.map((recipe) {
-                final isSelected = widget.quickRecipes.any((r) => r.id == recipe.id);
+              ...widget.allRecipes.map((recipe) => _buildQuickRecipeRow(context, l10n, recipe)),
+            const SizedBox(height: 6),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Collapsed: recipe-level tri-state checkbox (all/none/some selected) +
+  // an expand affordance. Expanded: one checkbox per ingredient, so the
+  // user can select only part of a recipe (e.g. just "Tomato").
+  Widget _buildQuickRecipeRow(BuildContext context, AppLocalizations l10n, Recipe recipe) {
+    final selectedKeys = widget.quickSelectedIngredientKeys[recipe.id] ?? const <String>{};
+    final allKeys = recipe.ingredients.map((i) => ingredientKey(i.name, i.unit)).toSet();
+    final isFullySelected = allKeys.isNotEmpty && selectedKeys.length == allKeys.length && allKeys.every(selectedKeys.contains);
+    final isPartiallySelected = selectedKeys.isNotEmpty && !isFullySelected;
+    final isExpanded = _expandedQuickRecipeIds.contains(recipe.id);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => widget.onToggleQuickRecipe(recipe.id),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            child: Row(
+              children: [
+                _triStateCheckbox(isFullySelected, isPartiallySelected),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(recipe.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: (isFullySelected || isPartiallySelected) ? const Color(0xFF1A1C19) : Colors.grey[700],
+                    )),
+                ),
+                Text('${localizedRecipeCategory(l10n, recipe.category)} · ${recipe.servings} ${l10n.shoppingServingsAbbrev}',
+                  style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => setState(() {
+                    if (isExpanded) {
+                      _expandedQuickRecipeIds.remove(recipe.id);
+                    } else {
+                      _expandedQuickRecipeIds.add(recipe.id);
+                    }
+                  }),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                      size: 20,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 30, bottom: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: recipe.ingredients.map((ingredient) {
+                final key = ingredientKey(ingredient.name, ingredient.unit);
+                final isIngredientSelected = selectedKeys.contains(key);
                 return InkWell(
-                  onTap: () => widget.onToggleQuickRecipe(recipe.id),
+                  onTap: () => widget.onToggleQuickIngredient(recipe.id, key),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    padding: const EdgeInsets.symmetric(vertical: 5),
                     child: Row(
                       children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppColors.primaryDark : Colors.transparent,
-                            border: Border.all(
-                              color: isSelected ? AppColors.primaryDark : Theme.of(context).dividerColor,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
-                        ),
+                        _ingredientCheckbox(isIngredientSelected),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(recipe.name,
+                          child: Text(ingredient.name,
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: isSelected ? const Color(0xFF1A1C19) : Colors.grey[700],
+                              fontSize: 13,
+                              color: isIngredientSelected ? const Color(0xFF1A1C19) : Colors.grey[600],
                             )),
                         ),
-                        Text('${localizedRecipeCategory(l10n, recipe.category)} · ${recipe.servings} ${l10n.shoppingServingsAbbrev}',
+                        Text('${_formatAmount(ingredient.amount)} ${ingredient.unit}',
                           style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                       ],
                     ),
                   ),
                 );
-              }),
-            const SizedBox(height: 6),
-          ],
+              }).toList(),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _triStateCheckbox(bool isFull, bool isPartial) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        color: isFull ? AppColors.primaryDark : (isPartial ? AppColors.surfaceSoft : Colors.transparent),
+        border: Border.all(
+          color: (isFull || isPartial) ? AppColors.primaryDark : Theme.of(context).dividerColor,
+          width: 2,
         ),
+        borderRadius: BorderRadius.circular(4),
       ),
+      child: isFull
+          ? const Icon(Icons.check, size: 14, color: Colors.white)
+          : (isPartial ? const Icon(Icons.remove, size: 14, color: AppColors.primaryDark) : null),
+    );
+  }
+
+  Widget _ingredientCheckbox(bool isSelected) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: isSelected ? AppColors.primaryDark : Colors.transparent,
+        border: Border.all(
+          color: isSelected ? AppColors.primaryDark : Theme.of(context).dividerColor,
+          width: 2,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: isSelected ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
     );
   }
 

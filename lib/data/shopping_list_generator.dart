@@ -1,9 +1,6 @@
 import '../models/recipe.dart';
 import '../models/shopping_list_item.dart';
-
-String _normalizeText(String value) {
-  return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
-}
+import '../shared/ingredient_key.dart';
 
 String _cleanDisplayText(String value) {
   return value.trim().replaceAll(RegExp(r'\s+'), ' ');
@@ -19,15 +16,8 @@ String _resolveMergedCategory({
   return currentCategory;
 }
 
-String _baseUnitFor(String unit) {
-  final normalizedUnit = _normalizeText(unit);
-  if (normalizedUnit == 'kg' || normalizedUnit == 'g') return 'g';
-  if (normalizedUnit == 'l' || normalizedUnit == 'ml') return 'ml';
-  return normalizedUnit;
-}
-
 double _amountToBaseUnit({required double amount, required String unit}) {
-  final normalizedUnit = _normalizeText(unit);
+  final normalizedUnit = unit.trim().toLowerCase();
   if (normalizedUnit == 'kg') return amount * 1000;
   if (normalizedUnit == 'l') return amount * 1000;
   return amount;
@@ -45,14 +35,12 @@ List<ShoppingListItem> generateShoppingListFromRecipes(
         (multipliers != null && i < multipliers.length) ? multipliers[i] : 1.0;
 
     for (final ingredient in recipe.ingredients) {
-      final normalizedName = _normalizeText(ingredient.name);
-      final normalizedUnit = _normalizeText(ingredient.unit);
-      final baseUnit = _baseUnitFor(normalizedUnit);
+      final baseUnit = normalizeUnit(ingredient.unit);
       final baseAmount = _amountToBaseUnit(
         amount: ingredient.amount * multiplier,
-        unit: normalizedUnit,
+        unit: ingredient.unit,
       );
-      final key = '$normalizedName-$baseUnit';
+      final key = ingredientKey(ingredient.name, ingredient.unit);
 
       final existingItem = mergedItems[key];
 

@@ -14,6 +14,7 @@ import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../shared/app_constants.dart';
+import '../shared/ingredient_key.dart';
 import '../shared/iso_week.dart';
 import '../shared/widgets/brand_logo.dart';
 import '../shared/widgets/floating_nav_bar.dart';
@@ -264,7 +265,8 @@ class _MainShellState extends State<MainShell> {
   Map<String, PlannedRecipe> _allPlannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
   Set<String> _excludedShoppingItemKeys = {};
-  Set<String> _quickRecipeIds = {};
+  // recipeId -> selected ingredient keys (name+unit) for that recipe.
+  Map<String, Set<String>> _quickSelectedIngredients = {};
   List<Ingredient> _customQuickItems = [];
 
   // "Copy day" clipboard — lives here (not in the stateless MealPlanScreen)
@@ -308,19 +310,20 @@ class _MainShellState extends State<MainShell> {
 
   Future<void> _loadSavedData() async {
     final savedRecipes = await _recipeStorageService.loadRecipes();
+    final allRecipes = [...sampleRecipes, ...savedRecipes];
+
     final savedMealPlan = await _recipeStorageService.loadMealPlan();
     final savedCheckedShoppingItems =
         await _recipeStorageService.loadCheckedShoppingItems();
     final savedExcludedShoppingItems =
         await _recipeStorageService.loadExcludedShoppingItemKeys();
-    final savedQuickRecipeIds =
-        await _recipeStorageService.loadQuickRecipeIds();
+    // Needs allRecipes to migrate the old whole-recipe-id format, if found.
+    final savedQuickSelectedIngredients =
+        await _recipeStorageService.loadQuickSelectedIngredients(allRecipes);
     final savedCustomQuickItems =
         await _recipeStorageService.loadCustomQuickItems();
     final onboardingCompleted =
         await _recipeStorageService.loadOnboardingCompleted();
-
-    final allRecipes = [...sampleRecipes, ...savedRecipes];
 
     // Migrate old-format keys (e.g. "Monday-breakfast") to week-prefixed keys
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -357,7 +360,7 @@ class _MainShellState extends State<MainShell> {
       _allPlannedRecipes = allPlannedRecipes;
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
       _excludedShoppingItemKeys = savedExcludedShoppingItems;
-      _quickRecipeIds = savedQuickRecipeIds;
+      _quickSelectedIngredients = savedQuickSelectedIngredients;
       _customQuickItems = savedCustomQuickItems;
       _onboardingCompleted = onboardingCompleted;
       _isLoadingData = false;
@@ -413,11 +416,11 @@ class _MainShellState extends State<MainShell> {
     setState(() {
       _recipes.removeWhere((r) => r.id == recipe.id);
       _allPlannedRecipes.removeWhere((_, pr) => pr.recipe.id == recipe.id);
-      _quickRecipeIds.remove(recipe.id);
+      _quickSelectedIngredients.remove(recipe.id);
     });
     _saveCustomRecipes();
     _saveMealPlan();
-    _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
+    _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
   }
   void _toggleFavorite(Recipe recipe) {
     setState(() {
@@ -497,20 +500,53 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveExcludedShoppingItemKeys(_excludedShoppingItemKeys);
   }
 
+  bool _isRecipeFullySelected(Recipe recipe) {
+    final selected = _quickSelectedIngredients[recipe.id];
+    if (selected == null || selected.isEmpty || recipe.ingredients.isEmpty) return false;
+    return recipe.ingredients.every((i) => selected.contains(ingredientKey(i.name, i.unit)));
+  }
+
+  /// All-or-nothing toggle for a whole recipe — used by the Quick List
+  /// picker's recipe-level checkbox AND by RecipeDetailScreen's "Add to
+  /// Quick List" star/menu action, which is meant to mean the same thing.
   void _toggleQuickRecipe(String recipeId) {
+    final matches = _recipes.where((r) => r.id == recipeId);
+    if (matches.isEmpty) return;
+    final recipe = matches.first;
+    final isFullySelected = _isRecipeFullySelected(recipe);
     setState(() {
-      if (_quickRecipeIds.contains(recipeId)) {
-        _quickRecipeIds.remove(recipeId);
+      if (isFullySelected) {
+        _quickSelectedIngredients.remove(recipeId);
       } else {
-        _quickRecipeIds.add(recipeId);
+        _quickSelectedIngredients[recipeId] =
+            recipe.ingredients.map((i) => ingredientKey(i.name, i.unit)).toSet();
       }
     });
-    _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
+    _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
+  }
+
+  /// Per-ingredient toggle for partial recipe selection in the Quick List
+  /// picker's expanded ingredient list.
+  void _toggleQuickIngredient(String recipeId, String key) {
+    setState(() {
+      final current = Set<String>.from(_quickSelectedIngredients[recipeId] ?? {});
+      if (current.contains(key)) {
+        current.remove(key);
+      } else {
+        current.add(key);
+      }
+      if (current.isEmpty) {
+        _quickSelectedIngredients.remove(recipeId);
+      } else {
+        _quickSelectedIngredients[recipeId] = current;
+      }
+    });
+    _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
   }
 
   void _clearQuickRecipes() {
-    setState(() => _quickRecipeIds.clear());
-    _recipeStorageService.saveQuickRecipeIds(_quickRecipeIds);
+    setState(() => _quickSelectedIngredients.clear());
+    _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
   }
 
   void _addCustomQuickItem(Ingredient item) {
@@ -561,8 +597,14 @@ class _MainShellState extends State<MainShell> {
     }
 
     final l10n = AppLocalizations.of(context)!;
-    final quickRecipes =
-        _recipes.where((r) => _quickRecipeIds.contains(r.id)).toList();
+    // Recipes with *any* ingredient selected (used for Quick List content);
+    // RecipeListScreen/RecipeDetailScreen instead need the *fully* selected
+    // set, since their single star/menu toggle is all-or-nothing.
+    final quickRecipes = _recipes
+        .where((r) => _quickSelectedIngredients[r.id]?.isNotEmpty ?? false)
+        .toList();
+    final fullySelectedQuickRecipeIds =
+        _recipes.where(_isRecipeFullySelected).map((r) => r.id).toSet();
 
     final screens = [
       RecipeListScreen(
@@ -573,7 +615,7 @@ class _MainShellState extends State<MainShell> {
         onRecipeUpdated: _updateRecipe,
         onRecipeDeleted: _deleteRecipe,
         onFavoriteToggled: _toggleFavorite,
-        quickRecipeIds: _quickRecipeIds,
+        quickRecipeIds: fullySelectedQuickRecipeIds,
         onToggleQuickRecipe: _toggleQuickRecipe,
       ),
       MealPlanScreen(
@@ -597,7 +639,9 @@ class _MainShellState extends State<MainShell> {
         onItemCheckedChanged: _setShoppingItemChecked,
         excludedItemKeys: _excludedShoppingItemKeys,
         onExcludeItem: _excludeShoppingItem,
+        quickSelectedIngredientKeys: _quickSelectedIngredients,
         onToggleQuickRecipe: _toggleQuickRecipe,
+        onToggleQuickIngredient: _toggleQuickIngredient,
         onClearQuickRecipes: _clearQuickRecipes,
         customQuickItems: _customQuickItems,
         onAddCustomItem: _addCustomQuickItem,

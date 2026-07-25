@@ -5,9 +5,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../data/sample_recipes.dart';
 import '../l10n/app_localizations.dart';
 import '../models/recipe.dart';
 import '../services/recipe_storage_service.dart';
+import '../shared/ingredient_key.dart';
 
 
 class BackupService {
@@ -20,7 +22,8 @@ class BackupService {
       final recipes = await _storageService.loadRecipes();
       final mealPlan = await _storageService.loadMealPlan();
       final checkedItems = await _storageService.loadCheckedShoppingItems();
-      final quickRecipeIds = await _storageService.loadQuickRecipeIds();
+      final quickSelectedIngredients = await _storageService
+          .loadQuickSelectedIngredients([...sampleRecipes, ...recipes]);
 
       final backup = {
         'version': 1,
@@ -28,7 +31,8 @@ class BackupService {
         'recipes': recipes.map((r) => r.toJson()).toList(),
         'mealPlan': mealPlan,
         'checkedItems': checkedItems.toList(),
-        'quickRecipeIds': quickRecipeIds.toList(),
+        'quickSelectedIngredients':
+            quickSelectedIngredients.map((id, keys) => MapEntry(id, keys.toList())),
       };
 
       final jsonString = const JsonEncoder.withIndent('  ').convert(backup);
@@ -153,9 +157,25 @@ class BackupService {
         checkedItemsList.toSet(),
       );
 
-      final quickIdsList =
-          (backup['quickRecipeIds'] as List<dynamic>?)?.cast<String>() ?? [];
-      await _storageService.saveQuickRecipeIds(quickIdsList.toSet());
+      if (backup.containsKey('quickSelectedIngredients')) {
+        final json = backup['quickSelectedIngredients'] as Map<String, dynamic>? ?? {};
+        final selected = json.map((recipeId, keys) =>
+            MapEntry(recipeId, (keys as List<dynamic>).map((k) => k as String).toSet()));
+        await _storageService.saveQuickSelectedIngredients(selected);
+      } else {
+        // Older backup: whole-recipe selection becomes "all ingredients
+        // selected" for that recipe, same as the first-launch migration.
+        final quickIdsList =
+            (backup['quickRecipeIds'] as List<dynamic>?)?.cast<String>() ?? [];
+        final selected = <String, Set<String>>{};
+        for (final recipeId in quickIdsList) {
+          final matches = recipes.where((r) => r.id == recipeId);
+          if (matches.isEmpty) continue;
+          selected[recipeId] =
+              matches.first.ingredients.map((i) => ingredientKey(i.name, i.unit)).toSet();
+        }
+        await _storageService.saveQuickSelectedIngredients(selected);
+      }
 
       if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(

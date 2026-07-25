@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/ingredient.dart';
 import '../models/recipe.dart';
+import '../shared/ingredient_key.dart';
 
 class RecipeStorageService {
   static const String _recipesKey = 'recipes';
@@ -15,6 +16,7 @@ class RecipeStorageService {
   static const String _onboardingCompletedKey = 'onboarding_completed';
   static const String _localeCodeKey = 'locale_code';
   static const String _excludedShoppingItemsKey = 'excluded_shopping_items';
+  static const String _quickSelectedIngredientsKey = 'quick_selected_ingredients';
 
   Future<List<Recipe>> loadRecipes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -103,23 +105,46 @@ class RecipeStorageService {
     await prefs.setString(_excludedShoppingItemsKey, jsonEncode(excludedItemKeys.toList()));
   }
 
-  // Quick shopping list
-  Future<Set<String>> loadQuickRecipeIds() async {
+  /// Quick List selection: recipeId -> set of selected ingredient keys
+  /// (name+unit). If nothing has been saved in this format yet, migrates
+  /// the old whole-recipe-id format once — a previously selected recipe
+  /// becomes "all of its ingredients selected" — then persists the
+  /// migrated result under the new key so this only ever runs once (the
+  /// new key existing always takes priority on later loads, so data can't
+  /// be lost or re-migrated by reopening the app).
+  Future<Map<String, Set<String>>> loadQuickSelectedIngredients(List<Recipe> knownRecipes) async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_quickRecipeIdsKey);
+    final jsonString = prefs.getString(_quickSelectedIngredientsKey);
 
-    if (jsonString == null || jsonString.isEmpty) {
-      return {};
+    if (jsonString != null && jsonString.isNotEmpty) {
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      return jsonMap.map((recipeId, keys) =>
+          MapEntry(recipeId, (keys as List<dynamic>).map((k) => k as String).toSet()));
     }
 
-    final jsonList = jsonDecode(jsonString) as List<dynamic>;
+    final oldJsonString = prefs.getString(_quickRecipeIdsKey);
+    if (oldJsonString != null && oldJsonString.isNotEmpty) {
+      final oldIds = (jsonDecode(oldJsonString) as List<dynamic>).map((e) => e as String).toSet();
+      final migrated = <String, Set<String>>{};
+      for (final recipeId in oldIds) {
+        final matches = knownRecipes.where((r) => r.id == recipeId);
+        if (matches.isEmpty) continue;
+        migrated[recipeId] = matches.first.ingredients
+            .map((i) => ingredientKey(i.name, i.unit))
+            .toSet();
+      }
+      await saveQuickSelectedIngredients(migrated);
+      await prefs.remove(_quickRecipeIdsKey);
+      return migrated;
+    }
 
-    return jsonList.map((item) => item as String).toSet();
+    return {};
   }
 
-  Future<void> saveQuickRecipeIds(Set<String> recipeIds) async {
+  Future<void> saveQuickSelectedIngredients(Map<String, Set<String>> selected) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_quickRecipeIdsKey, jsonEncode(recipeIds.toList()));
+    final jsonMap = selected.map((recipeId, keys) => MapEntry(recipeId, keys.toList()));
+    await prefs.setString(_quickSelectedIngredientsKey, jsonEncode(jsonMap));
   }
 
   Future<List<Ingredient>> loadCustomQuickItems() async {
