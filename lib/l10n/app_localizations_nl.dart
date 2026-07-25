@@ -225,6 +225,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get shoppingShopAtCaption => 'Open je favoriete winkel';
 
   @override
+  String get shoppingOnlineTooltip => 'Online winkelen';
+
+  @override
   String get shoppingSortByTitle => 'Sorteren op';
 
   @override

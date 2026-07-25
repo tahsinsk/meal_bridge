@@ -222,6 +222,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shoppingShopAtCaption => 'Favori marketini aç';
 
   @override
+  String get shoppingOnlineTooltip => 'Online alışveriş';
+
+  @override
   String get shoppingSortByTitle => 'Sırala';
 
   @override

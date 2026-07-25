@@ -223,6 +223,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shoppingShopAtCaption => 'Open your favorite store';
 
   @override
+  String get shoppingOnlineTooltip => 'Shop online';
+
+  @override
   String get shoppingSortByTitle => 'Sort by';
 
   @override

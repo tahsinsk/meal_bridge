@@ -472,6 +472,12 @@ abstract class AppLocalizations {
   /// **'Open your favorite store'**
   String get shoppingShopAtCaption;
 
+  /// No description provided for @shoppingOnlineTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop online'**
+  String get shoppingOnlineTooltip;
+
   /// No description provided for @shoppingSortByTitle.
   ///
   /// In en, this message translates to:

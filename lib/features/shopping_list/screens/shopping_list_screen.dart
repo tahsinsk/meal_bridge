@@ -12,7 +12,7 @@ import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
 import '../../../shared/day_labels.dart';
 import '../../../shared/meal_type_style.dart';
-import '../../../shared/widgets/shop_link_row.dart';
+import '../../../shared/widgets/shop_link_sheet.dart';
 import 'add_custom_item_sheet.dart';
 
 class _RecipeSection {
@@ -670,8 +670,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Widget _buildCategorySection(String category, List<ShoppingListItem> items) {
     final l10n = AppLocalizations.of(context)!;
-    final categoryCheckedCount = items.where((i) => widget.checkedItemKeys.contains(_itemKey(i))).length;
-    final allCategoryChecked = categoryCheckedCount == items.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -686,21 +684,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 child: Text(
                   localizedMarketCategory(l10n, category),
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1C19)),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: allCategoryChecked ? AppColors.primaryDark : AppColors.surfaceSoft,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '$categoryCheckedCount/${items.length}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: allCategoryChecked ? Colors.white : AppColors.primaryDark,
-                  ),
                 ),
               ),
             ],
@@ -816,6 +799,13 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[700]),
               ),
               const Spacer(),
+              if (hasContent)
+                IconButton(
+                  icon: const Icon(Icons.storefront_outlined),
+                  color: AppColors.primaryDark,
+                  tooltip: l10n.shoppingOnlineTooltip,
+                  onPressed: () => showShopLinksSheet(context),
+                ),
               IconButton(
                 icon: const Icon(Icons.swap_vert),
                 color: AppColors.primaryDark,
@@ -829,13 +819,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
 
         const SizedBox(height: 8),
-
-        // "Shop at" quick-access row — only once there's something to shop
-        // for, regardless of Weekly Plan / Quick List mode.
-        if (hasContent) ...[
-          const ShopLinksRow(),
-          const SizedBox(height: 8),
-        ],
 
         // Quick List: inline recipe selector (custom items are added via the
         // AppBar "+" button/sheet, which works in either mode)
