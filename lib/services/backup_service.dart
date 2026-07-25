@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/recipe.dart';
 import '../services/recipe_storage_service.dart';
 
@@ -13,6 +14,7 @@ class BackupService {
   final RecipeStorageService _storageService = RecipeStorageService();
 
   Future<void> exportBackup(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final screenSize = MediaQuery.of(context).size;
     try {
       final recipes = await _storageService.loadRecipes();
@@ -40,7 +42,7 @@ class BackupService {
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(tempFile.path)],
-          subject: 'MealBridge Backup',
+          subject: l10n.backupExportSubject,
           sharePositionOrigin: Rect.fromLTWH(
             0,
             0,
@@ -54,12 +56,13 @@ class BackupService {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
+        SnackBar(content: Text(l10n.backupExportFailed('$e'))),
       );
     }
   }
 
   Future<bool> importBackup(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final result = await FilePicker.pickFiles(
         type: FileType.custom,
@@ -77,9 +80,7 @@ class BackupService {
       if (version > 1) {
         if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('This backup was created with a newer version of MealBridge.'),
-          ),
+          SnackBar(content: Text(l10n.backupImportNewerVersion)),
         );
         return false;
       }
@@ -98,33 +99,33 @@ class BackupService {
           }
 
           return AlertDialog(
-            title: const Text('Import backup?'),
+            title: Text(l10n.backupImportDialogTitle),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('This will restore:'),
+                Text(l10n.backupImportDialogIntro),
                 const SizedBox(height: 8),
-                Text('• $recipeCount recipe(s)'),
+                Text('• ${l10n.backupImportRecipeCount(recipeCount)}'),
                 if (exportDate != null)
                   Text(
-                    '• Exported on ${exportDate.day}/${exportDate.month}/${exportDate.year}',
+                    '• ${l10n.backupImportExportedOn('${exportDate.day}/${exportDate.month}/${exportDate.year}')}',
                   ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Your existing custom recipes will be replaced.',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                Text(
+                  l10n.backupImportWarning,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: Text(l10n.commonCancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Import'),
+                child: Text(l10n.backupImportConfirm),
               ),
             ],
           );
@@ -158,14 +159,14 @@ class BackupService {
 
       if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Backup imported successfully!')),
+        SnackBar(content: Text(l10n.backupImportSuccess)),
       );
 
       return true;
     } catch (e) {
       if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Import failed: $e')),
+        SnackBar(content: Text(l10n.backupImportFailed('$e'))),
       );
       return false;
     }

@@ -1,0 +1,79 @@
+{
+  "@@locale": "en",
+
+  "navRecipes": "Recipes",
+  "navPlan": "Plan",
+  "navShopping": "Shopping",
+  "navSettings": "Settings",
+
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingGetStarted": "Get started",
+  "onboardingPage1Title": "Your recipes, in one place",
+  "onboardingPage1Body": "Save what you cook, with ingredients, steps and calories.",
+  "onboardingPage2Title": "Plan your week",
+  "onboardingPage2Body": "Drop meals into breakfast, lunch and dinner — for any week.",
+  "onboardingPage3Title": "Your shopping list writes itself",
+  "onboardingPage3Body": "Ingredients are combined and sorted by aisle, ready for the store.",
+
+  "settingsTitle": "Settings",
+  "settingsVersionLabel": "MealBridge v{version}",
+  "@settingsVersionLabel": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "settingsDataBackupSection": "Data & Backup",
+  "settingsExportTitle": "Export backup",
+  "settingsExportSubtitle": "Save all your recipes and meal plan as a JSON file",
+  "settingsImportTitle": "Import backup",
+  "settingsImportSubtitle": "Restore your recipes and meal plan from a backup file",
+  "settingsBackupInfo": "Export your data regularly to avoid losing your recipes if you change phones.",
+  "settingsAboutSection": "About",
+  "settingsAppVersionSubtitle": "Version {version}",
+  "@settingsAppVersionSubtitle": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "settingsStorageTitle": "Storage",
+  "settingsStorageSubtitle": "All data stored locally on your device",
+  "settingsResetOnboardingTitle": "Reset onboarding",
+  "settingsResetOnboardingSubtitle": "Clear the flag and show the intro screens again",
+  "settingsLanguageSection": "Language",
+  "settingsLanguageSystemDefault": "System default",
+
+  "commonCancel": "Cancel",
+
+  "backupExportSubject": "MealBridge Backup",
+  "backupExportFailed": "Export failed: {error}",
+  "@backupExportFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "backupImportNewerVersion": "This backup was created with a newer version of MealBridge.",
+  "backupImportDialogTitle": "Import backup?",
+  "backupImportDialogIntro": "This will restore:",
+  "backupImportRecipeCount": "{count, plural, =0{No recipes} one{{count} recipe} other{{count} recipes}}",
+  "@backupImportRecipeCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "backupImportExportedOn": "Exported on {date}",
+  "@backupImportExportedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "backupImportWarning": "Your existing custom recipes will be replaced.",
+  "backupImportConfirm": "Import",
+  "backupImportSuccess": "Backup imported successfully!",
+  "backupImportFailed": "Import failed: {error}",
+  "@backupImportFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  }
+}

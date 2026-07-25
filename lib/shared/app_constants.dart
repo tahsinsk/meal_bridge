@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// Single source of truth for app metadata shown in the UI (Settings), kept
+/// separate from pubspec.yaml's build version so both can't drift apart.
+class AppInfo {
+  static const String version = '0.5.0';
+}
+
 /// Single source of truth for the MealBridge brand palette. All screens
 /// should reference these instead of introducing their own green shades (or
 /// unrelated hues) so the app reads as one consistent palette.

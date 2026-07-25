@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/widgets/brand_logo.dart';
 import '../widgets/onboarding_illustrations.dart';
@@ -32,23 +33,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
-  static const _pages = [
-    _OnboardingPageData(
-      title: 'Your recipes, in one place',
-      body: 'Save what you cook, with ingredients, steps and calories.',
-      illustration: RecipeCardIllustration(),
-    ),
-    _OnboardingPageData(
-      title: 'Plan your week',
-      body: 'Drop meals into breakfast, lunch and dinner — for any week.',
-      illustration: WeekStripIllustration(),
-    ),
-    _OnboardingPageData(
-      title: 'Your shopping list writes itself',
-      body: 'Ingredients are combined and sorted by aisle, ready for the store.',
-      illustration: ShoppingListIllustration(),
-    ),
-  ];
+  List<_OnboardingPageData> _pages(AppLocalizations l10n) => [
+        _OnboardingPageData(
+          title: l10n.onboardingPage1Title,
+          body: l10n.onboardingPage1Body,
+          illustration: const RecipeCardIllustration(),
+        ),
+        _OnboardingPageData(
+          title: l10n.onboardingPage2Title,
+          body: l10n.onboardingPage2Body,
+          illustration: const WeekStripIllustration(),
+        ),
+        _OnboardingPageData(
+          title: l10n.onboardingPage3Title,
+          body: l10n.onboardingPage3Body,
+          illustration: const ShoppingListIllustration(),
+        ),
+      ];
 
   @override
   void dispose() {
@@ -56,8 +57,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _next() {
-    if (_page < _pages.length - 1) {
+  void _next(int pageCount) {
+    if (_page < pageCount - 1) {
       _controller.nextPage(duration: const Duration(milliseconds: 320), curve: Curves.easeOut);
     } else {
       widget.onFinished();
@@ -66,7 +67,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLastPage = _page == _pages.length - 1;
+    final l10n = AppLocalizations.of(context)!;
+    final pages = _pages(l10n);
+    final isLastPage = _page == pages.length - 1;
 
     return Scaffold(
       backgroundColor: AppColors.creamBackground,
@@ -83,7 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         padding: const EdgeInsets.only(right: 8),
                         child: TextButton(
                           onPressed: widget.onFinished,
-                          child: const Text('Skip'),
+                          child: Text(l10n.onboardingSkip),
                         ),
                       ),
                     ),
@@ -91,23 +94,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _controller,
-                itemCount: _pages.length,
+                itemCount: pages.length,
                 onPageChanged: (index) => setState(() => _page = index),
                 itemBuilder: (context, index) => _OnboardingPage(
-                  data: _pages[index],
+                  data: pages[index],
                   showLogo: index == 0,
                 ),
               ),
             ),
-            _PageIndicator(count: _pages.length, activeIndex: _page),
+            _PageIndicator(count: pages.length, activeIndex: _page),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: FilledButton(
-                  onPressed: _next,
-                  child: Text(isLastPage ? 'Get started' : 'Next'),
+                  onPressed: () => _next(pages.length),
+                  child: Text(isLastPage ? l10n.onboardingGetStarted : l10n.onboardingNext),
                 ),
               ),
             ),

@@ -12,19 +12,66 @@ import '../models/meal_type.dart';
 import '../models/planned_recipe.dart';
 import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
+import '../l10n/app_localizations.dart';
 import '../shared/app_constants.dart';
 import '../shared/widgets/brand_logo.dart';
 import '../shared/widgets/floating_nav_bar.dart';
 
 
-class MealBridgeApp extends StatelessWidget {
+class MealBridgeApp extends StatefulWidget {
   const MealBridgeApp({super.key});
+
+  @override
+  State<MealBridgeApp> createState() => _MealBridgeAppState();
+}
+
+class _MealBridgeAppState extends State<MealBridgeApp> {
+  final _storageService = RecipeStorageService();
+
+  // 'system' (follow device locale) or a supported language code.
+  String _localeCode = 'system';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocale();
+  }
+
+  Future<void> _loadLocale() async {
+    final code = await _storageService.loadLocaleCode();
+    if (!mounted) return;
+    setState(() => _localeCode = code);
+  }
+
+  /// Applies immediately (no restart) since it just rebuilds MaterialApp
+  /// with a new `locale`, which the framework propagates to every
+  /// Localizations-dependent widget below it.
+  void _setLocaleCode(String code) {
+    setState(() => _localeCode = code);
+    _storageService.saveLocaleCode(code);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MealBridge',
       debugShowCheckedModeBanner: false,
+      // Explicit pick forces that locale; 'system' leaves `locale` null so
+      // localeResolutionCallback below follows the device, falling back to
+      // English when the device locale isn't one we support.
+      locale: _localeCode == 'system' ? null : Locale(_localeCode),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localeResolutionCallback: (deviceLocale, supportedLocales) {
+        if (deviceLocale != null) {
+          for (final supported in supportedLocales) {
+            if (supported.languageCode == deviceLocale.languageCode) {
+              return supported;
+            }
+          }
+        }
+        return const Locale('en');
+      },
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primaryDark,
@@ -180,13 +227,23 @@ class MealBridgeApp extends StatelessWidget {
           side: const BorderSide(color: AppColors.primaryDark, width: 1.5),
         ),
       ),
-      home: const MainShell(),
+      home: MainShell(
+        localeCode: _localeCode,
+        onLocaleCodeChanged: _setLocaleCode,
+      ),
     );
   }
 }
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  final String localeCode;
+  final ValueChanged<String> onLocaleCodeChanged;
+
+  const MainShell({
+    super.key,
+    required this.localeCode,
+    required this.onLocaleCodeChanged,
+  });
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -495,6 +552,7 @@ class _MainShellState extends State<MainShell> {
       return OnboardingScreen(onFinished: _completeOnboarding);
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final quickRecipes =
         _recipes.where((r) => _quickRecipeIds.contains(r.id)).toList();
 
@@ -538,6 +596,8 @@ class _MainShellState extends State<MainShell> {
       SettingsScreen(
         onImportSuccess: () => _loadSavedData(),
         onResetOnboarding: _resetOnboarding,
+        localeCode: widget.localeCode,
+        onLocaleCodeChanged: widget.onLocaleCodeChanged,
       ),
     ];
 
@@ -566,26 +626,26 @@ class _MainShellState extends State<MainShell> {
         onDestinationSelected: (index) {
           setState(() => _selectedIndex = index);
         },
-        destinations: const [
+        destinations: [
           FloatingNavDestination(
             icon: Icons.restaurant_menu_outlined,
             selectedIcon: Icons.restaurant_menu,
-            label: 'Recipes',
+            label: l10n.navRecipes,
           ),
           FloatingNavDestination(
             icon: Icons.calendar_month_outlined,
             selectedIcon: Icons.calendar_month,
-            label: 'Plan',
+            label: l10n.navPlan,
           ),
           FloatingNavDestination(
             icon: Icons.shopping_cart_outlined,
             selectedIcon: Icons.shopping_cart,
-            label: 'Shopping',
+            label: l10n.navShopping,
           ),
           FloatingNavDestination(
             icon: Icons.settings_outlined,
             selectedIcon: Icons.settings,
-            label: 'Settings',
+            label: l10n.navSettings,
           ),
         ],
       ),

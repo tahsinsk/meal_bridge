@@ -54,10 +54,16 @@ class FloatingNavBar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             for (var i = 0; i < destinations.length; i++)
-              _FloatingNavItem(
-                destination: destinations[i],
-                selected: i == selectedIndex,
-                onTap: () => onDestinationSelected(i),
+              // Flexible (not a fixed size) so longer localized labels
+              // shrink to fit instead of overflowing the Row on narrow
+              // phones — labels are translated and vary in length per
+              // language.
+              Flexible(
+                child: _FloatingNavItem(
+                  destination: destinations[i],
+                  selected: i == selectedIndex,
+                  onTap: () => onDestinationSelected(i),
+                ),
               ),
           ],
         ),
@@ -111,6 +117,8 @@ class _FloatingNavItem extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 destination.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: selected ? Colors.white : Colors.grey[500],
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w500,

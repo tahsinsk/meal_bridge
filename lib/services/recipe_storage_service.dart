@@ -13,6 +13,7 @@ class RecipeStorageService {
   static const String _customQuickItemsKey = 'custom_quick_items';
   static const String _recipeGridViewKey = 'recipe_grid_view';
   static const String _onboardingCompletedKey = 'onboarding_completed';
+  static const String _localeCodeKey = 'locale_code';
 
   Future<List<Recipe>> loadRecipes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -138,5 +139,17 @@ class RecipeStorageService {
   Future<void> saveOnboardingCompleted(bool completed) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingCompletedKey, completed);
+  }
+
+  /// 'system' (follow device locale) or a supported language code
+  /// ('en'/'tr'/'nl'). Defaults to 'system' when nothing has been saved yet.
+  Future<String> loadLocaleCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_localeCodeKey) ?? 'system';
+  }
+
+  Future<void> saveLocaleCode(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_localeCodeKey, code);
   }
 }
