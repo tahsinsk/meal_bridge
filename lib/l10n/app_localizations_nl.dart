@@ -123,6 +123,188 @@ class AppLocalizationsNl extends AppLocalizations {
   String get commonClearAll => 'Alles wissen';
 
   @override
+  String get planOverwriteConfirm => 'Overschrijven';
+
+  @override
+  String get dayMonday => 'Maandag';
+
+  @override
+  String get dayTuesday => 'Dinsdag';
+
+  @override
+  String get dayWednesday => 'Woensdag';
+
+  @override
+  String get dayThursday => 'Donderdag';
+
+  @override
+  String get dayFriday => 'Vrijdag';
+
+  @override
+  String get daySaturday => 'Zaterdag';
+
+  @override
+  String get daySunday => 'Zondag';
+
+  @override
+  String get planLastWeek => 'Vorige week';
+
+  @override
+  String get planThisWeek => 'Deze week';
+
+  @override
+  String get planNextWeek => 'Volgende week';
+
+  @override
+  String planKcalPerServing(int value) {
+    return '$value kcal/portie';
+  }
+
+  @override
+  String planIngredientCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingrediënten',
+      one: '$count ingrediënt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planCopiedDaySnackbar(String day) {
+    return '$day gekopieerd';
+  }
+
+  @override
+  String get planOverwriteDialogTitle => 'Deze dag overschrijven?';
+
+  @override
+  String planOverwriteDialogContent(String day) {
+    return '$day heeft al geplande maaltijden. Plakken vervangt deze.';
+  }
+
+  @override
+  String get planTodayBadge => 'Vandaag';
+
+  @override
+  String get planCopyDay => 'Dag kopiëren';
+
+  @override
+  String get planPasteDay => 'Dag plakken';
+
+  @override
+  String planAddMealType(String mealType) {
+    return '$mealType toevoegen';
+  }
+
+  @override
+  String get planAddToPlanTitle => 'Toevoegen aan plan';
+
+  @override
+  String get planAddToPlanButton => 'Toevoegen aan plan';
+
+  @override
+  String get planRecipeFieldLabel => 'Recept';
+
+  @override
+  String get planSearchRecipesHint => 'Recepten zoeken';
+
+  @override
+  String get planNoRecipesYet =>
+      'Nog geen recepten. Voeg eerst een recept toe.';
+
+  @override
+  String get planNoRecipesMatch =>
+      'Geen recepten komen overeen met je zoekopdracht of filter.';
+
+  @override
+  String get shoppingListHeading => 'Boodschappenlijst';
+
+  @override
+  String get shoppingShopAtCaption => 'Open je favoriete winkel';
+
+  @override
+  String get shoppingSortByTitle => 'Sorteren op';
+
+  @override
+  String get shoppingShareTooltip => 'Lijst delen';
+
+  @override
+  String get shoppingAddItemTooltip => 'Item toevoegen';
+
+  @override
+  String get shoppingWeeklyPlanMode => 'Weekplan';
+
+  @override
+  String get shoppingQuickListMode => 'Snellijst';
+
+  @override
+  String get shoppingSelectAll => 'Alles selecteren';
+
+  @override
+  String shoppingSortTooltip(String mode) {
+    return 'Sorteren: $mode';
+  }
+
+  @override
+  String get shoppingNoRecipesYet =>
+      'Nog geen recepten. Voeg ze toe via het tabblad Recepten.';
+
+  @override
+  String get shoppingServingsAbbrev => 'port';
+
+  @override
+  String shoppingServingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count porties',
+      one: '$count portie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shoppingMyItemsSection => 'Mijn items';
+
+  @override
+  String get shoppingEmptyTitle => 'Nog geen boodschappenlijst';
+
+  @override
+  String get shoppingEmptyMessage =>
+      'Plan recepten voor de week en je boodschappenlijst verschijnt hier automatisch.';
+
+  @override
+  String get shoppingGoToPlanChip => 'Ga naar tabblad Plan';
+
+  @override
+  String get shoppingItemNameLabel => 'Naam item';
+
+  @override
+  String get shoppingItemNameHint => 'bijv. Melk, Vuilniszakken, Servetten';
+
+  @override
+  String get shoppingAddItemButton => 'Item toevoegen';
+
+  @override
+  String get shoppingNoExtraItems =>
+      'Nog geen extra items — voeg er hierboven een toe.';
+
+  @override
+  String get shoppingInvalidItem => 'Voer een geldig item in.';
+
+  @override
+  String get shoppingItemNameTooShort =>
+      'Naam van het item moet minstens 2 tekens bevatten.';
+
+  @override
+  String get shoppingItemAmountInvalid => 'Hoeveelheid moet groter zijn dan 0.';
+
+  @override
+  String get shoppingItemDuplicate => 'Dat item staat al op de lijst.';
+
+  @override
   String get categoryBreakfast => 'Ontbijt';
 
   @override

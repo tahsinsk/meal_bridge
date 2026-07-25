@@ -123,6 +123,186 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClearAll => 'Clear all';
 
   @override
+  String get planOverwriteConfirm => 'Overwrite';
+
+  @override
+  String get dayMonday => 'Monday';
+
+  @override
+  String get dayTuesday => 'Tuesday';
+
+  @override
+  String get dayWednesday => 'Wednesday';
+
+  @override
+  String get dayThursday => 'Thursday';
+
+  @override
+  String get dayFriday => 'Friday';
+
+  @override
+  String get daySaturday => 'Saturday';
+
+  @override
+  String get daySunday => 'Sunday';
+
+  @override
+  String get planLastWeek => 'Last week';
+
+  @override
+  String get planThisWeek => 'This week';
+
+  @override
+  String get planNextWeek => 'Next week';
+
+  @override
+  String planKcalPerServing(int value) {
+    return '$value kcal/serving';
+  }
+
+  @override
+  String planIngredientCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ingredients',
+      one: '$count ingredient',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planCopiedDaySnackbar(String day) {
+    return 'Copied $day\'s meals';
+  }
+
+  @override
+  String get planOverwriteDialogTitle => 'Overwrite this day?';
+
+  @override
+  String planOverwriteDialogContent(String day) {
+    return '$day already has planned meals. Pasting will replace them.';
+  }
+
+  @override
+  String get planTodayBadge => 'Today';
+
+  @override
+  String get planCopyDay => 'Copy day';
+
+  @override
+  String get planPasteDay => 'Paste day';
+
+  @override
+  String planAddMealType(String mealType) {
+    return 'Add $mealType';
+  }
+
+  @override
+  String get planAddToPlanTitle => 'Add to plan';
+
+  @override
+  String get planAddToPlanButton => 'Add to Plan';
+
+  @override
+  String get planRecipeFieldLabel => 'Recipe';
+
+  @override
+  String get planSearchRecipesHint => 'Search recipes';
+
+  @override
+  String get planNoRecipesYet => 'No recipes yet. Add a recipe first.';
+
+  @override
+  String get planNoRecipesMatch => 'No recipes match your search/filter.';
+
+  @override
+  String get shoppingListHeading => 'Shopping list';
+
+  @override
+  String get shoppingShopAtCaption => 'Open your favorite store';
+
+  @override
+  String get shoppingSortByTitle => 'Sort by';
+
+  @override
+  String get shoppingShareTooltip => 'Share list';
+
+  @override
+  String get shoppingAddItemTooltip => 'Add item';
+
+  @override
+  String get shoppingWeeklyPlanMode => 'Weekly Plan';
+
+  @override
+  String get shoppingQuickListMode => 'Quick List';
+
+  @override
+  String get shoppingSelectAll => 'Select all';
+
+  @override
+  String shoppingSortTooltip(String mode) {
+    return 'Sort: $mode';
+  }
+
+  @override
+  String get shoppingNoRecipesYet =>
+      'No recipes yet. Add some in the Recipes tab.';
+
+  @override
+  String get shoppingServingsAbbrev => 'srv';
+
+  @override
+  String shoppingServingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count servings',
+      one: '$count serving',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shoppingMyItemsSection => 'My Items';
+
+  @override
+  String get shoppingEmptyTitle => 'No shopping list yet';
+
+  @override
+  String get shoppingEmptyMessage =>
+      'Plan recipes for the week and your shopping list will appear here automatically.';
+
+  @override
+  String get shoppingGoToPlanChip => 'Go to Plan tab';
+
+  @override
+  String get shoppingItemNameLabel => 'Item name';
+
+  @override
+  String get shoppingItemNameHint => 'e.g. Milk, Trash bags, Napkins';
+
+  @override
+  String get shoppingAddItemButton => 'Add Item';
+
+  @override
+  String get shoppingNoExtraItems =>
+      'No extra items yet — add your first one above.';
+
+  @override
+  String get shoppingInvalidItem => 'Please enter a valid item.';
+
+  @override
+  String get shoppingItemNameTooShort =>
+      'Item name must be at least 2 characters.';
+
+  @override
+  String get shoppingItemAmountInvalid => 'Item amount must be greater than 0.';
+
+  @override
+  String get shoppingItemDuplicate => 'That item is already on the list.';
+
+  @override
   String get categoryBreakfast => 'Breakfast';
 
   @override

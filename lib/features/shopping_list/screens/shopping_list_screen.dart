@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../data/shopping_list_generator.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/ingredient.dart';
 import '../../../models/meal_type.dart';
 import '../../../models/planned_recipe.dart';
 import '../../../models/recipe.dart';
 import '../../../models/shopping_list_item.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/category_labels.dart';
+import '../../../shared/day_labels.dart';
 import '../../../shared/meal_type_style.dart';
+import '../../../shared/widgets/shop_link_row.dart';
 import 'add_custom_item_sheet.dart';
 
 class _RecipeSection {
@@ -141,14 +145,15 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   /// mode) as plain text, grouped by category with amounts — mirrors what's
   /// shown on screen when sorted by category.
   void _shareShoppingList() {
+    final l10n = AppLocalizations.of(context)!;
     final items = _computeShoppingItems().items;
     if (items.isEmpty) return;
     final grouped = _groupItemsByCategory(items);
 
-    final buffer = StringBuffer('Shopping List\n');
+    final buffer = StringBuffer('${l10n.shoppingListHeading}\n');
     for (final entry in grouped.entries) {
       buffer.writeln();
-      buffer.writeln(entry.key);
+      buffer.writeln(localizedMarketCategory(l10n, entry.key));
       for (final item in entry.value) {
         final amount = item.unit.isNotEmpty
             ? ' (${_formatAmount(item.amount)} ${item.unit})'
@@ -161,13 +166,14 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     SharePlus.instance.share(
       ShareParams(
         text: buffer.toString().trim(),
-        subject: 'Shopping List',
+        subject: l10n.shoppingListHeading,
         sharePositionOrigin: Rect.fromLTWH(0, 0, screenSize.width, screenSize.height / 2),
       ),
     );
   }
 
   void _showSortSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -196,12 +202,12 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                       ),
                     ),
                   ),
-                  Text('Sort by', style: Theme.of(context).textTheme.titleMedium),
+                  Text(l10n.shoppingSortByTitle, style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
                   _buildSortOptionRow(
                     context: context,
                     icon: Icons.category_outlined,
-                    label: 'Category',
+                    label: l10n.recipeFilterCategoryLabel,
                     selected: !_groupByRecipe,
                     onTap: () {
                       setState(() => _groupByRecipe = false);
@@ -211,7 +217,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                   _buildSortOptionRow(
                     context: context,
                     icon: Icons.restaurant_menu_outlined,
-                    label: 'Recipe',
+                    label: l10n.planRecipeFieldLabel,
                     selected: _groupByRecipe,
                     onTap: () {
                       setState(() => _groupByRecipe = true);
@@ -273,13 +279,20 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   String _itemKey(ShoppingListItem item) =>
       '${item.name.toLowerCase()}-${item.unit.toLowerCase()}';
 
-  String _formatPlanKey(String key) {
+  String _formatPlanKey(AppLocalizations l10n, String key) {
     final dash = key.lastIndexOf('-');
-    if (dash == -1) return key;
+    if (dash == -1) return localizedDayName(l10n, key);
     final day = key.substring(0, dash);
     final meal = key.substring(dash + 1);
-    const mealLabels = {'breakfast': 'Breakfast', 'lunch': 'Lunch', 'dinner': 'Dinner'};
-    return '$day · ${mealLabels[meal] ?? meal}';
+    const mealTypes = {
+      'breakfast': MealType.breakfast,
+      'lunch': MealType.lunch,
+      'dinner': MealType.dinner,
+    };
+    final mealLabel = mealTypes.containsKey(meal)
+        ? localizedMealTypeLabel(l10n, mealTypes[meal]!)
+        : meal;
+    return '${localizedDayName(l10n, day)} · $mealLabel';
   }
 
   Map<String, List<ShoppingListItem>> _groupItemsByCategory(List<ShoppingListItem> items) {
@@ -300,13 +313,14 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   List<_RecipeSection> _buildRecipeSections() {
+    final l10n = AppLocalizations.of(context)!;
     if (_isQuickMode) {
       return widget.quickRecipes.map((recipe) {
         final items = generateShoppingListFromRecipes([recipe]);
         return _RecipeSection(
           sectionKey: 'quick-${recipe.id}',
           recipeName: recipe.name,
-          subtitle: '${recipe.servings} serving${recipe.servings != 1 ? 's' : ''}',
+          subtitle: l10n.shoppingServingCount(recipe.servings),
           icon: Icons.restaurant_menu_outlined,
           iconColor: AppColors.primaryDark,
           iconBgColor: AppColors.surfaceSoft,
@@ -361,7 +375,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       return _RecipeSection(
         sectionKey: 'weekly-${entry.key}',
         recipeName: pr.recipe.name,
-        subtitle: _formatPlanKey(entry.key),
+        subtitle: _formatPlanKey(l10n, entry.key),
         icon: icon,
         iconColor: iconColor,
         iconBgColor: iconBgColor,
@@ -382,12 +396,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     }
   }
 
-  void _checkCategory(List<ShoppingListItem> items, bool check) {
-    for (final item in items) {
-      widget.onItemCheckedChanged(_itemKey(item), check);
-    }
-  }
-
   void _checkRecipeSection(List<ShoppingListItem> items, bool check) {
     for (final item in items) {
       widget.onItemCheckedChanged(_itemKey(item), check);
@@ -395,6 +403,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _buildInlineRecipeSelector() {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
@@ -405,7 +414,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
               children: [
                 const Icon(Icons.restaurant_menu_outlined, size: 16, color: AppColors.primaryDark),
                 const SizedBox(width: 6),
-                const Text('Recipes', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1C19))),
+                Text(l10n.navRecipes, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1C19))),
                 const Spacer(),
                 if (widget.quickRecipes.isNotEmpty)
                   TextButton(
@@ -415,14 +424,14 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text('Clear all', style: TextStyle(fontSize: 12)),
+                    child: Text(l10n.commonClearAll, style: const TextStyle(fontSize: 12)),
                   ),
               ],
             ),
             if (widget.allRecipes.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text('No recipes yet. Add some in the Recipes tab.',
+                child: Text(l10n.shoppingNoRecipesYet,
                   style: TextStyle(fontSize: 13, color: Colors.grey[500])),
               )
             else
@@ -458,7 +467,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                               color: isSelected ? const Color(0xFF1A1C19) : Colors.grey[700],
                             )),
                         ),
-                        Text('${recipe.category} · ${recipe.servings} srv',
+                        Text('${localizedRecipeCategory(l10n, recipe.category)} · ${recipe.servings} ${l10n.shoppingServingsAbbrev}',
                           style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                       ],
                     ),
@@ -544,6 +553,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _buildCustomItemsSection() {
+    final l10n = AppLocalizations.of(context)!;
     final customItems = _customShoppingItems();
     final displayItems = customItems;
 
@@ -564,10 +574,10 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 child: const Icon(Icons.list_alt_outlined, size: 18, color: AppColors.primaryDark),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'My Items',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1C19)),
+                  l10n.shoppingMyItemsSection,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1C19)),
                 ),
               ),
             ],
@@ -659,6 +669,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _buildCategorySection(String category, List<ShoppingListItem> items) {
+    final l10n = AppLocalizations.of(context)!;
     final categoryCheckedCount = items.where((i) => widget.checkedItemKeys.contains(_itemKey(i))).length;
     final allCategoryChecked = categoryCheckedCount == items.length;
 
@@ -673,7 +684,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  category,
+                  localizedMarketCategory(l10n, category),
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF1A1C19)),
                 ),
               ),
@@ -692,15 +703,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () => _checkCategory(items, !allCategoryChecked),
-                child: Icon(
-                  allCategoryChecked ? Icons.check_circle : Icons.check_circle_outline,
-                  size: 22,
-                  color: allCategoryChecked ? AppColors.primaryDark : Colors.grey[400],
-                ),
-              ),
             ],
           ),
         ),
@@ -712,6 +714,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final computed = _computeShoppingItems();
     final shoppingItems = computed.items;
     final hasContent = computed.hasContent;
@@ -725,12 +728,12 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
           padding: const EdgeInsets.only(bottom: 14),
           child: Row(
             children: [
-              const Expanded(
-                child: Text('Shopping list', style: AppTextStyles.pageHeading),
+              Expanded(
+                child: Text(l10n.shoppingListHeading, style: AppTextStyles.pageHeading),
               ),
               IconButton.filledTonal(
                 icon: const Icon(Icons.ios_share_outlined),
-                tooltip: 'Share list',
+                tooltip: l10n.shoppingShareTooltip,
                 onPressed: hasContent ? _shareShoppingList : null,
                 style: IconButton.styleFrom(
                   backgroundColor: AppColors.surfaceSoft,
@@ -740,7 +743,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
               const SizedBox(width: 8),
               IconButton.filledTonal(
                 icon: const Icon(Icons.add),
-                tooltip: 'Add item',
+                tooltip: l10n.shoppingAddItemTooltip,
                 onPressed: openAddCustomItemSheet,
                 style: IconButton.styleFrom(
                   backgroundColor: AppColors.surfaceSoft,
@@ -756,16 +759,16 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: SegmentedButton<bool>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: false,
-                  icon: Icon(Icons.calendar_month_outlined),
-                  label: Text('Weekly Plan'),
+                  icon: const Icon(Icons.calendar_month_outlined),
+                  label: Text(l10n.shoppingWeeklyPlanMode),
                 ),
                 ButtonSegment(
                   value: true,
-                  icon: Icon(Icons.bolt_outlined),
-                  label: Text('Quick List'),
+                  icon: const Icon(Icons.bolt_outlined),
+                  label: Text(l10n.shoppingQuickListMode),
                 ),
               ],
               selected: {_isQuickMode},
@@ -809,14 +812,16 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Select all',
+                l10n.shoppingSelectAll,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[700]),
               ),
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.swap_vert),
                 color: AppColors.primaryDark,
-                tooltip: 'Sort: ${_groupByRecipe ? 'Recipe' : 'Category'}',
+                tooltip: l10n.shoppingSortTooltip(
+                  _groupByRecipe ? l10n.planRecipeFieldLabel : l10n.recipeFilterCategoryLabel,
+                ),
                 onPressed: () => _showSortSheet(context),
               ),
             ],
@@ -824,6 +829,13 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
 
         const SizedBox(height: 8),
+
+        // "Shop at" quick-access row — only once there's something to shop
+        // for, regardless of Weekly Plan / Quick List mode.
+        if (hasContent) ...[
+          const ShopLinksRow(),
+          const SizedBox(height: 8),
+        ],
 
         // Quick List: inline recipe selector (custom items are added via the
         // AppBar "+" button/sheet, which works in either mode)
@@ -851,21 +863,21 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                       child: const Icon(Icons.shopping_basket_outlined, size: 40, color: AppColors.primaryDark),
                     ),
                     const SizedBox(height: 20),
-                    Text('No shopping list yet', style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+                    Text(l10n.shoppingEmptyTitle, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
                     const SizedBox(height: 8),
                     Text(
-                      'Plan recipes for the week and your shopping list will appear here automatically.',
+                      l10n.shoppingEmptyMessage,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 20),
-                    const Wrap(
+                    Wrap(
                       alignment: WrapAlignment.center,
                       spacing: 8,
                       children: [
                         Chip(
-                          avatar: Icon(Icons.calendar_month_outlined, size: 16),
-                          label: Text('Go to Plan tab'),
+                          avatar: const Icon(Icons.calendar_month_outlined, size: 16),
+                          label: Text(l10n.shoppingGoToPlanChip),
                         ),
                       ],
                     ),

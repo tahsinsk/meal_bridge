@@ -1,4 +1,19 @@
 import '../l10n/app_localizations.dart';
+import '../models/meal_type.dart';
+
+/// Maps a [MealType] to its localized label. Reuses the recipe-category
+/// strings ("Breakfast"/"Lunch"/"Dinner") since they're the same words in
+/// every supported language — kept as one translation, not duplicated.
+String localizedMealTypeLabel(AppLocalizations l10n, MealType type) {
+  switch (type) {
+    case MealType.breakfast:
+      return l10n.categoryBreakfast;
+    case MealType.lunch:
+      return l10n.categoryLunch;
+    case MealType.dinner:
+      return l10n.categoryDinner;
+  }
+}
 
 /// Maps a persisted recipe category value ("Breakfast"/"Lunch"/"Dinner"/
 /// "Other" — this is what's stored on [Recipe.category] and must never

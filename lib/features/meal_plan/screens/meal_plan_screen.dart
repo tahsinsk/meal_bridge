@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/meal_type.dart';
 import '../../../models/planned_recipe.dart';
 import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/category_labels.dart';
+import '../../../shared/day_labels.dart';
 import '../../../shared/meal_type_style.dart';
 import 'add_to_plan_sheet.dart';
 
@@ -47,34 +51,36 @@ class MealPlanScreen extends StatelessWidget {
     return monday.add(Duration(days: 7 * offset));
   }
 
-  static String _shortDate(DateTime d) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[d.month - 1]} ${d.day}';
+  // Locale-aware short date ("Jan 5", "5 Oca", "5 jan.", ...) — the CLDR
+  // data behind DateFormat picks the right month form/order per language.
+  String _shortDate(BuildContext context, DateTime d) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.MMMd(locale).format(d);
   }
 
-  static String _weekLabel(int offset) {
+  String _weekLabel(BuildContext context, int offset) {
+    final l10n = AppLocalizations.of(context)!;
     switch (offset) {
-      case -1: return 'Last week';
-      case 0:  return 'This week';
-      case 1:  return 'Next week';
+      case -1: return l10n.planLastWeek;
+      case 0:  return l10n.planThisWeek;
+      case 1:  return l10n.planNextWeek;
       default:
         final monday = _mondayForOffset(offset);
         final sunday = monday.add(const Duration(days: 6));
-        return '${_shortDate(monday)} – ${_shortDate(sunday)}';
+        return '${_shortDate(context, monday)} – ${_shortDate(context, sunday)}';
     }
   }
 
-  static String _weekDateRange(int offset) {
+  String _weekDateRange(BuildContext context, int offset) {
     final monday = _mondayForOffset(offset);
     final sunday = monday.add(const Duration(days: 6));
-    return '${_shortDate(monday)} – ${_shortDate(sunday)}';
+    return '${_shortDate(context, monday)} – ${_shortDate(context, sunday)}';
   }
 
-  String _dayDate(String day) {
+  String _dayDate(BuildContext context, String day) {
     final monday = _mondayForOffset(weekOffset);
     final date = monday.add(Duration(days: _days.indexOf(day)));
-    return _shortDate(date);
+    return _shortDate(context, date);
   }
 
   String _mealPlanKey(String day, [MealType? mealType]) {
@@ -82,30 +88,33 @@ class MealPlanScreen extends StatelessWidget {
     return '$day-${mealType.name}';
   }
 
-  String _recipeMetaInfo(Recipe recipe) {
+  String _recipeMetaInfo(BuildContext context, Recipe recipe) {
+    final l10n = AppLocalizations.of(context)!;
     if (recipe.calories != null) {
-      return '${(recipe.calories! / recipe.servings).round()} kcal/serving';
+      return l10n.planKcalPerServing((recipe.calories! / recipe.servings).round());
     }
-    return '${recipe.ingredients.length} ingredients';
+    return l10n.planIngredientCount(recipe.ingredients.length);
   }
 
   void _handleCopyDay(BuildContext context, String day) {
+    final l10n = AppLocalizations.of(context)!;
     onCopyDay(day);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Copied $day\'s meals')),
+      SnackBar(content: Text(l10n.planCopiedDaySnackbar(localizedDayName(l10n, day)))),
     );
   }
 
   Future<void> _handlePasteDay(BuildContext context, String day, bool dayHasMeals) async {
+    final l10n = AppLocalizations.of(context)!;
     if (dayHasMeals) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Overwrite this day?'),
-          content: Text('$day already has planned meals. Pasting will replace them.'),
+          title: Text(l10n.planOverwriteDialogTitle),
+          content: Text(l10n.planOverwriteDialogContent(localizedDayName(l10n, day))),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Overwrite')),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.planOverwriteConfirm)),
           ],
         ),
       );
@@ -160,6 +169,7 @@ class MealPlanScreen extends StatelessWidget {
   }
 
   Widget _buildMealRow(BuildContext context, String day, MealType mealType) {
+    final l10n = AppLocalizations.of(context)!;
     final pr = plannedRecipes[_mealPlanKey(day, mealType)];
     final bg = mealType.surfaceColor;
     final onBg = mealType.onSurfaceColor;
@@ -192,13 +202,13 @@ class MealPlanScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            _recipeMetaInfo(pr.recipe),
+                            _recipeMetaInfo(context, pr.recipe),
                             style: TextStyle(fontSize: 11, color: onBg.withValues(alpha: 0.75)),
                           ),
                         ],
                       )
                     : Text(
-                        'Add ${mealType.label}',
+                        l10n.planAddMealType(localizedMealTypeLabel(l10n, mealType)),
                         style: TextStyle(
                           fontSize: 13,
                           color: onBg.withValues(alpha: 0.7),
@@ -250,7 +260,7 @@ class MealPlanScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 1),
                   Text(
-                    _recipeMetaInfo(pr.recipe),
+                    _recipeMetaInfo(context, pr.recipe),
                     style: TextStyle(fontSize: 11, color: AppColors.primaryDark.withValues(alpha: 0.7)),
                   ),
                 ],
@@ -272,6 +282,7 @@ class MealPlanScreen extends StatelessWidget {
   }
 
   Widget _buildDayCard(BuildContext context, String day) {
+    final l10n = AppLocalizations.of(context)!;
     final legacyPr = plannedRecipes[_mealPlanKey(day)];
     final mealEntries = _mealTypes
         .map((m) => MapEntry(m, plannedRecipes[_mealPlanKey(day, m)]))
@@ -311,7 +322,7 @@ class MealPlanScreen extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            day,
+                            localizedDayName(l10n, day),
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
@@ -326,16 +337,16 @@ class MealPlanScreen extends StatelessWidget {
                                 color: AppColors.primaryDark,
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
-                                'Today',
-                                style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                              child: Text(
+                                l10n.planTodayBadge,
+                                style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
                         ],
                       ),
                       Text(
-                        _dayDate(day),
+                        _dayDate(context, day),
                         style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                     ],
@@ -352,21 +363,21 @@ class MealPlanScreen extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'copy',
                       child: Row(children: [
-                        Icon(Icons.copy_outlined, size: 18),
-                        SizedBox(width: 10),
-                        Text('Copy day'),
+                        const Icon(Icons.copy_outlined, size: 18),
+                        const SizedBox(width: 10),
+                        Text(l10n.planCopyDay),
                       ]),
                     ),
                     if (hasCopiedDay)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'paste',
                         child: Row(children: [
-                          Icon(Icons.content_paste_outlined, size: 18),
-                          SizedBox(width: 10),
-                          Text('Paste day'),
+                          const Icon(Icons.content_paste_outlined, size: 18),
+                          const SizedBox(width: 10),
+                          Text(l10n.planPasteDay),
                         ]),
                       ),
                   ],
@@ -409,12 +420,12 @@ class MealPlanScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _weekLabel(weekOffset),
+                        _weekLabel(context, weekOffset),
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                       if (weekOffset.abs() <= 1)
                         Text(
-                          _weekDateRange(weekOffset),
+                          _weekDateRange(context, weekOffset),
                           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                     ],

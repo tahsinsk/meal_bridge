@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/ingredient.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/category_labels.dart';
 import '../../../shared/widgets/option_picker_sheet.dart';
 
 /// Clean "add an extra item to the shopping list" bottom sheet — same
@@ -83,31 +85,32 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
   }
 
   void _add() {
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameController.text.trim();
     final unit = _unitController.text.trim();
     final amount = double.tryParse(_amountController.text.trim().replaceAll(',', '.'));
 
     if (name.isEmpty || amount == null || unit.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid item.')),
+        SnackBar(content: Text(l10n.shoppingInvalidItem)),
       );
       return;
     }
     if (name.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Item name must be at least 2 characters.')),
+        SnackBar(content: Text(l10n.shoppingItemNameTooShort)),
       );
       return;
     }
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Item amount must be greater than 0.')),
+        SnackBar(content: Text(l10n.shoppingItemAmountInvalid)),
       );
       return;
     }
     if (_items.any((i) => i.name.toLowerCase() == name.toLowerCase())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('That item is already on the list.')),
+        SnackBar(content: Text(l10n.shoppingItemDuplicate)),
       );
       return;
     }
@@ -130,6 +133,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.5,
@@ -157,7 +161,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text('Add item', style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(l10n.shoppingAddItemTooltip, style: Theme.of(context).textTheme.titleLarge),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -175,9 +179,9 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                       controller: _nameController,
                       focusNode: _nameFocusNode,
                       autofocus: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Item name',
-                        hintText: 'e.g. Milk, Trash bags, Napkins',
+                      decoration: InputDecoration(
+                        labelText: l10n.shoppingItemNameLabel,
+                        hintText: l10n.shoppingItemNameHint,
                       ),
                       textCapitalization: TextCapitalization.sentences,
                     ),
@@ -187,7 +191,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                         Expanded(
                           child: TextField(
                             controller: _amountController,
-                            decoration: const InputDecoration(labelText: 'Amount'),
+                            decoration: InputDecoration(labelText: l10n.recipeFormAmountLabel),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             onSubmitted: (_) => _add(),
                           ),
@@ -195,7 +199,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: OptionPickerField<String>(
-                            label: 'Unit',
+                            label: l10n.recipeFormUnitLabel,
                             value: _units.contains(_unitController.text)
                                 ? _unitController.text
                                 : 'g',
@@ -212,7 +216,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                       child: FilledButton.icon(
                         onPressed: _add,
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Item'),
+                        label: Text(l10n.shoppingAddItemButton),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -220,7 +224,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Text(
-                          'No extra items yet — add your first one above.',
+                          l10n.shoppingNoExtraItems,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -239,7 +243,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
                                     children: [
                                       Text(item.name, style: Theme.of(context).textTheme.titleSmall),
                                       Text(
-                                        item.resolvedCategory,
+                                        localizedMarketCategory(l10n, item.resolvedCategory),
                                         style: Theme.of(context).textTheme.bodySmall,
                                       ),
                                     ],

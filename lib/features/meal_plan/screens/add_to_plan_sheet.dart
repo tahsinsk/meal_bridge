@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/meal_type.dart';
 import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/category_labels.dart';
+import '../../../shared/day_labels.dart';
 import '../../../shared/meal_type_style.dart';
 
 /// Opens the clean "add a recipe to this slot" bottom sheet for a specific
@@ -74,6 +77,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final query = _query.trim().toLowerCase();
     final filteredRecipes = widget.recipes.where((r) {
       final matchesQuery = query.isEmpty || r.name.toLowerCase().contains(query);
@@ -109,7 +113,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Text('Add to plan', style: Theme.of(context).textTheme.titleLarge),
+                      child: Text(l10n.planAddToPlanTitle, style: Theme.of(context).textTheme.titleLarge),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -125,7 +129,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                     Icon(widget.mealType.icon, size: 18, color: widget.mealType.accentColor),
                     const SizedBox(width: 8),
                     Text(
-                      '${widget.mealType.label} · ${widget.day}',
+                      '${localizedMealTypeLabel(l10n, widget.mealType)} · ${localizedDayName(l10n, widget.day)}',
                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -136,13 +140,13 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                   children: [
-                    Text('Recipe', style: Theme.of(context).textTheme.titleSmall),
+                    Text(l10n.planRecipeFieldLabel, style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Search recipes',
-                        prefixIcon: Icon(Icons.search),
+                      decoration: InputDecoration(
+                        hintText: l10n.planSearchRecipesHint,
+                        prefixIcon: const Icon(Icons.search),
                         isDense: true,
                       ),
                       onChanged: (v) => setState(() => _query = v),
@@ -154,7 +158,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                       children: _categories.map((cat) {
                         final isSelected = _categoryFilter == cat;
                         return FilterChip(
-                          label: Text(cat),
+                          label: Text(localizedRecipeCategory(l10n, cat)),
                           selected: isSelected,
                           selectedColor: AppColors.primaryDark,
                           checkmarkColor: Colors.white,
@@ -173,7 +177,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Text(
-                          'No recipes yet. Add a recipe first.',
+                          l10n.planNoRecipesYet,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       )
@@ -181,7 +185,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         child: Text(
-                          'No recipes match your search/filter.',
+                          l10n.planNoRecipesMatch,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       )
@@ -194,7 +198,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                           child: ListTile(
                             onTap: () => _selectRecipe(recipe),
                             title: Text(recipe.name),
-                            subtitle: Text('${recipe.category} · ${recipe.servings} servings'),
+                            subtitle: Text('${localizedRecipeCategory(l10n, recipe.category)} · ${recipe.servings} ${l10n.recipeStatServings}'),
                             trailing: Icon(
                               selected ? Icons.check_circle : Icons.circle_outlined,
                               color: selected ? AppColors.primaryDark : Colors.grey[300],
@@ -204,7 +208,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                       }),
                     if (_recipe != null) ...[
                       const SizedBox(height: 8),
-                      Text('Servings', style: Theme.of(context).textTheme.titleSmall),
+                      Text(l10n.recipeFormServingsLabel, style: Theme.of(context).textTheme.titleSmall),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -234,7 +238,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _recipe != null ? _confirm : null,
-                    child: const Text('Add to Plan'),
+                    child: Text(l10n.planAddToPlanButton),
                   ),
                 ),
               ),

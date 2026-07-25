@@ -304,6 +304,306 @@ abstract class AppLocalizations {
   /// **'Clear all'**
   String get commonClearAll;
 
+  /// No description provided for @planOverwriteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite'**
+  String get planOverwriteConfirm;
+
+  /// No description provided for @dayMonday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get dayMonday;
+
+  /// No description provided for @dayTuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get dayTuesday;
+
+  /// No description provided for @dayWednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get dayWednesday;
+
+  /// No description provided for @dayThursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get dayThursday;
+
+  /// No description provided for @dayFriday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get dayFriday;
+
+  /// No description provided for @daySaturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get daySaturday;
+
+  /// No description provided for @daySunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get daySunday;
+
+  /// No description provided for @planLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last week'**
+  String get planLastWeek;
+
+  /// No description provided for @planThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get planThisWeek;
+
+  /// No description provided for @planNextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Next week'**
+  String get planNextWeek;
+
+  /// No description provided for @planKcalPerServing.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kcal/serving'**
+  String planKcalPerServing(int value);
+
+  /// No description provided for @planIngredientCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} ingredient} other{{count} ingredients}}'**
+  String planIngredientCount(int count);
+
+  /// No description provided for @planCopiedDaySnackbar.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied {day}\'s meals'**
+  String planCopiedDaySnackbar(String day);
+
+  /// No description provided for @planOverwriteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite this day?'**
+  String get planOverwriteDialogTitle;
+
+  /// No description provided for @planOverwriteDialogContent.
+  ///
+  /// In en, this message translates to:
+  /// **'{day} already has planned meals. Pasting will replace them.'**
+  String planOverwriteDialogContent(String day);
+
+  /// No description provided for @planTodayBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get planTodayBadge;
+
+  /// No description provided for @planCopyDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy day'**
+  String get planCopyDay;
+
+  /// No description provided for @planPasteDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste day'**
+  String get planPasteDay;
+
+  /// No description provided for @planAddMealType.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {mealType}'**
+  String planAddMealType(String mealType);
+
+  /// No description provided for @planAddToPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to plan'**
+  String get planAddToPlanTitle;
+
+  /// No description provided for @planAddToPlanButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Plan'**
+  String get planAddToPlanButton;
+
+  /// No description provided for @planRecipeFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe'**
+  String get planRecipeFieldLabel;
+
+  /// No description provided for @planSearchRecipesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recipes'**
+  String get planSearchRecipesHint;
+
+  /// No description provided for @planNoRecipesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipes yet. Add a recipe first.'**
+  String get planNoRecipesYet;
+
+  /// No description provided for @planNoRecipesMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipes match your search/filter.'**
+  String get planNoRecipesMatch;
+
+  /// No description provided for @shoppingListHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping list'**
+  String get shoppingListHeading;
+
+  /// No description provided for @shoppingShopAtCaption.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your favorite store'**
+  String get shoppingShopAtCaption;
+
+  /// No description provided for @shoppingSortByTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get shoppingSortByTitle;
+
+  /// No description provided for @shoppingShareTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share list'**
+  String get shoppingShareTooltip;
+
+  /// No description provided for @shoppingAddItemTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get shoppingAddItemTooltip;
+
+  /// No description provided for @shoppingWeeklyPlanMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Plan'**
+  String get shoppingWeeklyPlanMode;
+
+  /// No description provided for @shoppingQuickListMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick List'**
+  String get shoppingQuickListMode;
+
+  /// No description provided for @shoppingSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get shoppingSelectAll;
+
+  /// No description provided for @shoppingSortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort: {mode}'**
+  String shoppingSortTooltip(String mode);
+
+  /// No description provided for @shoppingNoRecipesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipes yet. Add some in the Recipes tab.'**
+  String get shoppingNoRecipesYet;
+
+  /// No description provided for @shoppingServingsAbbrev.
+  ///
+  /// In en, this message translates to:
+  /// **'srv'**
+  String get shoppingServingsAbbrev;
+
+  /// No description provided for @shoppingServingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} serving} other{{count} servings}}'**
+  String shoppingServingCount(int count);
+
+  /// No description provided for @shoppingMyItemsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'My Items'**
+  String get shoppingMyItemsSection;
+
+  /// No description provided for @shoppingEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No shopping list yet'**
+  String get shoppingEmptyTitle;
+
+  /// No description provided for @shoppingEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan recipes for the week and your shopping list will appear here automatically.'**
+  String get shoppingEmptyMessage;
+
+  /// No description provided for @shoppingGoToPlanChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Plan tab'**
+  String get shoppingGoToPlanChip;
+
+  /// No description provided for @shoppingItemNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name'**
+  String get shoppingItemNameLabel;
+
+  /// No description provided for @shoppingItemNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Milk, Trash bags, Napkins'**
+  String get shoppingItemNameHint;
+
+  /// No description provided for @shoppingAddItemButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Item'**
+  String get shoppingAddItemButton;
+
+  /// No description provided for @shoppingNoExtraItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No extra items yet — add your first one above.'**
+  String get shoppingNoExtraItems;
+
+  /// No description provided for @shoppingInvalidItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid item.'**
+  String get shoppingInvalidItem;
+
+  /// No description provided for @shoppingItemNameTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name must be at least 2 characters.'**
+  String get shoppingItemNameTooShort;
+
+  /// No description provided for @shoppingItemAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Item amount must be greater than 0.'**
+  String get shoppingItemAmountInvalid;
+
+  /// No description provided for @shoppingItemDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'That item is already on the list.'**
+  String get shoppingItemDuplicate;
+
   /// No description provided for @categoryBreakfast.
   ///
   /// In en, this message translates to:

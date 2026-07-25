@@ -48,6 +48,80 @@
   "commonEdit": "Edit",
   "commonDelete": "Delete",
   "commonClearAll": "Clear all",
+  "planOverwriteConfirm": "Overwrite",
+
+  "dayMonday": "Monday",
+  "dayTuesday": "Tuesday",
+  "dayWednesday": "Wednesday",
+  "dayThursday": "Thursday",
+  "dayFriday": "Friday",
+  "daySaturday": "Saturday",
+  "daySunday": "Sunday",
+
+  "planLastWeek": "Last week",
+  "planThisWeek": "This week",
+  "planNextWeek": "Next week",
+  "planKcalPerServing": "{value} kcal/serving",
+  "@planKcalPerServing": {
+    "placeholders": { "value": { "type": "int" } }
+  },
+  "planIngredientCount": "{count, plural, one{{count} ingredient} other{{count} ingredients}}",
+  "@planIngredientCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "planCopiedDaySnackbar": "Copied {day}'s meals",
+  "@planCopiedDaySnackbar": {
+    "placeholders": { "day": { "type": "String" } }
+  },
+  "planOverwriteDialogTitle": "Overwrite this day?",
+  "planOverwriteDialogContent": "{day} already has planned meals. Pasting will replace them.",
+  "@planOverwriteDialogContent": {
+    "placeholders": { "day": { "type": "String" } }
+  },
+  "planTodayBadge": "Today",
+  "planCopyDay": "Copy day",
+  "planPasteDay": "Paste day",
+  "planAddMealType": "Add {mealType}",
+  "@planAddMealType": {
+    "placeholders": { "mealType": { "type": "String" } }
+  },
+  "planAddToPlanTitle": "Add to plan",
+  "planAddToPlanButton": "Add to Plan",
+  "planRecipeFieldLabel": "Recipe",
+  "planSearchRecipesHint": "Search recipes",
+  "planNoRecipesYet": "No recipes yet. Add a recipe first.",
+  "planNoRecipesMatch": "No recipes match your search/filter.",
+
+  "shoppingListHeading": "Shopping list",
+  "shoppingShopAtCaption": "Open your favorite store",
+  "shoppingSortByTitle": "Sort by",
+  "shoppingShareTooltip": "Share list",
+  "shoppingAddItemTooltip": "Add item",
+  "shoppingWeeklyPlanMode": "Weekly Plan",
+  "shoppingQuickListMode": "Quick List",
+  "shoppingSelectAll": "Select all",
+  "shoppingSortTooltip": "Sort: {mode}",
+  "@shoppingSortTooltip": {
+    "placeholders": { "mode": { "type": "String" } }
+  },
+  "shoppingNoRecipesYet": "No recipes yet. Add some in the Recipes tab.",
+  "shoppingServingsAbbrev": "srv",
+  "shoppingServingCount": "{count, plural, one{{count} serving} other{{count} servings}}",
+  "@shoppingServingCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "shoppingMyItemsSection": "My Items",
+  "shoppingEmptyTitle": "No shopping list yet",
+  "shoppingEmptyMessage": "Plan recipes for the week and your shopping list will appear here automatically.",
+  "shoppingGoToPlanChip": "Go to Plan tab",
+  "shoppingItemNameLabel": "Item name",
+  "shoppingItemNameHint": "e.g. Milk, Trash bags, Napkins",
+  "shoppingAddItemButton": "Add Item",
+  "shoppingNoExtraItems": "No extra items yet — add your first one above.",
+  "shoppingInvalidItem": "Please enter a valid item.",
+  "shoppingItemNameTooShort": "Item name must be at least 2 characters.",
+  "shoppingItemAmountInvalid": "Item amount must be greater than 0.",
+  "shoppingItemDuplicate": "That item is already on the list.",
 
   "categoryBreakfast": "Breakfast",
   "categoryLunch": "Lunch",

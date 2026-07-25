@@ -520,7 +520,10 @@ class RecipeListScreenState extends State<RecipeListScreen> {
       final matchesQuery = query.isEmpty ||
           r.name.toLowerCase().contains(query) ||
           r.category.toLowerCase().contains(query) ||
-          localizedRecipeCategory(l10n, r.category).toLowerCase().contains(query);
+          localizedRecipeCategory(l10n, r.category).toLowerCase().contains(query) ||
+          r.ingredients.any((i) =>
+              i.resolvedCategory.toLowerCase().contains(query) ||
+              localizedMarketCategory(l10n, i.resolvedCategory).toLowerCase().contains(query));
       final matchesFav = !_showFavoritesOnly || r.isFavorite;
       final matchesCat = _selectedCategory == null ||
           r.category.toLowerCase() == _selectedCategory!.toLowerCase();

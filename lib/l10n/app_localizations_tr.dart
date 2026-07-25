@@ -123,6 +123,183 @@ class AppLocalizationsTr extends AppLocalizations {
   String get commonClearAll => 'Tümünü temizle';
 
   @override
+  String get planOverwriteConfirm => 'Üzerine yaz';
+
+  @override
+  String get dayMonday => 'Pazartesi';
+
+  @override
+  String get dayTuesday => 'Salı';
+
+  @override
+  String get dayWednesday => 'Çarşamba';
+
+  @override
+  String get dayThursday => 'Perşembe';
+
+  @override
+  String get dayFriday => 'Cuma';
+
+  @override
+  String get daySaturday => 'Cumartesi';
+
+  @override
+  String get daySunday => 'Pazar';
+
+  @override
+  String get planLastWeek => 'Geçen hafta';
+
+  @override
+  String get planThisWeek => 'Bu hafta';
+
+  @override
+  String get planNextWeek => 'Gelecek hafta';
+
+  @override
+  String planKcalPerServing(int value) {
+    return '$value kcal/porsiyon';
+  }
+
+  @override
+  String planIngredientCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count malzeme',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planCopiedDaySnackbar(String day) {
+    return '$day günü kopyalandı';
+  }
+
+  @override
+  String get planOverwriteDialogTitle => 'Bu günün üzerine yazılsın mı?';
+
+  @override
+  String planOverwriteDialogContent(String day) {
+    return '$day için zaten planlanmış yemekler var. Yapıştırma bunların yerini alacak.';
+  }
+
+  @override
+  String get planTodayBadge => 'Bugün';
+
+  @override
+  String get planCopyDay => 'Günü kopyala';
+
+  @override
+  String get planPasteDay => 'Günü yapıştır';
+
+  @override
+  String planAddMealType(String mealType) {
+    return '$mealType ekle';
+  }
+
+  @override
+  String get planAddToPlanTitle => 'Plana ekle';
+
+  @override
+  String get planAddToPlanButton => 'Plana Ekle';
+
+  @override
+  String get planRecipeFieldLabel => 'Tarif';
+
+  @override
+  String get planSearchRecipesHint => 'Tarif ara';
+
+  @override
+  String get planNoRecipesYet => 'Henüz tarif yok. Önce bir tarif ekle.';
+
+  @override
+  String get planNoRecipesMatch => 'Aramanla veya filtrenle eşleşen tarif yok.';
+
+  @override
+  String get shoppingListHeading => 'Alışveriş listesi';
+
+  @override
+  String get shoppingShopAtCaption => 'Favori marketini aç';
+
+  @override
+  String get shoppingSortByTitle => 'Sırala';
+
+  @override
+  String get shoppingShareTooltip => 'Listeyi paylaş';
+
+  @override
+  String get shoppingAddItemTooltip => 'Öğe ekle';
+
+  @override
+  String get shoppingWeeklyPlanMode => 'Haftalık Plan';
+
+  @override
+  String get shoppingQuickListMode => 'Hızlı Liste';
+
+  @override
+  String get shoppingSelectAll => 'Tümünü seç';
+
+  @override
+  String shoppingSortTooltip(String mode) {
+    return 'Sırala: $mode';
+  }
+
+  @override
+  String get shoppingNoRecipesYet =>
+      'Henüz tarif yok. Tarifler sekmesinden ekleyebilirsin.';
+
+  @override
+  String get shoppingServingsAbbrev => 'prs';
+
+  @override
+  String shoppingServingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count porsiyon',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shoppingMyItemsSection => 'Kendi Ürünlerim';
+
+  @override
+  String get shoppingEmptyTitle => 'Henüz alışveriş listesi yok';
+
+  @override
+  String get shoppingEmptyMessage =>
+      'Hafta için tarif planla, alışveriş listen otomatik olarak burada oluşsun.';
+
+  @override
+  String get shoppingGoToPlanChip => 'Plan sekmesine git';
+
+  @override
+  String get shoppingItemNameLabel => 'Öğe adı';
+
+  @override
+  String get shoppingItemNameHint => 'örn. Süt, Çöp poşeti, Peçete';
+
+  @override
+  String get shoppingAddItemButton => 'Öğe Ekle';
+
+  @override
+  String get shoppingNoExtraItems =>
+      'Henüz ek ürün yok — yukarıdan ilkini ekle.';
+
+  @override
+  String get shoppingInvalidItem => 'Lütfen geçerli bir öğe gir.';
+
+  @override
+  String get shoppingItemNameTooShort => 'Öğe adı en az 2 karakter olmalı.';
+
+  @override
+  String get shoppingItemAmountInvalid => 'Öğe miktarı 0\'dan büyük olmalı.';
+
+  @override
+  String get shoppingItemDuplicate => 'Bu öğe zaten listede.';
+
+  @override
   String get categoryBreakfast => 'Kahvaltı';
 
   @override
