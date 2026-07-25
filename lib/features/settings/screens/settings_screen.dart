@@ -48,6 +48,48 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  void _showInfoDialog(BuildContext context, String title, String description) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(description),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.recipeFilterDone),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Keeps each row down to icon + title; the fuller description moves into
+  // a short dialog behind a small (i) button instead of always-visible
+  // subtitle text, so the list reads as lighter and less text-heavy.
+  Widget _rowTrailing(
+    BuildContext context, {
+    required String infoTitle,
+    required String infoText,
+    bool showChevron = true,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.info_outline, size: 20),
+          color: Colors.grey[400],
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          visualDensity: VisualDensity.compact,
+          onPressed: () => _showInfoDialog(context, infoTitle, infoText),
+        ),
+        if (showChevron) const Icon(Icons.chevron_right),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -188,8 +230,11 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(l10n.settingsExportTitle),
-                  subtitle: Text(l10n.settingsExportSubtitle),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: _rowTrailing(
+                    context,
+                    infoTitle: l10n.settingsExportTitle,
+                    infoText: '${l10n.settingsExportSubtitle}\n\n${l10n.settingsBackupInfo}',
+                  ),
                   onTap: () => backupService.exportBackup(context),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
@@ -207,8 +252,11 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(l10n.settingsImportTitle),
-                  subtitle: Text(l10n.settingsImportSubtitle),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: _rowTrailing(
+                    context,
+                    infoTitle: l10n.settingsImportTitle,
+                    infoText: l10n.settingsImportSubtitle,
+                  ),
                   onTap: () async {
                     final success =
                         await backupService.importBackup(context);
@@ -216,30 +264,6 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
               ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    size: 18,
-                    color: Color(0xFF2E7D32),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      l10n.settingsBackupInfo,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
 
@@ -305,7 +329,12 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(l10n.settingsStorageTitle),
-                  subtitle: Text(l10n.settingsStorageSubtitle),
+                  trailing: _rowTrailing(
+                    context,
+                    infoTitle: l10n.settingsStorageTitle,
+                    infoText: l10n.settingsStorageSubtitle,
+                    showChevron: false,
+                  ),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
                 ListTile(
@@ -322,8 +351,11 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   title: Text(l10n.settingsResetOnboardingTitle),
-                  subtitle: Text(l10n.settingsResetOnboardingSubtitle),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: _rowTrailing(
+                    context,
+                    infoTitle: l10n.settingsResetOnboardingTitle,
+                    infoText: l10n.settingsResetOnboardingSubtitle,
+                  ),
                   onTap: onResetOnboarding,
                 ),
               ],

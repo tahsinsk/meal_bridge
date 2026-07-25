@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../data/shopping_list_generator.dart';
@@ -11,6 +12,7 @@ import '../../../models/shopping_list_item.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
 import '../../../shared/day_labels.dart';
+import '../../../shared/iso_week.dart';
 import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/shop_link_sheet.dart';
 import 'add_custom_item_sheet.dart';
@@ -41,11 +43,14 @@ class ShoppingListScreen extends StatefulWidget {
   final List<Recipe> allRecipes;
   final Set<String> checkedItemKeys;
   final void Function(String itemKey, bool isChecked) onItemCheckedChanged;
+  final Set<String> excludedItemKeys;
+  final void Function(String itemKey) onExcludeItem;
   final void Function(String recipeId) onToggleQuickRecipe;
   final VoidCallback onClearQuickRecipes;
   final List<Ingredient> customQuickItems;
   final void Function(Ingredient item) onAddCustomItem;
   final void Function(String itemName) onRemoveCustomItem;
+  final int weekOffset;
 
   const ShoppingListScreen({
     super.key,
@@ -54,11 +59,14 @@ class ShoppingListScreen extends StatefulWidget {
     required this.allRecipes,
     required this.checkedItemKeys,
     required this.onItemCheckedChanged,
+    required this.excludedItemKeys,
+    required this.onExcludeItem,
     required this.onToggleQuickRecipe,
     required this.onClearQuickRecipes,
     required this.customQuickItems,
     required this.onAddCustomItem,
     required this.onRemoveCustomItem,
+    required this.weekOffset,
   });
 
   @override
@@ -95,7 +103,9 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       activeMultipliers = widget.plannedRecipes.values.map((pr) => pr.servingsMultiplier).toList();
     }
 
-    final recipeShoppingItems = generateShoppingListFromRecipes(activeRecipes, multipliers: activeMultipliers);
+    final recipeShoppingItems = generateShoppingListFromRecipes(activeRecipes, multipliers: activeMultipliers)
+        .where((i) => !widget.excludedItemKeys.contains(_itemKey(i)))
+        .toList();
     final items = [...recipeShoppingItems, ..._customShoppingItems()];
     final hasContent = activeRecipes.isNotEmpty || widget.customQuickItems.isNotEmpty;
 
@@ -274,6 +284,21 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   String _formatAmount(double amount) {
     if (amount == amount.roundToDouble()) return amount.toInt().toString();
     return amount.toString();
+  }
+
+  // "Week 30 · Aug 3 – Aug 9" for the week this Weekly Plan list is
+  // currently generated from — mirrors the Plan screen's header format.
+  String _weekRangeLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final monday = now
+        .subtract(Duration(days: now.weekday - 1))
+        .add(Duration(days: 7 * widget.weekOffset));
+    final sunday = monday.add(const Duration(days: 6));
+    final weekNum = isoWeekNumberForMonday(monday);
+    final locale = Localizations.localeOf(context).toString();
+    final shortDate = DateFormat.MMMd(locale);
+    return '${l10n.planWeekNumberLabel(weekNum)} · ${shortDate.format(monday)} – ${shortDate.format(sunday)}';
   }
 
   String _itemKey(ShoppingListItem item) =>
@@ -546,7 +571,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           ),
         ),
-        ...displayItems.map((item) => _buildItemRow(item)),
+        ...displayItems.map((item) => _buildItemRow(item, keyPrefix: section.sectionKey)),
         const SizedBox(height: 12),
       ],
     );
@@ -583,15 +608,15 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           ),
         ),
-        ...displayItems.map((item) => _buildItemRow(item)),
+        ...displayItems.map((item) => _buildItemRow(item, keyPrefix: 'custom')),
         const SizedBox(height: 12),
       ],
     );
   }
 
-  Widget _buildItemRow(ShoppingListItem item) {
+  Widget _buildItemRow(ShoppingListItem item, {required String keyPrefix}) {
     final isChecked = widget.checkedItemKeys.contains(_itemKey(item));
-    return Card(
+    final card = Card(
       margin: const EdgeInsets.only(bottom: 6),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -649,6 +674,32 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
       ),
     );
+
+    // Swipe-left-to-delete on every row: custom items are removed for good,
+    // recipe-derived items are added to the excluded set (so they stay
+    // hidden from the generated list until the plan changes/regenerates).
+    return Dismissible(
+      key: ValueKey('$keyPrefix-${_itemKey(item)}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        alignment: Alignment.centerRight,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFBE4E6),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        child: const Icon(Icons.delete_outline, color: Color(0xFFD8434F)),
+      ),
+      onDismissed: (_) {
+        if (item.isCustom) {
+          widget.onRemoveCustomItem(item.name);
+        } else {
+          widget.onExcludeItem(_itemKey(item));
+        }
+      },
+      child: card,
+    );
   }
 
   Widget _checkbox(bool isChecked) {
@@ -689,7 +740,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
             ],
           ),
         ),
-        ...items.map((item) => _buildItemRow(item)),
+        ...items.map((item) => _buildItemRow(item, keyPrefix: 'category-$category')),
         const SizedBox(height: 12),
       ],
     );
@@ -779,6 +830,25 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
 
         const SizedBox(height: 8),
+
+        // Week number + date range — Weekly Plan mode only, so it's clear
+        // which week this generated list belongs to.
+        if (!_isQuickMode) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey[500]),
+                const SizedBox(width: 6),
+                Text(
+                  _weekRangeLabel(context),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
 
         // Select all + sort control
         Padding(

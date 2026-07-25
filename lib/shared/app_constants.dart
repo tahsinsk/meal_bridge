@@ -44,4 +44,19 @@ class AppTextStyles {
     fontWeight: FontWeight.w500,
     color: Color(0xFF757575),
   );
+
+  /// Typed text inside search bars — a touch lighter/more muted than the
+  /// app's default text weight, so search fields feel calmer against the
+  /// soft filled surface instead of shouting for attention.
+  static const TextStyle searchInput = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: Color(0xFF5A5F58),
+  );
+
+  static const TextStyle searchHint = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    color: Color(0xFF9E9E9E),
+  );
 }

@@ -14,7 +14,7 @@
   "onboardingPage2Title": "Plan je week",
   "onboardingPage2Body": "Zet maaltijden bij ontbijt, lunch en diner — voor elke week.",
   "onboardingPage3Title": "Je boodschappenlijst schrijft zichzelf",
-  "onboardingPage3Body": "Ingrediënten worden gecombineerd en gesorteerd per gangpad, klaar voor de winkel.",
+  "onboardingPage3Body": "Ingrediënten worden gecombineerd en gesorteerd per gangpad voor de week die je bekijkt, klaar voor de winkel.",
 
   "settingsTitle": "Instellingen",
   "settingsVersionLabel": "MealBridge v{version}",
@@ -51,6 +51,7 @@
   "planLastWeek": "Vorige week",
   "planThisWeek": "Deze week",
   "planNextWeek": "Volgende week",
+  "planWeekNumberLabel": "Week {number}",
   "planKcalPerServing": "{value} kcal/portie",
   "planIngredientCount": "{count, plural, one{{count} ingrediënt} other{{count} ingrediënten}}",
   "planCopiedDaySnackbar": "{day} gekopieerd",

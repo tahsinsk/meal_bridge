@@ -14,6 +14,7 @@ import '../services/recipe_storage_service.dart';
 import '../features/settings/screens/settings_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../shared/app_constants.dart';
+import '../shared/iso_week.dart';
 import '../shared/widgets/brand_logo.dart';
 import '../shared/widgets/floating_nav_bar.dart';
 
@@ -262,6 +263,7 @@ class _MainShellState extends State<MainShell> {
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   Map<String, PlannedRecipe> _allPlannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
+  Set<String> _excludedShoppingItemKeys = {};
   Set<String> _quickRecipeIds = {};
   List<Ingredient> _customQuickItems = [];
 
@@ -277,9 +279,7 @@ class _MainShellState extends State<MainShell> {
     final targetMonday = monday.add(Duration(days: 7 * offset));
     final thursday = targetMonday.add(const Duration(days: 3));
     final year = thursday.year;
-    final jan4 = DateTime(year, 1, 4);
-    final mondayOfWeek1 = jan4.subtract(Duration(days: jan4.weekday - 1));
-    final weekNum = (targetMonday.difference(mondayOfWeek1).inDays ~/ 7) + 1;
+    final weekNum = isoWeekNumberForMonday(targetMonday);
     return '$year-W${weekNum.toString().padLeft(2, '0')}';
   }
 
@@ -311,6 +311,8 @@ class _MainShellState extends State<MainShell> {
     final savedMealPlan = await _recipeStorageService.loadMealPlan();
     final savedCheckedShoppingItems =
         await _recipeStorageService.loadCheckedShoppingItems();
+    final savedExcludedShoppingItems =
+        await _recipeStorageService.loadExcludedShoppingItemKeys();
     final savedQuickRecipeIds =
         await _recipeStorageService.loadQuickRecipeIds();
     final savedCustomQuickItems =
@@ -354,6 +356,7 @@ class _MainShellState extends State<MainShell> {
       _recipes = allRecipes;
       _allPlannedRecipes = allPlannedRecipes;
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
+      _excludedShoppingItemKeys = savedExcludedShoppingItems;
       _quickRecipeIds = savedQuickRecipeIds;
       _customQuickItems = savedCustomQuickItems;
       _onboardingCompleted = onboardingCompleted;
@@ -489,6 +492,11 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
   }
 
+  void _excludeShoppingItem(String itemKey) {
+    setState(() => _excludedShoppingItemKeys.add(itemKey));
+    _recipeStorageService.saveExcludedShoppingItemKeys(_excludedShoppingItemKeys);
+  }
+
   void _toggleQuickRecipe(String recipeId) {
     setState(() {
       if (_quickRecipeIds.contains(recipeId)) {
@@ -587,11 +595,14 @@ class _MainShellState extends State<MainShell> {
         allRecipes: _recipes,
         checkedItemKeys: _checkedShoppingItemKeys,
         onItemCheckedChanged: _setShoppingItemChecked,
+        excludedItemKeys: _excludedShoppingItemKeys,
+        onExcludeItem: _excludeShoppingItem,
         onToggleQuickRecipe: _toggleQuickRecipe,
         onClearQuickRecipes: _clearQuickRecipes,
         customQuickItems: _customQuickItems,
         onAddCustomItem: _addCustomQuickItem,
         onRemoveCustomItem: _removeCustomQuickItem,
+        weekOffset: _weekOffset,
       ),
       SettingsScreen(
         onImportSuccess: () => _loadSavedData(),

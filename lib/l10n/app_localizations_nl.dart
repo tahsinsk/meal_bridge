@@ -48,7 +48,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get onboardingPage3Body =>
-      'Ingrediënten worden gecombineerd en gesorteerd per gangpad, klaar voor de winkel.';
+      'Ingrediënten worden gecombineerd en gesorteerd per gangpad voor de week die je bekijkt, klaar voor de winkel.';
 
   @override
   String get settingsTitle => 'Instellingen';
@@ -154,6 +154,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get planNextWeek => 'Volgende week';
+
+  @override
+  String planWeekNumberLabel(int number) {
+    return 'Week $number';
+  }
 
   @override
   String planKcalPerServing(int value) {

@@ -14,7 +14,7 @@
   "onboardingPage2Title": "Plan your week",
   "onboardingPage2Body": "Drop meals into breakfast, lunch and dinner — for any week.",
   "onboardingPage3Title": "Your shopping list writes itself",
-  "onboardingPage3Body": "Ingredients are combined and sorted by aisle, ready for the store.",
+  "onboardingPage3Body": "Ingredients are combined and sorted by aisle for the week you're viewing, ready for the store.",
 
   "settingsTitle": "Settings",
   "settingsVersionLabel": "MealBridge v{version}",
@@ -61,6 +61,10 @@
   "planLastWeek": "Last week",
   "planThisWeek": "This week",
   "planNextWeek": "Next week",
+  "planWeekNumberLabel": "Week {number}",
+  "@planWeekNumberLabel": {
+    "placeholders": { "number": { "type": "int" } }
+  },
   "planKcalPerServing": "{value} kcal/serving",
   "@planKcalPerServing": {
     "placeholders": { "value": { "type": "int" } }

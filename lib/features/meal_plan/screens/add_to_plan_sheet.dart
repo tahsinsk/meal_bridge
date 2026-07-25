@@ -144,8 +144,10 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _searchController,
+                      style: AppTextStyles.searchInput,
                       decoration: InputDecoration(
                         hintText: l10n.planSearchRecipesHint,
+                        hintStyle: AppTextStyles.searchHint,
                         prefixIcon: const Icon(Icons.search),
                         isDense: true,
                       ),

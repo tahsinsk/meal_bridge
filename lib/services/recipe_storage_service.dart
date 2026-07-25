@@ -14,6 +14,7 @@ class RecipeStorageService {
   static const String _recipeGridViewKey = 'recipe_grid_view';
   static const String _onboardingCompletedKey = 'onboarding_completed';
   static const String _localeCodeKey = 'locale_code';
+  static const String _excludedShoppingItemsKey = 'excluded_shopping_items';
 
   Future<List<Recipe>> loadRecipes() async {
     final prefs = await SharedPreferences.getInstance();
@@ -79,6 +80,27 @@ class RecipeStorageService {
     final checkedItemsJsonString = jsonEncode(checkedItemKeys.toList());
 
     await prefs.setString(_checkedShoppingItemsKey, checkedItemsJsonString);
+  }
+
+  /// Ingredients swiped away from a generated (non-custom) shopping list —
+  /// keyed the same way as [_checkedShoppingItemsKey] (name+unit), so an
+  /// exclusion persists across the session until the plan changes and the
+  /// list is regenerated.
+  Future<Set<String>> loadExcludedShoppingItemKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_excludedShoppingItemsKey);
+
+    if (jsonString == null || jsonString.isEmpty) {
+      return {};
+    }
+
+    final jsonList = jsonDecode(jsonString) as List<dynamic>;
+    return jsonList.map((item) => item as String).toSet();
+  }
+
+  Future<void> saveExcludedShoppingItemKeys(Set<String> excludedItemKeys) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_excludedShoppingItemsKey, jsonEncode(excludedItemKeys.toList()));
   }
 
   // Quick shopping list

@@ -8,6 +8,7 @@ import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
 import '../../../shared/day_labels.dart';
+import '../../../shared/iso_week.dart';
 import '../../../shared/meal_type_style.dart';
 import 'add_to_plan_sheet.dart';
 
@@ -65,16 +66,19 @@ class MealPlanScreen extends StatelessWidget {
       case 0:  return l10n.planThisWeek;
       case 1:  return l10n.planNextWeek;
       default:
-        final monday = _mondayForOffset(offset);
-        final sunday = monday.add(const Duration(days: 6));
-        return '${_shortDate(context, monday)} – ${_shortDate(context, sunday)}';
+        return _weekDateRange(context, offset);
     }
   }
 
+  // "Week 30 · Aug 3 – Aug 9" — the ISO week number alongside the date
+  // range, so it's clear at a glance which week (and its shopping list)
+  // you're looking at.
   String _weekDateRange(BuildContext context, int offset) {
+    final l10n = AppLocalizations.of(context)!;
     final monday = _mondayForOffset(offset);
     final sunday = monday.add(const Duration(days: 6));
-    return '${_shortDate(context, monday)} – ${_shortDate(context, sunday)}';
+    final weekNum = isoWeekNumberForMonday(monday);
+    return '${l10n.planWeekNumberLabel(weekNum)} · ${_shortDate(context, monday)} – ${_shortDate(context, sunday)}';
   }
 
   String _dayDate(BuildContext context, String day) {

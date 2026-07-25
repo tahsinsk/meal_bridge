@@ -48,7 +48,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingPage3Body =>
-      'Ingredients are combined and sorted by aisle, ready for the store.';
+      'Ingredients are combined and sorted by aisle for the week you\'re viewing, ready for the store.';
 
   @override
   String get settingsTitle => 'Settings';
@@ -154,6 +154,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planNextWeek => 'Next week';
+
+  @override
+  String planWeekNumberLabel(int number) {
+    return 'Week $number';
+  }
 
   @override
   String planKcalPerServing(int value) {

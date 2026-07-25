@@ -387,6 +387,46 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     );
   }
 
+  // Soft, rounded swipe action chip — a gentle pastel surface with a small
+  // gap around it, instead of a hard-edged fully-saturated color block.
+  // Uses CustomSlidableAction with a transparent full-bleed button so the
+  // list background shows through the gap left by the inset Padding.
+  Widget _buildSlideAction({
+    required VoidCallback onTap,
+    required IconData icon,
+    required String label,
+    required Color background,
+    required Color foreground,
+  }) {
+    return CustomSlidableAction(
+      onPressed: (_) => onTap(),
+      backgroundColor: Colors.transparent,
+      padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Container(
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: foreground, size: 20),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(color: foreground, fontSize: 11, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildRecipeListTile(BuildContext context, Recipe recipe) {
     final l10n = AppLocalizations.of(context)!;
     final isCustom = widget.canDeleteRecipe(recipe);
@@ -483,19 +523,19 @@ class RecipeListScreenState extends State<RecipeListScreen> {
         motion: const DrawerMotion(),
         extentRatio: 0.42,
         children: [
-          SlidableAction(
-            onPressed: (_) => _openEditRecipeScreen(context, recipe),
-            backgroundColor: AppColors.primaryDark,
-            foregroundColor: Colors.white,
+          _buildSlideAction(
+            onTap: () => _openEditRecipeScreen(context, recipe),
             icon: Icons.edit_outlined,
             label: l10n.commonEdit,
+            background: AppColors.surfaceSoft,
+            foreground: AppColors.primaryDark,
           ),
-          SlidableAction(
-            onPressed: (_) => _confirmDeleteRecipe(context, recipe),
-            backgroundColor: const Color(0xFFD32F2F),
-            foregroundColor: Colors.white,
+          _buildSlideAction(
+            onTap: () => _confirmDeleteRecipe(context, recipe),
             icon: Icons.delete_outline,
             label: l10n.commonDelete,
+            background: const Color(0xFFFBE4E6),
+            foreground: const Color(0xFFD8434F),
           ),
         ],
       ),
@@ -547,8 +587,10 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                       Expanded(
                         child: TextField(
                           controller: _searchController,
+                          style: AppTextStyles.searchInput,
                           decoration: InputDecoration(
                             hintText: l10n.recipeSearchHint,
+                            hintStyle: AppTextStyles.searchHint,
                             prefixIcon: const Icon(Icons.search),
                             suffixIcon: query.isEmpty
                                 ? null

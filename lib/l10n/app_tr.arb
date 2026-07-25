@@ -14,7 +14,7 @@
   "onboardingPage2Title": "Haftanı planla",
   "onboardingPage2Body": "Yemekleri kahvaltı, öğle ve akşam yemeğine ekle — istediğin hafta için.",
   "onboardingPage3Title": "Alışveriş listen kendi kendine oluşsun",
-  "onboardingPage3Body": "Malzemeler birleştirilip reyona göre sıralanır, markete hazır.",
+  "onboardingPage3Body": "Malzemeler, görüntülediğin hafta için birleştirilip reyona göre sıralanır, markete hazır.",
 
   "settingsTitle": "Ayarlar",
   "settingsVersionLabel": "MealBridge v{version}",
@@ -51,6 +51,7 @@
   "planLastWeek": "Geçen hafta",
   "planThisWeek": "Bu hafta",
   "planNextWeek": "Gelecek hafta",
+  "planWeekNumberLabel": "{number}. Hafta",
   "planKcalPerServing": "{value} kcal/porsiyon",
   "planIngredientCount": "{count, plural, other{{count} malzeme}}",
   "planCopiedDaySnackbar": "{day} günü kopyalandı",

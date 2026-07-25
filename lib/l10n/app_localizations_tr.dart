@@ -48,7 +48,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get onboardingPage3Body =>
-      'Malzemeler birleştirilip reyona göre sıralanır, markete hazır.';
+      'Malzemeler, görüntülediğin hafta için birleştirilip reyona göre sıralanır, markete hazır.';
 
   @override
   String get settingsTitle => 'Ayarlar';
@@ -154,6 +154,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get planNextWeek => 'Gelecek hafta';
+
+  @override
+  String planWeekNumberLabel(int number) {
+    return '$number. Hafta';
+  }
 
   @override
   String planKcalPerServing(int value) {

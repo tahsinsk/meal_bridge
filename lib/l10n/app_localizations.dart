@@ -175,7 +175,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPage3Body.
   ///
   /// In en, this message translates to:
-  /// **'Ingredients are combined and sorted by aisle, ready for the store.'**
+  /// **'Ingredients are combined and sorted by aisle for the week you\'re viewing, ready for the store.'**
   String get onboardingPage3Body;
 
   /// No description provided for @settingsTitle.
@@ -369,6 +369,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next week'**
   String get planNextWeek;
+
+  /// No description provided for @planWeekNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Week {number}'**
+  String planWeekNumberLabel(int number);
 
   /// No description provided for @planKcalPerServing.
   ///
