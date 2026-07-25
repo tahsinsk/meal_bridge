@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/meal_type.dart';
 import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/category_labels.dart';
 import '../../../shared/meal_type_style.dart';
 import 'recipe_form_screen.dart';
 
@@ -99,6 +101,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(recipe.name),
@@ -108,13 +111,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
             ),
             color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
-            tooltip: recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+            tooltip: recipe.isFavorite ? l10n.recipeFavoriteRemove : l10n.recipeFavoriteAdd,
             onPressed: _handleFavoriteToggle,
           ),
           if (widget.canEdit)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Edit recipe',
+              tooltip: l10n.recipeEditTooltip,
               onPressed: _handleEdit,
             ),
           if (widget.onToggleQuickList != null)
@@ -135,7 +138,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         size: 18,
                       ),
                       const SizedBox(width: 10),
-                      Text(_isInQuickList ? 'Remove from Quick List' : 'Add to Quick List'),
+                      Text(_isInQuickList ? l10n.recipeQuickListRemove : l10n.recipeQuickListAdd),
                     ],
                   ),
                 ),
@@ -189,7 +192,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                recipe.category,
+                                localizedRecipeCategory(l10n, recipe.category),
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -212,21 +215,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         context,
                         Icons.people_outline,
                         '${recipe.servings}',
-                        'servings',
+                        l10n.recipeStatServings,
                       ),
                       _divider(),
                       _statItem(
                         context,
                         Icons.shopping_basket_outlined,
                         '${recipe.ingredients.length}',
-                        'ingredients',
+                        l10n.recipeStatIngredients,
                       ),
                       _divider(),
                       _statItem(
                         context,
                         Icons.format_list_numbered,
                         '${recipe.instructions.length}',
-                        'steps',
+                        l10n.recipeStatSteps,
                       ),
                       if (recipe.calories != null) ...[
                         _divider(),
@@ -234,7 +237,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           context,
                           Icons.local_fire_department_outlined,
                           '${(recipe.calories! / recipe.servings).round()}',
-                          'kcal/serving',
+                          l10n.recipeStatKcalPerServing,
                         ),
                       ],
                     ],
@@ -247,7 +250,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           const SizedBox(height: 20),
 
           // Ingredients
-          _sectionHeader(context, Icons.shopping_basket_outlined, 'Ingredients'),
+          _sectionHeader(context, Icons.shopping_basket_outlined, l10n.recipeSectionIngredients),
           const SizedBox(height: 8),
           ...recipe.ingredients.map(
             (ingredient) => Card(
@@ -282,7 +285,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           Text(
-                            ingredient.resolvedCategory,
+                            localizedMarketCategory(l10n, ingredient.resolvedCategory),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -315,7 +318,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           const SizedBox(height: 20),
 
           // Instructions
-          _sectionHeader(context, Icons.format_list_numbered, 'Instructions'),
+          _sectionHeader(context, Icons.format_list_numbered, l10n.recipeSectionInstructions),
           const SizedBox(height: 8),
           ...recipe.instructions.asMap().entries.map((entry) {
             final index = entry.key;
@@ -364,7 +367,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           // Notes
           if (recipe.notes != null && recipe.notes!.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _sectionHeader(context, Icons.notes_outlined, 'Notes'),
+            _sectionHeader(context, Icons.notes_outlined, l10n.recipeSectionNotes),
             const SizedBox(height: 8),
             Card(
               child: Padding(

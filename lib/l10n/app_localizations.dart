@@ -280,6 +280,552 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get commonCancel;
 
+  /// No description provided for @commonSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get commonSave;
+
+  /// No description provided for @commonEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get commonEdit;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
+  /// No description provided for @commonClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get commonClearAll;
+
+  /// No description provided for @categoryBreakfast.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakfast'**
+  String get categoryBreakfast;
+
+  /// No description provided for @categoryLunch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lunch'**
+  String get categoryLunch;
+
+  /// No description provided for @categoryDinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Dinner'**
+  String get categoryDinner;
+
+  /// No description provided for @categoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get categoryOther;
+
+  /// No description provided for @marketCategoryVegetables.
+  ///
+  /// In en, this message translates to:
+  /// **'Vegetables'**
+  String get marketCategoryVegetables;
+
+  /// No description provided for @marketCategoryFruit.
+  ///
+  /// In en, this message translates to:
+  /// **'Fruit'**
+  String get marketCategoryFruit;
+
+  /// No description provided for @marketCategoryMeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Meat'**
+  String get marketCategoryMeat;
+
+  /// No description provided for @marketCategoryDairy.
+  ///
+  /// In en, this message translates to:
+  /// **'Dairy'**
+  String get marketCategoryDairy;
+
+  /// No description provided for @marketCategoryBakery.
+  ///
+  /// In en, this message translates to:
+  /// **'Bakery'**
+  String get marketCategoryBakery;
+
+  /// No description provided for @marketCategorySpices.
+  ///
+  /// In en, this message translates to:
+  /// **'Spices'**
+  String get marketCategorySpices;
+
+  /// No description provided for @marketCategoryPantry.
+  ///
+  /// In en, this message translates to:
+  /// **'Pantry'**
+  String get marketCategoryPantry;
+
+  /// No description provided for @marketCategoryDrinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Drinks'**
+  String get marketCategoryDrinks;
+
+  /// No description provided for @marketCategoryFrozen.
+  ///
+  /// In en, this message translates to:
+  /// **'Frozen'**
+  String get marketCategoryFrozen;
+
+  /// No description provided for @marketCategorySnacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Snacks'**
+  String get marketCategorySnacks;
+
+  /// No description provided for @marketCategoryOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get marketCategoryOther;
+
+  /// No description provided for @recipeFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter recipes'**
+  String get recipeFilterTitle;
+
+  /// No description provided for @recipeFilterCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get recipeFilterCategoryLabel;
+
+  /// No description provided for @recipeFilterShowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get recipeFilterShowLabel;
+
+  /// No description provided for @recipeFilterFavoritesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites only'**
+  String get recipeFilterFavoritesOnly;
+
+  /// No description provided for @recipeFilterFavoritesChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get recipeFilterFavoritesChip;
+
+  /// No description provided for @recipeFilterDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get recipeFilterDone;
+
+  /// No description provided for @recipeFilterApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply ({count, plural, one{{count} filter} other{{count} filters}})'**
+  String recipeFilterApply(int count);
+
+  /// No description provided for @recipeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search recipes by name or category'**
+  String get recipeSearchHint;
+
+  /// No description provided for @recipeViewToggleToList.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to list view'**
+  String get recipeViewToggleToList;
+
+  /// No description provided for @recipeViewToggleToGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to grid view'**
+  String get recipeViewToggleToGrid;
+
+  /// No description provided for @recipeClearFiltersButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get recipeClearFiltersButton;
+
+  /// No description provided for @recipeAddFirstButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first recipe'**
+  String get recipeAddFirstButton;
+
+  /// No description provided for @recipeEmptyFavoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get recipeEmptyFavoritesTitle;
+
+  /// No description provided for @recipeEmptyFavoritesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the star on any recipe card to add to favorites.'**
+  String get recipeEmptyFavoritesMessage;
+
+  /// No description provided for @recipeEmptyFilteredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching recipes'**
+  String get recipeEmptyFilteredTitle;
+
+  /// No description provided for @recipeEmptyFilteredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Try adjusting your filters or search query.'**
+  String get recipeEmptyFilteredMessage;
+
+  /// No description provided for @recipeEmptySearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get recipeEmptySearchTitle;
+
+  /// No description provided for @recipeEmptySearchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipe matches your search.'**
+  String get recipeEmptySearchMessage;
+
+  /// No description provided for @recipeEmptyNoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No recipes yet'**
+  String get recipeEmptyNoneTitle;
+
+  /// No description provided for @recipeEmptyNoneMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first recipe to start building your meal plan.'**
+  String get recipeEmptyNoneMessage;
+
+  /// No description provided for @recipeDeleteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete recipe?'**
+  String get recipeDeleteDialogTitle;
+
+  /// No description provided for @recipeDeleteDialogContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"?'**
+  String recipeDeleteDialogContent(String name);
+
+  /// No description provided for @recipeStepCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} step} other{{count} steps}}'**
+  String recipeStepCount(int count);
+
+  /// No description provided for @recipeKcalPerServing.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kcal'**
+  String recipeKcalPerServing(int value);
+
+  /// No description provided for @recipeSectionIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients'**
+  String get recipeSectionIngredients;
+
+  /// No description provided for @recipeSectionInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get recipeSectionInstructions;
+
+  /// No description provided for @recipeSectionNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get recipeSectionNotes;
+
+  /// No description provided for @recipeStatServings.
+  ///
+  /// In en, this message translates to:
+  /// **'servings'**
+  String get recipeStatServings;
+
+  /// No description provided for @recipeStatIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'ingredients'**
+  String get recipeStatIngredients;
+
+  /// No description provided for @recipeStatSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'steps'**
+  String get recipeStatSteps;
+
+  /// No description provided for @recipeStatKcalPerServing.
+  ///
+  /// In en, this message translates to:
+  /// **'kcal/serving'**
+  String get recipeStatKcalPerServing;
+
+  /// No description provided for @recipeFavoriteAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get recipeFavoriteAdd;
+
+  /// No description provided for @recipeFavoriteRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get recipeFavoriteRemove;
+
+  /// No description provided for @recipeEditTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit recipe'**
+  String get recipeEditTooltip;
+
+  /// No description provided for @recipeQuickListAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Quick List'**
+  String get recipeQuickListAdd;
+
+  /// No description provided for @recipeQuickListRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Quick List'**
+  String get recipeQuickListRemove;
+
+  /// No description provided for @recipeFormTitleAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Recipe'**
+  String get recipeFormTitleAdd;
+
+  /// No description provided for @recipeFormTitleEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Recipe'**
+  String get recipeFormTitleEdit;
+
+  /// No description provided for @recipeFormBasicInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic info'**
+  String get recipeFormBasicInfo;
+
+  /// No description provided for @recipeFormNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe name'**
+  String get recipeFormNameLabel;
+
+  /// No description provided for @recipeFormNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe name is required.'**
+  String get recipeFormNameRequired;
+
+  /// No description provided for @recipeFormNameTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipe name must be at least 2 characters.'**
+  String get recipeFormNameTooShort;
+
+  /// No description provided for @recipeFormCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get recipeFormCategoryLabel;
+
+  /// No description provided for @recipeFormServingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Servings'**
+  String get recipeFormServingsLabel;
+
+  /// No description provided for @recipeFormAddIngredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ingredient'**
+  String get recipeFormAddIngredient;
+
+  /// No description provided for @recipeFormIngredientNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredient name'**
+  String get recipeFormIngredientNameLabel;
+
+  /// No description provided for @recipeFormIngredientNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Tomato, Chicken, Pasta'**
+  String get recipeFormIngredientNameHint;
+
+  /// No description provided for @recipeFormAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get recipeFormAmountLabel;
+
+  /// No description provided for @recipeFormUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get recipeFormUnitLabel;
+
+  /// No description provided for @recipeFormAddIngredientButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Ingredient'**
+  String get recipeFormAddIngredientButton;
+
+  /// No description provided for @recipeFormIngredientCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Category for \"{name}\"'**
+  String recipeFormIngredientCategoryTitle(String name);
+
+  /// No description provided for @recipeFormResetToAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to auto'**
+  String get recipeFormResetToAuto;
+
+  /// No description provided for @recipeFormEditIngredientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit ingredient'**
+  String get recipeFormEditIngredientTitle;
+
+  /// No description provided for @recipeFormInvalidIngredient.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid ingredient.'**
+  String get recipeFormInvalidIngredient;
+
+  /// No description provided for @recipeFormIngredientNameTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredient name must be at least 2 characters.'**
+  String get recipeFormIngredientNameTooShort;
+
+  /// No description provided for @recipeFormIngredientAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredient amount must be greater than 0.'**
+  String get recipeFormIngredientAmountInvalid;
+
+  /// No description provided for @recipeFormInvalidValues.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter valid values.'**
+  String get recipeFormInvalidValues;
+
+  /// No description provided for @recipeFormEditStepTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit step {number}'**
+  String recipeFormEditStepTitle(int number);
+
+  /// No description provided for @recipeFormInstructionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Instruction'**
+  String get recipeFormInstructionLabel;
+
+  /// No description provided for @recipeFormAddInstructionSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Add instruction step'**
+  String get recipeFormAddInstructionSection;
+
+  /// No description provided for @recipeFormAddInstructionButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Instruction'**
+  String get recipeFormAddInstructionButton;
+
+  /// No description provided for @recipeFormInstructionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an instruction step.'**
+  String get recipeFormInstructionEmpty;
+
+  /// No description provided for @recipeFormInstructionTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Instruction must be at least 5 characters.'**
+  String get recipeFormInstructionTooShort;
+
+  /// No description provided for @recipeFormCaloriesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories'**
+  String get recipeFormCaloriesSection;
+
+  /// No description provided for @recipeFormCaloriesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total calories (optional)'**
+  String get recipeFormCaloriesLabel;
+
+  /// No description provided for @recipeFormCaloriesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 450'**
+  String get recipeFormCaloriesHint;
+
+  /// No description provided for @recipeFormKcalSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'kcal'**
+  String get recipeFormKcalSuffix;
+
+  /// No description provided for @recipeFormCaloriesHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Per serving will be calculated automatically.'**
+  String get recipeFormCaloriesHelper;
+
+  /// No description provided for @recipeFormNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional notes'**
+  String get recipeFormNotesLabel;
+
+  /// No description provided for @recipeFormNoIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add at least one ingredient.'**
+  String get recipeFormNoIngredients;
+
+  /// No description provided for @recipeFormSaveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Recipe'**
+  String get recipeFormSaveButton;
+
+  /// No description provided for @recipeFormUpdateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Recipe'**
+  String get recipeFormUpdateButton;
+
   /// No description provided for @backupExportSubject.
   ///
   /// In en, this message translates to:

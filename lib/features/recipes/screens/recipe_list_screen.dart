@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/meal_type.dart';
 import '../../../models/recipe.dart';
 import '../../../services/recipe_storage_service.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/category_labels.dart';
 import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/recipe_image.dart';
 import 'recipe_detail_screen.dart';
@@ -116,14 +118,15 @@ class RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   Future<void> _confirmDeleteRecipe(BuildContext context, Recipe recipe) async {
+    final l10n = AppLocalizations.of(context)!;
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete recipe?'),
-        content: Text('Are you sure you want to delete "${recipe.name}"?'),
+        title: Text(l10n.recipeDeleteDialogTitle),
+        content: Text(l10n.recipeDeleteDialogContent(recipe.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.commonDelete)),
         ],
       ),
     );
@@ -131,6 +134,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   void _showFilterSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -145,7 +149,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                 children: [
                   const Icon(Icons.filter_list_outlined),
                   const SizedBox(width: 8),
-                  Text('Filter recipes', style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.recipeFilterTitle, style: Theme.of(context).textTheme.titleLarge),
                   const Spacer(),
                   if (_activeFilterCount > 0)
                     TextButton(
@@ -154,12 +158,12 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                         setSheetState(() {});
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Clear all'),
+                      child: Text(l10n.commonClearAll),
                     ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text('Category', style: Theme.of(context).textTheme.titleSmall),
+              Text(l10n.recipeFilterCategoryLabel, style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -167,7 +171,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                 children: _categories.map((cat) {
                   final isSelected = _selectedCategory == cat;
                   return FilterChip(
-                    label: Text(cat),
+                    label: Text(localizedRecipeCategory(l10n, cat)),
                     selected: isSelected,
                     selectedColor: AppColors.primaryDark,
                     checkmarkColor: Colors.white,
@@ -183,11 +187,11 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 16),
-              Text('Show', style: Theme.of(context).textTheme.titleSmall),
+              Text(l10n.recipeFilterShowLabel, style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Favorites only'),
+                title: Text(l10n.recipeFilterFavoritesOnly),
                 secondary: Icon(
                   _showFavoritesOnly ? Icons.star : Icons.star_outline,
                   color: _showFavoritesOnly ? const Color(0xFFF9A825) : null,
@@ -205,8 +209,8 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
                     _activeFilterCount > 0
-                        ? 'Apply ($_activeFilterCount filter${_activeFilterCount > 1 ? 's' : ''})'
-                        : 'Done',
+                        ? l10n.recipeFilterApply(_activeFilterCount)
+                        : l10n.recipeFilterDone,
                   ),
                 ),
               ),
@@ -217,12 +221,13 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     );
   }
 
-  String _subtitle(Recipe recipe) {
+  String _subtitle(BuildContext context, Recipe recipe) {
+    final l10n = AppLocalizations.of(context)!;
     final parts = <String>[];
     if (recipe.calories != null) {
-      parts.add('${(recipe.calories! / recipe.servings).round()} kcal');
+      parts.add(l10n.recipeKcalPerServing((recipe.calories! / recipe.servings).round()));
     }
-    parts.add('${recipe.instructions.length} step${recipe.instructions.length != 1 ? 's' : ''}');
+    parts.add(l10n.recipeStepCount(recipe.instructions.length));
     return parts.join(' · ');
   }
 
@@ -260,6 +265,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   Widget _buildCardMenu(BuildContext context, Recipe recipe) {
+    final l10n = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
       padding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -269,20 +275,20 @@ class RecipeListScreenState extends State<RecipeListScreen> {
         if (value == 'delete') _confirmDeleteRecipe(context, recipe);
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'edit',
           child: Row(children: [
-            Icon(Icons.edit_outlined, size: 18),
-            SizedBox(width: 10),
-            Text('Edit'),
+            const Icon(Icons.edit_outlined, size: 18),
+            const SizedBox(width: 10),
+            Text(l10n.commonEdit),
           ]),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: Row(children: [
-            Icon(Icons.delete_outline, size: 18, color: Colors.red),
-            SizedBox(width: 10),
-            Text('Delete', style: TextStyle(color: Colors.red)),
+            const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+            const SizedBox(width: 10),
+            Text(l10n.commonDelete, style: const TextStyle(color: Colors.red)),
           ]),
         ),
       ],
@@ -290,6 +296,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   Widget _buildRecipeCard(BuildContext context, Recipe recipe) {
+    final l10n = AppLocalizations.of(context)!;
     final isCustom = widget.canDeleteRecipe(recipe);
     final (categoryBg, categoryColor) = _categoryColors(recipe.category);
 
@@ -360,13 +367,13 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: Text(
-                      recipe.category,
+                      localizedRecipeCategory(l10n, recipe.category),
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: categoryColor),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _subtitle(recipe),
+                    _subtitle(context, recipe),
                     style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -381,6 +388,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   Widget _buildRecipeListTile(BuildContext context, Recipe recipe) {
+    final l10n = AppLocalizations.of(context)!;
     final isCustom = widget.canDeleteRecipe(recipe);
     final (categoryBg, categoryColor) = _categoryColors(recipe.category);
 
@@ -433,14 +441,14 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                             borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: Text(
-                            recipe.category,
+                            localizedRecipeCategory(l10n, recipe.category),
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: categoryColor),
                           ),
                         ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            _subtitle(recipe),
+                            _subtitle(context, recipe),
                             style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -480,14 +488,14 @@ class RecipeListScreenState extends State<RecipeListScreen> {
             backgroundColor: AppColors.primaryDark,
             foregroundColor: Colors.white,
             icon: Icons.edit_outlined,
-            label: 'Edit',
+            label: l10n.commonEdit,
           ),
           SlidableAction(
             onPressed: (_) => _confirmDeleteRecipe(context, recipe),
             backgroundColor: const Color(0xFFD32F2F),
             foregroundColor: Colors.white,
             icon: Icons.delete_outline,
-            label: 'Delete',
+            label: l10n.commonDelete,
           ),
         ],
       ),
@@ -497,6 +505,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final query = _searchQuery.trim().toLowerCase();
     final totalCount = widget.recipes.length;
     final hasActiveFilters = _activeFilterCount > 0 || query.isNotEmpty;
@@ -510,7 +519,8 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     final filteredRecipes = sortedRecipes.where((r) {
       final matchesQuery = query.isEmpty ||
           r.name.toLowerCase().contains(query) ||
-          r.category.toLowerCase().contains(query);
+          r.category.toLowerCase().contains(query) ||
+          localizedRecipeCategory(l10n, r.category).toLowerCase().contains(query);
       final matchesFav = !_showFavoritesOnly || r.isFavorite;
       final matchesCat = _selectedCategory == null ||
           r.category.toLowerCase() == _selectedCategory!.toLowerCase();
@@ -527,7 +537,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Recipes', style: AppTextStyles.pageHeading),
+                  Text(l10n.navRecipes, style: AppTextStyles.pageHeading),
                   const SizedBox(height: 14),
                   Row(
                     children: [
@@ -535,7 +545,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
-                            hintText: 'Search recipes by name or category',
+                            hintText: l10n.recipeSearchHint,
                             prefixIcon: const Icon(Icons.search),
                             suffixIcon: query.isEmpty
                                 ? null
@@ -591,7 +601,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                       const SizedBox(width: 8),
                       IconButton.filledTonal(
                         onPressed: _toggleViewMode,
-                        tooltip: _isGridView ? 'Switch to list view' : 'Switch to grid view',
+                        tooltip: _isGridView ? l10n.recipeViewToggleToList : l10n.recipeViewToggleToGrid,
                         icon: Icon(_isGridView ? Icons.view_list_outlined : Icons.grid_view_outlined),
                         style: IconButton.styleFrom(
                           backgroundColor: AppColors.surfaceSoft,
@@ -610,7 +620,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: Chip(
-                                label: Text(_selectedCategory!),
+                                label: Text(localizedRecipeCategory(l10n, _selectedCategory!)),
                                 avatar: const Icon(Icons.category_outlined, size: 16),
                                 onDeleted: () => setState(() => _selectedCategory = null),
                                 deleteIcon: const Icon(Icons.close, size: 16),
@@ -620,13 +630,13 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: Chip(
-                                label: const Text('Favorites'),
+                                label: Text(l10n.recipeFilterFavoritesChip),
                                 avatar: const Icon(Icons.star, size: 16, color: Color(0xFFF9A825)),
                                 onDeleted: () => setState(() => _showFavoritesOnly = false),
                                 deleteIcon: const Icon(Icons.close, size: 16),
                               ),
                             ),
-                          TextButton(onPressed: _clearFilters, child: const Text('Clear all')),
+                          TextButton(onPressed: _clearFilters, child: Text(l10n.commonClearAll)),
                         ],
                       ),
                     ),
@@ -661,24 +671,24 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                         const SizedBox(height: 16),
                         Text(
                           _showFavoritesOnly
-                              ? 'No favorites yet'
+                              ? l10n.recipeEmptyFavoritesTitle
                               : hasActiveFilters
-                                  ? 'No matching recipes'
+                                  ? l10n.recipeEmptyFilteredTitle
                                   : totalCount > 0
-                                      ? 'No results found'
-                                      : 'No recipes yet',
+                                      ? l10n.recipeEmptySearchTitle
+                                      : l10n.recipeEmptyNoneTitle,
                           style: Theme.of(context).textTheme.titleLarge,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           _showFavoritesOnly
-                              ? 'Tap the star on any recipe card to add to favorites.'
+                              ? l10n.recipeEmptyFavoritesMessage
                               : hasActiveFilters
-                                  ? 'Try adjusting your filters or search query.'
+                                  ? l10n.recipeEmptyFilteredMessage
                                   : totalCount > 0
-                                      ? 'No recipe matches your search.'
-                                      : 'Add your first recipe to start building your meal plan.',
+                                      ? l10n.recipeEmptySearchMessage
+                                      : l10n.recipeEmptyNoneMessage,
                           style: Theme.of(context).textTheme.bodyMedium,
                           textAlign: TextAlign.center,
                         ),
@@ -687,7 +697,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                           OutlinedButton.icon(
                             onPressed: _clearFilters,
                             icon: const Icon(Icons.filter_list_off_outlined),
-                            label: const Text('Clear filters'),
+                            label: Text(l10n.recipeClearFiltersButton),
                           ),
                         ],
                         if (totalCount == 0) ...[
@@ -697,7 +707,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                             child: FilledButton.icon(
                               onPressed: openAddRecipeScreen,
                               icon: const Icon(Icons.add),
-                              label: const Text('Add your first recipe'),
+                              label: Text(l10n.recipeAddFirstButton),
                             ),
                           ),
                         ],
