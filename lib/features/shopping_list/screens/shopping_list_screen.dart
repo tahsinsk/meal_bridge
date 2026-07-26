@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -44,8 +45,10 @@ class ShoppingListScreen extends StatefulWidget {
   final List<Recipe> allRecipes;
   final Set<String> checkedItemKeys;
   final void Function(String itemKey, bool isChecked) onItemCheckedChanged;
-  final Set<String> excludedItemKeys;
-  final void Function(String itemKey) onExcludeItem;
+  final Map<String, Set<String>> excludedItemKeysByWeek;
+  final void Function(String itemKey) onExcludeWeeklyItem;
+  final Set<String> quickListExcludedItemKeys;
+  final void Function(String itemKey) onExcludeQuickListItem;
   final Map<String, Set<String>> quickSelectedIngredientKeys;
   final void Function(String recipeId) onToggleQuickRecipe;
   final void Function(String recipeId, String ingredientKey) onToggleQuickIngredient;
@@ -62,8 +65,10 @@ class ShoppingListScreen extends StatefulWidget {
     required this.allRecipes,
     required this.checkedItemKeys,
     required this.onItemCheckedChanged,
-    required this.excludedItemKeys,
-    required this.onExcludeItem,
+    required this.excludedItemKeysByWeek,
+    required this.onExcludeWeeklyItem,
+    required this.quickListExcludedItemKeys,
+    required this.onExcludeQuickListItem,
     required this.quickSelectedIngredientKeys,
     required this.onToggleQuickRecipe,
     required this.onToggleQuickIngredient,
@@ -112,8 +117,14 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       activeMultipliers = widget.plannedRecipes.values.map((pr) => pr.servingsMultiplier).toList();
     }
 
+    // Weekly Plan exclusions are scoped to the week being viewed; Quick
+    // List exclusions have no week concept, so they're their own flat set.
+    final excludedKeys = _isQuickMode
+        ? widget.quickListExcludedItemKeys
+        : (widget.excludedItemKeysByWeek[isoWeekKeyForOffset(widget.weekOffset)] ?? const <String>{});
+
     final recipeShoppingItems = generateShoppingListFromRecipes(activeRecipes, multipliers: activeMultipliers)
-        .where((i) => !widget.excludedItemKeys.contains(_itemKey(i)))
+        .where((i) => !excludedKeys.contains(_itemKey(i)))
         .toList();
     final items = [...recipeShoppingItems, ..._customShoppingItems()];
     final hasContent = activeRecipes.isNotEmpty || widget.customQuickItems.isNotEmpty;
@@ -485,7 +496,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                   style: TextStyle(fontSize: 13, color: Colors.grey[500])),
               )
             else
-              ...widget.allRecipes.map((recipe) => _buildQuickRecipeRow(context, l10n, recipe)),
+              ...widget.allRecipes.map((recipe) => _buildQuickRecipeRow(recipe)),
             const SizedBox(height: 6),
           ],
         ),
@@ -496,7 +507,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   // Collapsed: recipe-level tri-state checkbox (all/none/some selected) +
   // an expand affordance. Expanded: one checkbox per ingredient, so the
   // user can select only part of a recipe (e.g. just "Tomato").
-  Widget _buildQuickRecipeRow(BuildContext context, AppLocalizations l10n, Recipe recipe) {
+  Widget _buildQuickRecipeRow(Recipe recipe) {
     final selectedKeys = widget.quickSelectedIngredientKeys[recipe.id] ?? const <String>{};
     final allKeys = recipe.ingredients.map((i) => ingredientKey(i.name, i.unit)).toSet();
     final isFullySelected = allKeys.isNotEmpty && selectedKeys.length == allKeys.length && allKeys.every(selectedKeys.contains);
@@ -523,8 +534,6 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                       color: (isFullySelected || isPartiallySelected) ? const Color(0xFF1A1C19) : Colors.grey[700],
                     )),
                 ),
-                Text('${localizedRecipeCategory(l10n, recipe.category)} · ${recipe.servings} ${l10n.shoppingServingsAbbrev}',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                 InkWell(
                   borderRadius: BorderRadius.circular(16),
                   onTap: () => setState(() {
@@ -789,31 +798,80 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       ),
     );
 
-    // Swipe-left-to-delete on every row: custom items are removed for good,
-    // recipe-derived items are added to the excluded set (so they stay
-    // hidden from the generated list until the plan changes/regenerates).
-    return Dismissible(
+    // Swipe-left reveals a soft rounded delete action (matching the
+    // Recipes list's swipe style) — tapping it confirms before actually
+    // removing: custom items are removed for good, recipe-derived items
+    // are added to the excluded set (so they stay hidden from the
+    // generated list until the plan changes/regenerates).
+    return Slidable(
       key: ValueKey('$keyPrefix-${_itemKey(item)}'),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        alignment: Alignment.centerRight,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFBE4E6),
-          borderRadius: BorderRadius.circular(AppRadius.card),
-        ),
-        child: const Icon(Icons.delete_outline, color: Color(0xFFD8434F)),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: 0.28,
+        children: [
+          _buildDeleteSlideAction(onTap: () => _confirmDeleteItem(item)),
+        ],
       ),
-      onDismissed: (_) {
-        if (item.isCustom) {
-          widget.onRemoveCustomItem(item.name);
-        } else {
-          widget.onExcludeItem(_itemKey(item));
-        }
-      },
       child: card,
     );
+  }
+
+  // Soft, rounded delete chip — same pastel treatment as the Recipes
+  // list's swipe actions (transparent full-bleed button behind an inset,
+  // rounded colored container, so there's a visible gap instead of a hard
+  // edge cutting into the card).
+  Widget _buildDeleteSlideAction({required VoidCallback onTap}) {
+    final l10n = AppLocalizations.of(context)!;
+    return CustomSlidableAction(
+      onPressed: (_) => onTap(),
+      backgroundColor: Colors.transparent,
+      padding: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFBE4E6),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.delete_outline, color: Color(0xFFD8434F), size: 20),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.commonDelete,
+                  style: const TextStyle(color: Color(0xFFD8434F), fontSize: 11, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteItem(ShoppingListItem item) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.shoppingDeleteItemDialogTitle),
+        content: Text(l10n.shoppingDeleteItemDialogContent(item.name)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.commonDelete)),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (item.isCustom) {
+      widget.onRemoveCustomItem(item.name);
+    } else if (_isQuickMode) {
+      widget.onExcludeQuickListItem(_itemKey(item));
+    } else {
+      widget.onExcludeWeeklyItem(_itemKey(item));
+    }
   }
 
   Widget _checkbox(bool isChecked) {

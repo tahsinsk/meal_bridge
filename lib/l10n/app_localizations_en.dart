@@ -311,6 +311,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shoppingItemDuplicate => 'That item is already on the list.';
 
   @override
+  String get shoppingDeleteItemDialogTitle => 'Delete this item?';
+
+  @override
+  String shoppingDeleteItemDialogContent(String name) {
+    return 'Remove \"$name\" from your list?';
+  }
+
+  @override
   String get categoryBreakfast => 'Breakfast';
 
   @override

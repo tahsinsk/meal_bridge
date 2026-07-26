@@ -616,6 +616,18 @@ abstract class AppLocalizations {
   /// **'That item is already on the list.'**
   String get shoppingItemDuplicate;
 
+  /// No description provided for @shoppingDeleteItemDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this item?'**
+  String get shoppingDeleteItemDialogTitle;
+
+  /// No description provided for @shoppingDeleteItemDialogContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\" from your list?'**
+  String shoppingDeleteItemDialogContent(String name);
+
   /// No description provided for @categoryBreakfast.
   ///
   /// In en, this message translates to:

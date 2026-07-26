@@ -264,7 +264,11 @@ class _MainShellState extends State<MainShell> {
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   Map<String, PlannedRecipe> _allPlannedRecipes = {};
   Set<String> _checkedShoppingItemKeys = {};
-  Set<String> _excludedShoppingItemKeys = {};
+  // Weekly Plan mode: ISO week key -> excluded ingredient keys for that
+  // week only. Quick List mode has no week concept, so it gets its own
+  // flat set that's cleared whenever the Quick List selection changes.
+  Map<String, Set<String>> _excludedShoppingItemsByWeek = {};
+  Set<String> _quickListExcludedItemKeys = {};
   // recipeId -> selected ingredient keys (name+unit) for that recipe.
   Map<String, Set<String>> _quickSelectedIngredients = {};
   List<Ingredient> _customQuickItems = [];
@@ -274,20 +278,9 @@ class _MainShellState extends State<MainShell> {
   Map<MealType, PlannedRecipe>? _copiedDayMeals;
   bool get _hasCopiedDay => _copiedDayMeals != null && _copiedDayMeals!.isNotEmpty;
 
-  // ISO week key for a given offset from today's week (0 = this week)
-  String _isoWeekKeyForOffset(int offset) {
-    final now = DateTime.now();
-    final monday = now.subtract(Duration(days: now.weekday - 1));
-    final targetMonday = monday.add(Duration(days: 7 * offset));
-    final thursday = targetMonday.add(const Duration(days: 3));
-    final year = thursday.year;
-    final weekNum = isoWeekNumberForMonday(targetMonday);
-    return '$year-W${weekNum.toString().padLeft(2, '0')}';
-  }
-
   // Current week's recipes with week prefix stripped (keys like "Monday-breakfast")
   Map<String, PlannedRecipe> get _currentWeekPlannedRecipes {
-    final prefix = '${_isoWeekKeyForOffset(_weekOffset)}-';
+    final prefix = '${isoWeekKeyForOffset(_weekOffset)}-';
     return {
       for (final e in _allPlannedRecipes.entries)
         if (e.key.startsWith(prefix)) e.key.substring(prefix.length): e.value,
@@ -295,9 +288,23 @@ class _MainShellState extends State<MainShell> {
   }
 
   String _fullMealPlanKey(String day, [MealType? mealType]) {
-    final weekKey = _isoWeekKeyForOffset(_weekOffset);
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
     if (mealType == null) return '$weekKey-$day';
     return '$weekKey-$day-${mealType.name}';
+  }
+
+  /// Clears a week's Weekly Plan exclusions whenever that week's meal plan
+  /// is actually mutated (recipe added/removed/servings changed), mirroring
+  /// how Quick List already clears its exclusions on selection change — an
+  /// excluded ingredient should never outlive the plan that made it
+  /// excludable. Returns whether anything was actually cleared, so callers
+  /// only persist when needed. Must be called from inside the same
+  /// setState() as the plan mutation, and must NOT be called for week
+  /// navigation or app-load — only for genuine plan edits.
+  bool _clearWeeklyExclusionsForWeek(String weekKey) {
+    if (!_excludedShoppingItemsByWeek.containsKey(weekKey)) return false;
+    _excludedShoppingItemsByWeek = {..._excludedShoppingItemsByWeek}..remove(weekKey);
+    return true;
   }
 
   void _setWeekOffset(int offset) => setState(() => _weekOffset = offset);
@@ -315,8 +322,14 @@ class _MainShellState extends State<MainShell> {
     final savedMealPlan = await _recipeStorageService.loadMealPlan();
     final savedCheckedShoppingItems =
         await _recipeStorageService.loadCheckedShoppingItems();
-    final savedExcludedShoppingItems =
-        await _recipeStorageService.loadExcludedShoppingItemKeys();
+    // Migrates the old flat/global exclusion set (if any) into the
+    // *current* week at migration time — the best available approximation,
+    // since the old data had no week concept at all.
+    final currentWeekKey = isoWeekKeyForOffset(0);
+    final savedExcludedShoppingItemsByWeek =
+        await _recipeStorageService.loadExcludedShoppingItemsByWeek(currentWeekKey);
+    final savedQuickListExcludedItems =
+        await _recipeStorageService.loadQuickListExcludedItemKeys();
     // Needs allRecipes to migrate the old whole-recipe-id format, if found.
     final savedQuickSelectedIngredients =
         await _recipeStorageService.loadQuickSelectedIngredients(allRecipes);
@@ -327,7 +340,6 @@ class _MainShellState extends State<MainShell> {
 
     // Migrate old-format keys (e.g. "Monday-breakfast") to week-prefixed keys
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    final currentWeekKey = _isoWeekKeyForOffset(0);
     bool needsMigration = false;
     final migratedPlan = <String, String>{};
     for (final entry in savedMealPlan.entries) {
@@ -359,7 +371,8 @@ class _MainShellState extends State<MainShell> {
       _recipes = allRecipes;
       _allPlannedRecipes = allPlannedRecipes;
       _checkedShoppingItemKeys = savedCheckedShoppingItems;
-      _excludedShoppingItemKeys = savedExcludedShoppingItems;
+      _excludedShoppingItemsByWeek = savedExcludedShoppingItemsByWeek;
+      _quickListExcludedItemKeys = savedQuickListExcludedItems;
       _quickSelectedIngredients = savedQuickSelectedIngredients;
       _customQuickItems = savedCustomQuickItems;
       _onboardingCompleted = onboardingCompleted;
@@ -413,14 +426,32 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _deleteRecipe(Recipe recipe) {
+    // Deleting a recipe can remove its planned entries from several weeks at
+    // once (not just the one currently being viewed), so every affected
+    // week's key ("YYYY-Wnn", the first two '-'-separated segments of a
+    // planned-recipe key) needs its exclusions cleared — not just
+    // isoWeekKeyForOffset(_weekOffset).
+    final affectedWeekKeys = _allPlannedRecipes.entries
+        .where((e) => e.value.recipe.id == recipe.id)
+        .map((e) => e.key.split('-').take(2).join('-'))
+        .toSet();
+    var exclusionsChanged = false;
     setState(() {
       _recipes.removeWhere((r) => r.id == recipe.id);
       _allPlannedRecipes.removeWhere((_, pr) => pr.recipe.id == recipe.id);
       _quickSelectedIngredients.remove(recipe.id);
+      _quickListExcludedItemKeys.clear();
+      for (final weekKey in affectedWeekKeys) {
+        if (_clearWeeklyExclusionsForWeek(weekKey)) exclusionsChanged = true;
+      }
     });
     _saveCustomRecipes();
     _saveMealPlan();
     _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
+    _recipeStorageService.saveQuickListExcludedItemKeys(_quickListExcludedItemKeys);
+    if (exclusionsChanged) {
+      _recipeStorageService.saveExcludedShoppingItemsByWeek(_excludedShoppingItemsByWeek);
+    }
   }
   void _toggleFavorite(Recipe recipe) {
     setState(() {
@@ -434,16 +465,30 @@ class _MainShellState extends State<MainShell> {
 
   void _selectRecipeForDay(String day, Recipe recipe, int servings, [MealType? mealType]) {
     final key = _fullMealPlanKey(day, mealType);
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
+    var exclusionsChanged = false;
     setState(() {
       _allPlannedRecipes[key] = PlannedRecipe(recipe: recipe, targetServings: servings);
+      exclusionsChanged = _clearWeeklyExclusionsForWeek(weekKey);
     });
     _saveMealPlan();
+    if (exclusionsChanged) {
+      _recipeStorageService.saveExcludedShoppingItemsByWeek(_excludedShoppingItemsByWeek);
+    }
   }
 
   void _removeRecipeFromDay(String day, [MealType? mealType]) {
     final key = _fullMealPlanKey(day, mealType);
-    setState(() => _allPlannedRecipes.remove(key));
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
+    var exclusionsChanged = false;
+    setState(() {
+      _allPlannedRecipes.remove(key);
+      exclusionsChanged = _clearWeeklyExclusionsForWeek(weekKey);
+    });
     _saveMealPlan();
+    if (exclusionsChanged) {
+      _recipeStorageService.saveExcludedShoppingItemsByWeek(_excludedShoppingItemsByWeek);
+    }
   }
 
   void _updateServings(String day, MealType? mealType, int delta) {
@@ -451,10 +496,16 @@ class _MainShellState extends State<MainShell> {
     final current = _allPlannedRecipes[key];
     if (current == null) return;
     final newServings = (current.targetServings + delta).clamp(1, 20);
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
+    var exclusionsChanged = false;
     setState(() {
       _allPlannedRecipes[key] = current.copyWith(targetServings: newServings);
+      exclusionsChanged = _clearWeeklyExclusionsForWeek(weekKey);
     });
     _saveMealPlan();
+    if (exclusionsChanged) {
+      _recipeStorageService.saveExcludedShoppingItemsByWeek(_excludedShoppingItemsByWeek);
+    }
   }
 
   void _copyDay(String day) {
@@ -470,6 +521,8 @@ class _MainShellState extends State<MainShell> {
   void _pasteDay(String day) {
     final copied = _copiedDayMeals;
     if (copied == null) return;
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
+    var exclusionsChanged = false;
     setState(() {
       for (final mealType in MealType.values) {
         final key = _fullMealPlanKey(day, mealType);
@@ -480,8 +533,12 @@ class _MainShellState extends State<MainShell> {
           _allPlannedRecipes.remove(key);
         }
       }
+      exclusionsChanged = _clearWeeklyExclusionsForWeek(weekKey);
     });
     _saveMealPlan();
+    if (exclusionsChanged) {
+      _recipeStorageService.saveExcludedShoppingItemsByWeek(_excludedShoppingItemsByWeek);
+    }
   }
 
   void _setShoppingItemChecked(String itemKey, bool isChecked) {
@@ -495,9 +552,25 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCheckedShoppingItems(_checkedShoppingItemKeys);
   }
 
-  void _excludeShoppingItem(String itemKey) {
-    setState(() => _excludedShoppingItemKeys.add(itemKey));
-    _recipeStorageService.saveExcludedShoppingItemKeys(_excludedShoppingItemKeys);
+  /// Excludes an ingredient from Weekly Plan mode's generated list for the
+  /// week currently being viewed only — other weeks (past or future) are
+  /// unaffected, since this is scoped by ISO week key.
+  void _excludeWeeklyShoppingItem(String itemKey) {
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
+    setState(() {
+      final current = Set<String>.from(_excludedShoppingItemsByWeek[weekKey] ?? {});
+      current.add(itemKey);
+      _excludedShoppingItemsByWeek = {
+        ..._excludedShoppingItemsByWeek,
+        weekKey: current,
+      };
+    });
+    _recipeStorageService.saveExcludedShoppingItemsByWeek(_excludedShoppingItemsByWeek);
+  }
+
+  void _excludeQuickListItem(String itemKey) {
+    setState(() => _quickListExcludedItemKeys.add(itemKey));
+    _recipeStorageService.saveQuickListExcludedItemKeys(_quickListExcludedItemKeys);
   }
 
   bool _isRecipeFullySelected(Recipe recipe) {
@@ -521,8 +594,13 @@ class _MainShellState extends State<MainShell> {
         _quickSelectedIngredients[recipeId] =
             recipe.ingredients.map((i) => ingredientKey(i.name, i.unit)).toSet();
       }
+      // The selection changed, so any Quick List exclusions no longer
+      // reflect what's actually on the list — drop them rather than let
+      // them silently keep hiding items forever.
+      _quickListExcludedItemKeys.clear();
     });
     _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
+    _recipeStorageService.saveQuickListExcludedItemKeys(_quickListExcludedItemKeys);
   }
 
   /// Per-ingredient toggle for partial recipe selection in the Quick List
@@ -540,13 +618,19 @@ class _MainShellState extends State<MainShell> {
       } else {
         _quickSelectedIngredients[recipeId] = current;
       }
+      _quickListExcludedItemKeys.clear();
     });
     _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
+    _recipeStorageService.saveQuickListExcludedItemKeys(_quickListExcludedItemKeys);
   }
 
   void _clearQuickRecipes() {
-    setState(() => _quickSelectedIngredients.clear());
+    setState(() {
+      _quickSelectedIngredients.clear();
+      _quickListExcludedItemKeys.clear();
+    });
     _recipeStorageService.saveQuickSelectedIngredients(_quickSelectedIngredients);
+    _recipeStorageService.saveQuickListExcludedItemKeys(_quickListExcludedItemKeys);
   }
 
   void _addCustomQuickItem(Ingredient item) {
@@ -637,8 +721,10 @@ class _MainShellState extends State<MainShell> {
         allRecipes: _recipes,
         checkedItemKeys: _checkedShoppingItemKeys,
         onItemCheckedChanged: _setShoppingItemChecked,
-        excludedItemKeys: _excludedShoppingItemKeys,
-        onExcludeItem: _excludeShoppingItem,
+        excludedItemKeysByWeek: _excludedShoppingItemsByWeek,
+        onExcludeWeeklyItem: _excludeWeeklyShoppingItem,
+        quickListExcludedItemKeys: _quickListExcludedItemKeys,
+        onExcludeQuickListItem: _excludeQuickListItem,
         quickSelectedIngredientKeys: _quickSelectedIngredients,
         onToggleQuickRecipe: _toggleQuickRecipe,
         onToggleQuickIngredient: _toggleQuickIngredient,

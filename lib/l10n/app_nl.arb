@@ -93,6 +93,8 @@
   "shoppingItemNameTooShort": "Naam van het item moet minstens 2 tekens bevatten.",
   "shoppingItemAmountInvalid": "Hoeveelheid moet groter zijn dan 0.",
   "shoppingItemDuplicate": "Dat item staat al op de lijst.",
+  "shoppingDeleteItemDialogTitle": "Dit item verwijderen?",
+  "shoppingDeleteItemDialogContent": "\"{name}\" van je lijst verwijderen?",
 
   "categoryBreakfast": "Ontbijt",
   "categoryLunch": "Lunch",

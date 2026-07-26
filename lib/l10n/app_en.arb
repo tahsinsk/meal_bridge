@@ -127,6 +127,11 @@
   "shoppingItemNameTooShort": "Item name must be at least 2 characters.",
   "shoppingItemAmountInvalid": "Item amount must be greater than 0.",
   "shoppingItemDuplicate": "That item is already on the list.",
+  "shoppingDeleteItemDialogTitle": "Delete this item?",
+  "shoppingDeleteItemDialogContent": "Remove \"{name}\" from your list?",
+  "@shoppingDeleteItemDialogContent": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "categoryBreakfast": "Breakfast",
   "categoryLunch": "Lunch",

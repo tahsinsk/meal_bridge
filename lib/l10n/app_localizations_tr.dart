@@ -308,6 +308,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shoppingItemDuplicate => 'Bu öğe zaten listede.';
 
   @override
+  String get shoppingDeleteItemDialogTitle => 'Bu öğe silinsin mi?';
+
+  @override
+  String shoppingDeleteItemDialogContent(String name) {
+    return '\"$name\" listeden kaldırılsın mı?';
+  }
+
+  @override
   String get categoryBreakfast => 'Kahvaltı';
 
   @override

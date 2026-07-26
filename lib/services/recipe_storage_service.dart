@@ -16,6 +16,8 @@ class RecipeStorageService {
   static const String _onboardingCompletedKey = 'onboarding_completed';
   static const String _localeCodeKey = 'locale_code';
   static const String _excludedShoppingItemsKey = 'excluded_shopping_items';
+  static const String _excludedShoppingItemsByWeekKey = 'excluded_shopping_items_by_week';
+  static const String _quickListExcludedItemsKey = 'quick_list_excluded_items';
   static const String _quickSelectedIngredientsKey = 'quick_selected_ingredients';
 
   Future<List<Recipe>> loadRecipes() async {
@@ -84,13 +86,52 @@ class RecipeStorageService {
     await prefs.setString(_checkedShoppingItemsKey, checkedItemsJsonString);
   }
 
-  /// Ingredients swiped away from a generated (non-custom) shopping list —
-  /// keyed the same way as [_checkedShoppingItemsKey] (name+unit), so an
-  /// exclusion persists across the session until the plan changes and the
-  /// list is regenerated.
-  Future<Set<String>> loadExcludedShoppingItemKeys() async {
+  /// Weekly Plan shopping-list exclusions: ISO week key ("2026-W30") ->
+  /// set of excluded ingredient keys (name+unit). Scoped per week so
+  /// swiping away "Tomato" for the week you're viewing doesn't hide it
+  /// forever in every other week. If nothing has been saved in this format
+  /// yet, migrates the old flat (global, non-week-scoped) set once — its
+  /// contents become exclusions for [currentWeekKey] (the best available
+  /// approximation, since the old data had no week concept at all) — then
+  /// persists under the new key so this only ever runs once.
+  Future<Map<String, Set<String>>> loadExcludedShoppingItemsByWeek(String currentWeekKey) async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_excludedShoppingItemsKey);
+    final jsonString = prefs.getString(_excludedShoppingItemsByWeekKey);
+
+    if (jsonString != null && jsonString.isNotEmpty) {
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      return jsonMap.map((weekKey, keys) =>
+          MapEntry(weekKey, (keys as List<dynamic>).map((k) => k as String).toSet()));
+    }
+
+    final oldJsonString = prefs.getString(_excludedShoppingItemsKey);
+    if (oldJsonString != null && oldJsonString.isNotEmpty) {
+      final oldKeys = (jsonDecode(oldJsonString) as List<dynamic>).map((e) => e as String).toSet();
+      final migrated = <String, Set<String>>{
+        if (oldKeys.isNotEmpty) currentWeekKey: oldKeys,
+      };
+      await saveExcludedShoppingItemsByWeek(migrated);
+      await prefs.remove(_excludedShoppingItemsKey);
+      return migrated;
+    }
+
+    return {};
+  }
+
+  Future<void> saveExcludedShoppingItemsByWeek(Map<String, Set<String>> excludedByWeek) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonMap = excludedByWeek.map((weekKey, keys) => MapEntry(weekKey, keys.toList()));
+    await prefs.setString(_excludedShoppingItemsByWeekKey, jsonEncode(jsonMap));
+  }
+
+  /// Quick List shopping-list exclusions — a flat set with no week concept
+  /// (Quick List isn't tied to a week). Callers are expected to clear this
+  /// whenever the underlying Quick List ingredient selection changes, so an
+  /// exclusion never outlives the selection that produced the list it was
+  /// excluded from.
+  Future<Set<String>> loadQuickListExcludedItemKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_quickListExcludedItemsKey);
 
     if (jsonString == null || jsonString.isEmpty) {
       return {};
@@ -100,9 +141,9 @@ class RecipeStorageService {
     return jsonList.map((item) => item as String).toSet();
   }
 
-  Future<void> saveExcludedShoppingItemKeys(Set<String> excludedItemKeys) async {
+  Future<void> saveQuickListExcludedItemKeys(Set<String> excludedItemKeys) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_excludedShoppingItemsKey, jsonEncode(excludedItemKeys.toList()));
+    await prefs.setString(_quickListExcludedItemsKey, jsonEncode(excludedItemKeys.toList()));
   }
 
   /// Quick List selection: recipeId -> set of selected ingredient keys

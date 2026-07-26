@@ -313,6 +313,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get shoppingItemDuplicate => 'Dat item staat al op de lijst.';
 
   @override
+  String get shoppingDeleteItemDialogTitle => 'Dit item verwijderen?';
+
+  @override
+  String shoppingDeleteItemDialogContent(String name) {
+    return '\"$name\" van je lijst verwijderen?';
+  }
+
+  @override
   String get categoryBreakfast => 'Ontbijt';
 
   @override

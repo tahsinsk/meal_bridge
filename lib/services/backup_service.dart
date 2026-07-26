@@ -10,6 +10,7 @@ import '../l10n/app_localizations.dart';
 import '../models/recipe.dart';
 import '../services/recipe_storage_service.dart';
 import '../shared/ingredient_key.dart';
+import '../shared/iso_week.dart';
 
 
 class BackupService {
@@ -22,6 +23,9 @@ class BackupService {
       final recipes = await _storageService.loadRecipes();
       final mealPlan = await _storageService.loadMealPlan();
       final checkedItems = await _storageService.loadCheckedShoppingItems();
+      final excludedByWeek = await _storageService
+          .loadExcludedShoppingItemsByWeek(isoWeekKeyForOffset(0));
+      final quickListExcludedItems = await _storageService.loadQuickListExcludedItemKeys();
       final quickSelectedIngredients = await _storageService
           .loadQuickSelectedIngredients([...sampleRecipes, ...recipes]);
 
@@ -31,6 +35,9 @@ class BackupService {
         'recipes': recipes.map((r) => r.toJson()).toList(),
         'mealPlan': mealPlan,
         'checkedItems': checkedItems.toList(),
+        'excludedShoppingItemsByWeek':
+            excludedByWeek.map((weekKey, keys) => MapEntry(weekKey, keys.toList())),
+        'quickListExcludedItems': quickListExcludedItems.toList(),
         'quickSelectedIngredients':
             quickSelectedIngredients.map((id, keys) => MapEntry(id, keys.toList())),
       };
@@ -156,6 +163,27 @@ class BackupService {
       await _storageService.saveCheckedShoppingItems(
         checkedItemsList.toSet(),
       );
+
+      if (backup.containsKey('excludedShoppingItemsByWeek')) {
+        final json = backup['excludedShoppingItemsByWeek'] as Map<String, dynamic>? ?? {};
+        final excludedByWeek = json.map((weekKey, keys) =>
+            MapEntry(weekKey, (keys as List<dynamic>).map((k) => k as String).toSet()));
+        await _storageService.saveExcludedShoppingItemsByWeek(excludedByWeek);
+      } else if (backup.containsKey('excludedShoppingItems')) {
+        // Older backup, from before exclusions were scoped per week: treat
+        // as belonging to the current week at import time.
+        final oldKeys =
+            (backup['excludedShoppingItems'] as List<dynamic>?)?.cast<String>() ?? [];
+        if (oldKeys.isNotEmpty) {
+          await _storageService.saveExcludedShoppingItemsByWeek({
+            isoWeekKeyForOffset(0): oldKeys.toSet(),
+          });
+        }
+      }
+
+      final quickListExcludedItemsList =
+          (backup['quickListExcludedItems'] as List<dynamic>?)?.cast<String>() ?? [];
+      await _storageService.saveQuickListExcludedItemKeys(quickListExcludedItemsList.toSet());
 
       if (backup.containsKey('quickSelectedIngredients')) {
         final json = backup['quickSelectedIngredients'] as Map<String, dynamic>? ?? {};

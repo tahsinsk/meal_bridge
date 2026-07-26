@@ -93,6 +93,8 @@
   "shoppingItemNameTooShort": "Öğe adı en az 2 karakter olmalı.",
   "shoppingItemAmountInvalid": "Öğe miktarı 0'dan büyük olmalı.",
   "shoppingItemDuplicate": "Bu öğe zaten listede.",
+  "shoppingDeleteItemDialogTitle": "Bu öğe silinsin mi?",
+  "shoppingDeleteItemDialogContent": "\"{name}\" listeden kaldırılsın mı?",
 
   "categoryBreakfast": "Kahvaltı",
   "categoryLunch": "Öğle Yemeği",
