@@ -13,7 +13,7 @@ class AppColors {
   static const Color primaryDark = Color(0xFF2E7D32);
   static const Color accentMid = Color(0xFF66BB6A);
   static const Color surfaceSoft = Color(0xFFE8F3E9);
-  static const Color creamBackground = Color(0xFFFAFBF7);
+  static const Color creamBackground = Color(0xFFF5F3EA);
 }
 
 class AppRadius {

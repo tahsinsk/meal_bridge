@@ -395,7 +395,7 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get recipeSearchHint => 'Zoek recepten op naam of categorie';
+  String get recipeSearchHint => 'Zoek recepten';
 
   @override
   String get recipeViewToggleToList => 'Naar lijstweergave';
@@ -502,6 +502,29 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get recipeFormTitleEdit => 'Recept bewerken';
+
+  @override
+  String get recipeFormPhotoSection => 'Foto';
+
+  @override
+  String get recipeFormAddPhoto => 'Foto toevoegen';
+
+  @override
+  String get recipeFormChangePhoto => 'Foto wijzigen';
+
+  @override
+  String get recipeFormTakePhoto => 'Foto maken';
+
+  @override
+  String get recipeFormChooseFromGallery => 'Kiezen uit galerij';
+
+  @override
+  String get recipeFormImagePickFailed =>
+      'Deze foto kon niet worden geladen. Probeer het opnieuw.';
+
+  @override
+  String get recipeFormImagePermissionDenied =>
+      'Toegang tot camera of foto\'s is nodig. Schakel dit in bij Instellingen.';
 
   @override
   String get recipeFormBasicInfo => 'Basisgegevens';

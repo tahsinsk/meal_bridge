@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/ingredient.dart';
@@ -7,6 +11,7 @@ import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
 import '../../../shared/widgets/option_picker_sheet.dart';
+import '../../../shared/widgets/recipe_image.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? initialRecipe;
@@ -37,6 +42,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   final List<Ingredient> _ingredients = [];
   final List<String> _instructions = [];
 
+  // Stable per-row ids (independent of list position/content) so
+  // ReorderableListView can track each row's identity through a drag —
+  // using the ingredient/instruction value itself as the key would break
+  // for duplicate content (e.g. two identical instruction steps).
+  final List<int> _ingredientKeys = [];
+  final List<int> _instructionKeys = [];
+  int _nextIngredientKeyId = 0;
+  int _nextInstructionKeyId = 0;
+
+  String? _imagePath;
+  final ImagePicker _imagePicker = ImagePicker();
+
   final List<String> _marketCategories = const [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
     'Pantry', 'Frozen', 'Drinks', 'Snacks', 'Spices', 'Other',
@@ -55,10 +72,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _servings = recipe?.servings ?? 2;
     _notesController = TextEditingController(text: recipe?.notes ?? '');
     _caloriesController = TextEditingController(text: recipe?.calories?.toString() ?? '');
+    _imagePath = recipe?.imagePath;
     if (recipe != null) {
       _ingredients.addAll(recipe.ingredients);
       _instructions.addAll(recipe.instructions);
     }
+    _ingredientKeys.addAll(List.generate(_ingredients.length, (_) => _nextIngredientKeyId++));
+    _instructionKeys.addAll(List.generate(_instructions.length, (_) => _nextInstructionKeyId++));
   }
 
   @override
@@ -118,6 +138,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
     setState(() {
       _ingredients.add(Ingredient(name: name, amount: amount, unit: unit));
+      _ingredientKeys.add(_nextIngredientKeyId++);
       _ingredientNameController.clear();
       _ingredientAmountController.clear();
       _ingredientUnitController.text = 'g';
@@ -126,7 +147,17 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   }
 
   void _removeIngredient(int index) {
-    setState(() => _ingredients.removeAt(index));
+    setState(() {
+      _ingredients.removeAt(index);
+      _ingredientKeys.removeAt(index);
+    });
+  }
+
+  void _reorderIngredients(int oldIndex, int newIndex) {
+    setState(() {
+      _ingredients.insert(newIndex, _ingredients.removeAt(oldIndex));
+      _ingredientKeys.insert(newIndex, _ingredientKeys.removeAt(oldIndex));
+    });
   }
 
   void _showCategoryPicker(int index) {
@@ -219,6 +250,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         labelText: l10n.recipeFormIngredientNameLabel,
                         border: const OutlineInputBorder(),
                       ),
+                      textCapitalization: TextCapitalization.sentences,
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -297,13 +329,24 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     }
     setState(() {
       _instructions.add(instruction);
+      _instructionKeys.add(_nextInstructionKeyId++);
       _instructionController.clear();
     });
     _requestFocusAfterFrame(_instructionFocusNode);
   }
 
   void _removeInstruction(int index) {
-    setState(() => _instructions.removeAt(index));
+    setState(() {
+      _instructions.removeAt(index);
+      _instructionKeys.removeAt(index);
+    });
+  }
+
+  void _reorderInstructions(int oldIndex, int newIndex) {
+    setState(() {
+      _instructions.insert(newIndex, _instructions.removeAt(oldIndex));
+      _instructionKeys.insert(newIndex, _instructionKeys.removeAt(oldIndex));
+    });
   }
 
   void _showEditInstructionDialog(int index) {
@@ -323,6 +366,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
             minLines: 2,
             maxLines: 5,
             autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
           ),
           actions: [
             TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
@@ -346,6 +390,73 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     );
   }
 
+  void _showImageSourcePicker() {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: Text(l10n.recipeFormTakePhoto),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: Text(l10n.recipeFormChooseFromGallery),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final l10n = AppLocalizations.of(context)!;
+    XFile? picked;
+    try {
+      picked = await _imagePicker.pickImage(source: source, imageQuality: 85);
+    } on PlatformException {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.recipeFormImagePermissionDenied)),
+      );
+      return;
+    }
+    if (picked == null) return;
+
+    try {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${docsDir.path}/recipe_images');
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+      final dotIndex = picked.path.lastIndexOf('.');
+      final ext = dotIndex == -1 ? '.jpg' : picked.path.substring(dotIndex);
+      final fileName = 'recipe_${DateTime.now().millisecondsSinceEpoch}$ext';
+      final savedFile = await File(picked.path).copy('${imagesDir.path}/$fileName');
+      if (!mounted) return;
+      setState(() => _imagePath = savedFile.path);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.recipeFormImagePickFailed)),
+      );
+    }
+  }
+
   void _saveRecipe() {
     final l10n = AppLocalizations.of(context)!;
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -365,6 +476,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       instructions: List.unmodifiable(_instructions),
       notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       calories: int.tryParse(_caloriesController.text.trim()),
+      imagePath: _imagePath,
     );
     Navigator.of(context).pop(recipe);
   }
@@ -381,6 +493,48 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Photo
+            GestureDetector(
+              onTap: _showImageSourcePicker,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  height: 160,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      RecipeImage(imagePath: _imagePath, iconSize: 48),
+                      Positioned(
+                        right: 10,
+                        bottom: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.camera_alt_outlined, size: 16, color: Colors.white),
+                              const SizedBox(width: 6),
+                              Text(
+                                _imagePath == null ? l10n.recipeFormAddPhoto : l10n.recipeFormChangePhoto,
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             // Basic info
             Card(
               child: Padding(
@@ -397,6 +551,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(labelText: l10n.recipeFormNameLabel, border: const OutlineInputBorder()),
+                      textCapitalization: TextCapitalization.sentences,
                       validator: (value) {
                         final name = value?.trim() ?? '';
                         if (name.isEmpty) return l10n.recipeFormNameRequired;
@@ -482,18 +637,31 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
             ]),
             const SizedBox(height: 8),
 
-            ..._ingredients.asMap().entries.map((entry) {
-              final index = entry.key;
-              final ingredient = entry.value;
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              onReorderItem: _reorderIngredients,
+              itemCount: _ingredients.length,
+              itemBuilder: (context, index) {
+              final ingredient = _ingredients[index];
               final category = ingredient.resolvedCategory;
               final isAuto = ingredient.isCategoryAuto;
 
               return Card(
+                key: ValueKey(_ingredientKeys[index]),
                 margin: const EdgeInsets.only(bottom: 8),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Row(
                     children: [
+                      ReorderableDelayedDragStartListener(
+                        index: index,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(Icons.drag_indicator, size: 20, color: Colors.grey[400]),
+                        ),
+                      ),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -581,7 +749,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   ),
                 ),
               );
-            }),
+              },
+            ),
 
             const SizedBox(height: 8),
 
@@ -606,6 +775,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         border: const OutlineInputBorder(),
                         hintText: l10n.recipeFormIngredientNameHint,
                       ),
+                      textCapitalization: TextCapitalization.sentences,
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -657,25 +827,41 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               Text(l10n.recipeSectionInstructions, style: Theme.of(context).textTheme.titleLarge),
             ]),
             const SizedBox(height: 8),
-            ..._instructions.asMap().entries.map((entry) {
-              final index = entry.key;
-              final instruction = entry.value;
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              onReorderItem: _reorderInstructions,
+              itemCount: _instructions.length,
+              itemBuilder: (context, index) {
+              final instruction = _instructions[index];
               return Card(
+                key: ValueKey(_instructionKeys[index]),
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  leading: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryDark,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ReorderableDelayedDragStartListener(
+                        index: index,
+                        child: Icon(Icons.drag_indicator, size: 20, color: Colors.grey[400]),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryDark,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   title: Text(instruction),
                   trailing: Row(
@@ -693,7 +879,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                   ),
                 ),
               );
-            }),
+              },
+            ),
 
             const SizedBox(height: 8),
 
@@ -719,6 +906,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       ),
                       minLines: 2,
                       maxLines: 4,
+                      textCapitalization: TextCapitalization.sentences,
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -793,6 +981,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       ),
                       minLines: 2,
                       maxLines: 4,
+                      textCapitalization: TextCapitalization.sentences,
                     ),
                   ],
                 ),

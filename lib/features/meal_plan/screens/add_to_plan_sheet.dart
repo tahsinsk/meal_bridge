@@ -58,9 +58,43 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
   String? _categoryFilter;
 
   @override
+  void initState() {
+    super.initState();
+    // Sensible default: pre-filter to the slot's own meal type (e.g.
+    // tapping "Add Breakfast" shows Breakfast recipes first) — the user can
+    // still clear the chip or search to browse every recipe.
+    final defaultCategory = _mealTypeCategory(widget.mealType);
+    if (_categories.contains(defaultCategory)) {
+      _categoryFilter = defaultCategory;
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  String _recipeSubtitle(AppLocalizations l10n, Recipe recipe) {
+    final parts = [
+      localizedRecipeCategory(l10n, recipe.category),
+      '${recipe.servings} ${l10n.recipeStatServings}',
+    ];
+    if (recipe.calories != null) {
+      parts.add(l10n.recipeKcalPerServing((recipe.calories! / recipe.servings).round()));
+    }
+    return parts.join(' · ');
+  }
+
+  String _mealTypeCategory(MealType mealType) {
+    switch (mealType) {
+      case MealType.breakfast:
+        return 'Breakfast';
+      case MealType.lunch:
+        return 'Lunch';
+      case MealType.dinner:
+        return 'Dinner';
+    }
   }
 
   void _selectRecipe(Recipe recipe) {
@@ -200,7 +234,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                           child: ListTile(
                             onTap: () => _selectRecipe(recipe),
                             title: Text(recipe.name),
-                            subtitle: Text('${localizedRecipeCategory(l10n, recipe.category)} · ${recipe.servings} ${l10n.recipeStatServings}'),
+                            subtitle: Text(_recipeSubtitle(l10n, recipe)),
                             trailing: Icon(
                               selected ? Icons.check_circle : Icons.circle_outlined,
                               color: selected ? AppColors.primaryDark : Colors.grey[300],

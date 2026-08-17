@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:google_fonts/google_fonts.dart';
 
 import '../data/sample_recipes.dart';
@@ -260,6 +261,11 @@ class _MainShellState extends State<MainShell> {
   bool _isLoadingData = true;
   bool _onboardingCompleted = false;
   int _weekOffset = 0;
+  // Instagram-style scroll-driven visibility for the floating bottom nav
+  // bar: scrolling content down (finger moving up) hides it, scrolling up
+  // brings it back. Reset to visible on every tab switch so a new screen
+  // never opens with the bar already hidden from a previous scroll position.
+  bool _navBarVisible = true;
 
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   Map<String, PlannedRecipe> _allPlannedRecipes = {};
@@ -272,6 +278,7 @@ class _MainShellState extends State<MainShell> {
   // recipeId -> selected ingredient keys (name+unit) for that recipe.
   Map<String, Set<String>> _quickSelectedIngredients = {};
   List<Ingredient> _customQuickItems = [];
+  List<Ingredient> _customWeeklyItems = [];
 
   // "Copy day" clipboard — lives here (not in the stateless MealPlanScreen)
   // so it survives week navigation and screen rebuilds.
@@ -320,6 +327,7 @@ class _MainShellState extends State<MainShell> {
     final allRecipes = [...sampleRecipes, ...savedRecipes];
 
     final savedMealPlan = await _recipeStorageService.loadMealPlan();
+    final savedMealPlanServings = await _recipeStorageService.loadMealPlanServings();
     final savedCheckedShoppingItems =
         await _recipeStorageService.loadCheckedShoppingItems();
     // Migrates the old flat/global exclusion set (if any) into the
@@ -335,6 +343,8 @@ class _MainShellState extends State<MainShell> {
         await _recipeStorageService.loadQuickSelectedIngredients(allRecipes);
     final savedCustomQuickItems =
         await _recipeStorageService.loadCustomQuickItems();
+    final savedCustomWeeklyItems =
+        await _recipeStorageService.loadCustomWeeklyItems();
     final onboardingCompleted =
         await _recipeStorageService.loadOnboardingCompleted();
 
@@ -360,7 +370,7 @@ class _MainShellState extends State<MainShell> {
       if (match.isNotEmpty) {
         allPlannedRecipes[entry.key] = PlannedRecipe(
           recipe: match.first,
-          targetServings: match.first.servings,
+          targetServings: savedMealPlanServings[entry.key] ?? match.first.servings,
         );
       }
     }
@@ -375,6 +385,7 @@ class _MainShellState extends State<MainShell> {
       _quickListExcludedItemKeys = savedQuickListExcludedItems;
       _quickSelectedIngredients = savedQuickSelectedIngredients;
       _customQuickItems = savedCustomQuickItems;
+      _customWeeklyItems = savedCustomWeeklyItems;
       _onboardingCompleted = onboardingCompleted;
       _isLoadingData = false;
     });
@@ -404,7 +415,9 @@ class _MainShellState extends State<MainShell> {
 
   Future<void> _saveMealPlan() async {
     final mealPlan = _allPlannedRecipes.map((k, v) => MapEntry(k, v.recipe.id));
+    final mealPlanServings = _allPlannedRecipes.map((k, v) => MapEntry(k, v.targetServings));
     await _recipeStorageService.saveMealPlan(mealPlan);
+    await _recipeStorageService.saveMealPlanServings(mealPlanServings);
   }
 
   void _addRecipe(Recipe recipe) {
@@ -644,6 +657,17 @@ class _MainShellState extends State<MainShell> {
     _recipeStorageService.saveCustomQuickItems(_customQuickItems);
   }
 
+  void _addCustomWeeklyItem(Ingredient item) {
+    if (_customWeeklyItems.any((i) => i.name.toLowerCase() == item.name.toLowerCase())) return;
+    setState(() => _customWeeklyItems = [..._customWeeklyItems, item]);
+    _recipeStorageService.saveCustomWeeklyItems(_customWeeklyItems);
+  }
+
+  void _removeCustomWeeklyItem(String name) {
+    setState(() => _customWeeklyItems = _customWeeklyItems.where((i) => i.name != name).toList());
+    _recipeStorageService.saveCustomWeeklyItems(_customWeeklyItems);
+  }
+
   /// Per-tab AppBar actions. Only Recipes needs one (its "add recipe"
   /// action) — Shopping List now shows its own "add item"/"share" actions
   /// in its in-content heading instead of the AppBar.
@@ -730,8 +754,11 @@ class _MainShellState extends State<MainShell> {
         onToggleQuickIngredient: _toggleQuickIngredient,
         onClearQuickRecipes: _clearQuickRecipes,
         customQuickItems: _customQuickItems,
-        onAddCustomItem: _addCustomQuickItem,
-        onRemoveCustomItem: _removeCustomQuickItem,
+        onAddQuickItem: _addCustomQuickItem,
+        onRemoveQuickItem: _removeCustomQuickItem,
+        customWeeklyItems: _customWeeklyItems,
+        onAddWeeklyItem: _addCustomWeeklyItem,
+        onRemoveWeeklyItem: _removeCustomWeeklyItem,
         weekOffset: _weekOffset,
       ),
       SettingsScreen(
@@ -761,34 +788,73 @@ class _MainShellState extends State<MainShell> {
               actions: appBarActions,
             )
           : null,
-      body: showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex]),
-      bottomNavigationBar: FloatingNavBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
+      body: NotificationListener<UserScrollNotification>(
+        onNotification: (notification) {
+          switch (notification.direction) {
+            case ScrollDirection.reverse:
+              if (_navBarVisible) setState(() => _navBarVisible = false);
+            case ScrollDirection.forward:
+              if (!_navBarVisible) setState(() => _navBarVisible = true);
+            case ScrollDirection.idle:
+              break;
+          }
+          return false;
         },
-        destinations: [
-          FloatingNavDestination(
-            icon: Icons.restaurant_menu_outlined,
-            selectedIcon: Icons.restaurant_menu,
-            label: l10n.navRecipes,
+        child: showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex]),
+      ),
+      // Instagram-style show/hide: a small slide + scale-down + fade, all on
+      // the same short duration/curve, so the bar visually shrinks and
+      // fades away rather than sliding far enough to get clipped by the
+      // bottomNavigationBar slot's fixed bounds (which would read as an
+      // abrupt pop instead of a smooth transition).
+      bottomNavigationBar: AnimatedSlide(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        offset: _navBarVisible ? Offset.zero : const Offset(0, 0.35),
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          scale: _navBarVisible ? 1.0 : 0.85,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            opacity: _navBarVisible ? 1 : 0,
+            child: IgnorePointer(
+              ignoring: !_navBarVisible,
+              child: FloatingNavBar(
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (index) {
+                  setState(() {
+                    _selectedIndex = index;
+                    _navBarVisible = true;
+                  });
+                },
+                destinations: [
+                  FloatingNavDestination(
+                    icon: Icons.restaurant_menu_outlined,
+                    selectedIcon: Icons.restaurant_menu,
+                    label: l10n.navRecipes,
+                  ),
+                  FloatingNavDestination(
+                    icon: Icons.calendar_month_outlined,
+                    selectedIcon: Icons.calendar_month,
+                    label: l10n.navPlan,
+                  ),
+                  FloatingNavDestination(
+                    icon: Icons.shopping_cart_outlined,
+                    selectedIcon: Icons.shopping_cart,
+                    label: l10n.navShopping,
+                  ),
+                  FloatingNavDestination(
+                    icon: Icons.settings_outlined,
+                    selectedIcon: Icons.settings,
+                    label: l10n.navSettings,
+                  ),
+                ],
+              ),
+            ),
           ),
-          FloatingNavDestination(
-            icon: Icons.calendar_month_outlined,
-            selectedIcon: Icons.calendar_month,
-            label: l10n.navPlan,
-          ),
-          FloatingNavDestination(
-            icon: Icons.shopping_cart_outlined,
-            selectedIcon: Icons.shopping_cart,
-            label: l10n.navShopping,
-          ),
-          FloatingNavDestination(
-            icon: Icons.settings_outlined,
-            selectedIcon: Icons.settings,
-            label: l10n.navSettings,
-          ),
-        ],
+        ),
       ),
     );
   }

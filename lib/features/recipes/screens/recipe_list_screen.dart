@@ -591,6 +591,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                           decoration: InputDecoration(
                             hintText: l10n.recipeSearchHint,
                             hintStyle: AppTextStyles.searchHint,
+                            hintMaxLines: 1,
                             prefixIcon: const Icon(Icons.search),
                             suffixIcon: query.isEmpty
                                 ? null

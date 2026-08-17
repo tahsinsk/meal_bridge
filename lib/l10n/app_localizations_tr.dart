@@ -389,7 +389,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get recipeSearchHint => 'İsme veya kategoriye göre tarif ara';
+  String get recipeSearchHint => 'Tarif ara';
 
   @override
   String get recipeViewToggleToList => 'Liste görünümüne geç';
@@ -494,6 +494,29 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get recipeFormTitleEdit => 'Tarifi Düzenle';
+
+  @override
+  String get recipeFormPhotoSection => 'Fotoğraf';
+
+  @override
+  String get recipeFormAddPhoto => 'Fotoğraf ekle';
+
+  @override
+  String get recipeFormChangePhoto => 'Fotoğrafı değiştir';
+
+  @override
+  String get recipeFormTakePhoto => 'Fotoğraf çek';
+
+  @override
+  String get recipeFormChooseFromGallery => 'Galeriden seç';
+
+  @override
+  String get recipeFormImagePickFailed =>
+      'Fotoğraf yüklenemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String get recipeFormImagePermissionDenied =>
+      'Kameraya veya fotoğraflara erişim izni gerekiyor. Lütfen Ayarlar\'dan izin verin.';
 
   @override
   String get recipeFormBasicInfo => 'Temel bilgiler';

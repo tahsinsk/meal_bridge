@@ -18,7 +18,9 @@ extension MealTypeStyle on MealType {
   }
 
   /// Soft, green-family surface color for the meal's slot background —
-  /// lightest for breakfast, soft mid-green for lunch, deepest for dinner.
+  /// lightest for breakfast, soft mid-green for lunch, a slightly deeper
+  /// (but still pastel) green for dinner, so all three stay in the same
+  /// gentle family instead of dinner reading as a hard, saturated block.
   Color get surfaceColor {
     switch (this) {
       case MealType.breakfast:
@@ -26,7 +28,7 @@ extension MealTypeStyle on MealType {
       case MealType.lunch:
         return const Color(0xFFCFE8D1);
       case MealType.dinner:
-        return const Color(0xFF386641);
+        return const Color(0xFFB7DDBB);
     }
   }
 
@@ -38,7 +40,7 @@ extension MealTypeStyle on MealType {
       case MealType.lunch:
         return const Color(0xFF1B5E20);
       case MealType.dinner:
-        return Colors.white;
+        return const Color(0xFF1B5E20);
     }
   }
 

@@ -9,9 +9,11 @@ import '../shared/ingredient_key.dart';
 class RecipeStorageService {
   static const String _recipesKey = 'recipes';
   static const String _mealPlanKey = 'meal_plan';
+  static const String _mealPlanServingsKey = 'meal_plan_servings';
   static const String _checkedShoppingItemsKey = 'checked_shopping_items';
   static const String _quickRecipeIdsKey = 'quick_recipe_ids';
   static const String _customQuickItemsKey = 'custom_quick_items';
+  static const String _customWeeklyItemsKey = 'custom_weekly_items';
   static const String _recipeGridViewKey = 'recipe_grid_view';
   static const String _onboardingCompletedKey = 'onboarding_completed';
   static const String _localeCodeKey = 'locale_code';
@@ -64,6 +66,28 @@ class RecipeStorageService {
     final mealPlanJsonString = jsonEncode(mealPlan);
 
     await prefs.setString(_mealPlanKey, mealPlanJsonString);
+  }
+
+  /// Target servings for each planned-recipe slot, keyed the same way as
+  /// [loadMealPlan]/[saveMealPlan]. Stored separately (rather than folded
+  /// into the meal plan's plain recipe-id string values) so the two can
+  /// evolve independently; a key missing here just means "use the recipe's
+  /// own default servings" (e.g. slots planned before this existed).
+  Future<Map<String, int>> loadMealPlanServings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_mealPlanServingsKey);
+
+    if (jsonString == null || jsonString.isEmpty) {
+      return {};
+    }
+
+    final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+    return jsonMap.map((key, servings) => MapEntry(key, servings as int));
+  }
+
+  Future<void> saveMealPlanServings(Map<String, int> servingsByKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_mealPlanServingsKey, jsonEncode(servingsByKey));
   }
 
   Future<Set<String>> loadCheckedShoppingItems() async {
@@ -205,6 +229,25 @@ class RecipeStorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       _customQuickItemsKey,
+      jsonEncode(items.map((i) => i.toJson()).toList()),
+    );
+  }
+
+  /// Weekly Plan mode's own "extra items" list — kept separate from Quick
+  /// List's so an item added in one mode never shows up in the other mode's
+  /// generated list.
+  Future<List<Ingredient>> loadCustomWeeklyItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_customWeeklyItemsKey);
+    if (jsonString == null || jsonString.isEmpty) return [];
+    final jsonList = jsonDecode(jsonString) as List<dynamic>;
+    return jsonList.map((item) => Ingredient.fromJson(item as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> saveCustomWeeklyItems(List<Ingredient> items) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _customWeeklyItemsKey,
       jsonEncode(items.map((i) => i.toJson()).toList()),
     );
   }

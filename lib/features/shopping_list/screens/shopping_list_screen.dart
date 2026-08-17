@@ -54,8 +54,11 @@ class ShoppingListScreen extends StatefulWidget {
   final void Function(String recipeId, String ingredientKey) onToggleQuickIngredient;
   final VoidCallback onClearQuickRecipes;
   final List<Ingredient> customQuickItems;
-  final void Function(Ingredient item) onAddCustomItem;
-  final void Function(String itemName) onRemoveCustomItem;
+  final void Function(Ingredient item) onAddQuickItem;
+  final void Function(String itemName) onRemoveQuickItem;
+  final List<Ingredient> customWeeklyItems;
+  final void Function(Ingredient item) onAddWeeklyItem;
+  final void Function(String itemName) onRemoveWeeklyItem;
   final int weekOffset;
 
   const ShoppingListScreen({
@@ -74,8 +77,11 @@ class ShoppingListScreen extends StatefulWidget {
     required this.onToggleQuickIngredient,
     required this.onClearQuickRecipes,
     required this.customQuickItems,
-    required this.onAddCustomItem,
-    required this.onRemoveCustomItem,
+    required this.onAddQuickItem,
+    required this.onRemoveQuickItem,
+    required this.customWeeklyItems,
+    required this.onAddWeeklyItem,
+    required this.onRemoveWeeklyItem,
     required this.weekOffset,
   });
 
@@ -90,6 +96,17 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   // Ephemeral UI-only state: which recipe rows are expanded in the Quick
   // List picker (not persisted — collapses again next visit, which is fine).
   final Set<String> _expandedQuickRecipeIds = {};
+
+  // Search filter for the Quick List recipe picker — narrows down which
+  // recipes are shown, doesn't touch the expand/collapse or selection state.
+  final _quickRecipeSearchController = TextEditingController();
+  var _quickRecipeSearchQuery = '';
+
+  @override
+  void dispose() {
+    _quickRecipeSearchController.dispose();
+    super.dispose();
+  }
 
   static const List<String> _categoryOrder = [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
@@ -127,13 +144,25 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         .where((i) => !excludedKeys.contains(_itemKey(i)))
         .toList();
     final items = [...recipeShoppingItems, ..._customShoppingItems()];
-    final hasContent = activeRecipes.isNotEmpty || widget.customQuickItems.isNotEmpty;
+    final hasContent = activeRecipes.isNotEmpty || _activeCustomItems.isNotEmpty;
 
     return (items: items, hasContent: hasContent);
   }
 
+  // Weekly Plan and Quick List each keep their own custom ("extra") items,
+  // so an item added while in one mode never shows up in the other mode's
+  // generated list — same independence the recipe-derived items already have.
+  List<Ingredient> get _activeCustomItems =>
+      _isQuickMode ? widget.customQuickItems : widget.customWeeklyItems;
+
+  void Function(Ingredient item) get _onAddActiveCustomItem =>
+      _isQuickMode ? widget.onAddQuickItem : widget.onAddWeeklyItem;
+
+  void Function(String itemName) get _onRemoveActiveCustomItem =>
+      _isQuickMode ? widget.onRemoveQuickItem : widget.onRemoveWeeklyItem;
+
   List<ShoppingListItem> _customShoppingItems() {
-    return widget.customQuickItems
+    return _activeCustomItems
         .map((i) => ShoppingListItem(
               name: i.name,
               amount: i.amount,
@@ -182,9 +211,9 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   void openAddCustomItemSheet() {
     showAddCustomItemSheet(
       context,
-      existingItems: widget.customQuickItems,
-      onAdd: widget.onAddCustomItem,
-      onRemove: widget.onRemoveCustomItem,
+      existingItems: _activeCustomItems,
+      onAdd: _onAddActiveCustomItem,
+      onRemove: _onRemoveActiveCustomItem,
     );
   }
 
@@ -465,6 +494,11 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Widget _buildInlineRecipeSelector() {
     final l10n = AppLocalizations.of(context)!;
+    final query = _quickRecipeSearchQuery.trim().toLowerCase();
+    final filteredRecipes = query.isEmpty
+        ? widget.allRecipes
+        : widget.allRecipes.where((r) => r.name.toLowerCase().contains(query)).toList();
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
@@ -489,14 +523,35 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                   ),
               ],
             ),
+            if (widget.allRecipes.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _quickRecipeSearchController,
+                style: AppTextStyles.searchInput,
+                decoration: InputDecoration(
+                  hintText: l10n.planSearchRecipesHint,
+                  hintStyle: AppTextStyles.searchHint,
+                  prefixIcon: const Icon(Icons.search),
+                  isDense: true,
+                ),
+                onChanged: (v) => setState(() => _quickRecipeSearchQuery = v),
+              ),
+              const SizedBox(height: 4),
+            ],
             if (widget.allRecipes.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(l10n.shoppingNoRecipesYet,
                   style: TextStyle(fontSize: 13, color: Colors.grey[500])),
               )
+            else if (filteredRecipes.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(l10n.planNoRecipesMatch,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+              )
             else
-              ...widget.allRecipes.map((recipe) => _buildQuickRecipeRow(recipe)),
+              ...filteredRecipes.map((recipe) => _buildQuickRecipeRow(recipe)),
             const SizedBox(height: 6),
           ],
         ),
@@ -786,7 +841,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
               if (item.isCustom)
                 IconButton(
-                  onPressed: () => widget.onRemoveCustomItem(item.name),
+                  onPressed: () => _onRemoveActiveCustomItem(item.name),
                   icon: const Icon(Icons.close, size: 16),
                   color: Colors.grey[400],
                   padding: const EdgeInsets.all(8),
@@ -866,7 +921,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     );
     if (confirmed != true) return;
     if (item.isCustom) {
-      widget.onRemoveCustomItem(item.name);
+      _onRemoveActiveCustomItem(item.name);
     } else if (_isQuickMode) {
       widget.onExcludeQuickListItem(_itemKey(item));
     } else {
@@ -1115,7 +1170,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
           // in the AppBar for this tab now).
           if (_groupByRecipe) ...[
             ..._buildRecipeSections().map(_buildRecipeSectionWidget),
-            if (widget.customQuickItems.isNotEmpty) _buildCustomItemsSection(),
+            if (_activeCustomItems.isNotEmpty) _buildCustomItemsSection(),
           ] else ...[
             ...groupedItems.entries.map((entry) => _buildCategorySection(entry.key, entry.value)),
           ],

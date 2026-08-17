@@ -1,35 +1,56 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
-/// Displays a recipe photo when [imagePath] is a reachable URL, otherwise
-/// shows an intentional gradient placeholder so recipes never look "broken".
+/// Displays a recipe photo when [imagePath] is a reachable URL or a local
+/// file path (e.g. a photo picked via the camera/gallery and copied into
+/// app storage), otherwise shows an intentional gradient placeholder so
+/// recipes never look "broken".
 class RecipeImage extends StatelessWidget {
   final String? imagePath;
   final double iconSize;
 
   const RecipeImage({super.key, this.imagePath, this.iconSize = 40});
 
-  bool get _hasNetworkImage {
+  bool get _isNetworkImage {
     final path = imagePath;
     return path != null &&
         path.isNotEmpty &&
         (path.startsWith('http://') || path.startsWith('https://'));
   }
 
+  bool get _isLocalFileImage {
+    final path = imagePath;
+    return path != null && path.isNotEmpty && !_isNetworkImage;
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!_hasNetworkImage) return _Placeholder(iconSize: iconSize);
+    if (_isNetworkImage) {
+      return Image.network(
+        imagePath!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) => _Placeholder(iconSize: iconSize),
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return _Placeholder(iconSize: iconSize);
+        },
+      );
+    }
 
-    return Image.network(
-      imagePath!,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: double.infinity,
-      errorBuilder: (context, error, stackTrace) => _Placeholder(iconSize: iconSize),
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) return child;
-        return _Placeholder(iconSize: iconSize);
-      },
-    );
+    if (_isLocalFileImage) {
+      return Image.file(
+        File(imagePath!),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) => _Placeholder(iconSize: iconSize),
+      );
+    }
+
+    return _Placeholder(iconSize: iconSize);
   }
 }
 

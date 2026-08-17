@@ -160,7 +160,7 @@
   "@recipeFilterApply": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "recipeSearchHint": "Search recipes by name or category",
+  "recipeSearchHint": "Search recipes",
   "recipeViewToggleToList": "Switch to list view",
   "recipeViewToggleToGrid": "Switch to grid view",
   "recipeClearFiltersButton": "Clear filters",
@@ -202,6 +202,13 @@
 
   "recipeFormTitleAdd": "Add Recipe",
   "recipeFormTitleEdit": "Edit Recipe",
+  "recipeFormPhotoSection": "Photo",
+  "recipeFormAddPhoto": "Add photo",
+  "recipeFormChangePhoto": "Change photo",
+  "recipeFormTakePhoto": "Take photo",
+  "recipeFormChooseFromGallery": "Choose from gallery",
+  "recipeFormImagePickFailed": "Couldn't load that photo. Please try again.",
+  "recipeFormImagePermissionDenied": "Permission needed to access the camera or photos. Please enable it in Settings.",
   "recipeFormBasicInfo": "Basic info",
   "recipeFormNameLabel": "Recipe name",
   "recipeFormNameRequired": "Recipe name is required.",

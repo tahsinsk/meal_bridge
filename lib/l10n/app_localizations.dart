@@ -763,7 +763,7 @@ abstract class AppLocalizations {
   /// No description provided for @recipeSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search recipes by name or category'**
+  /// **'Search recipes'**
   String get recipeSearchHint;
 
   /// No description provided for @recipeViewToggleToList.
@@ -945,6 +945,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit Recipe'**
   String get recipeFormTitleEdit;
+
+  /// No description provided for @recipeFormPhotoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get recipeFormPhotoSection;
+
+  /// No description provided for @recipeFormAddPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add photo'**
+  String get recipeFormAddPhoto;
+
+  /// No description provided for @recipeFormChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get recipeFormChangePhoto;
+
+  /// No description provided for @recipeFormTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get recipeFormTakePhoto;
+
+  /// No description provided for @recipeFormChooseFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get recipeFormChooseFromGallery;
+
+  /// No description provided for @recipeFormImagePickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load that photo. Please try again.'**
+  String get recipeFormImagePickFailed;
+
+  /// No description provided for @recipeFormImagePermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission needed to access the camera or photos. Please enable it in Settings.'**
+  String get recipeFormImagePermissionDenied;
 
   /// No description provided for @recipeFormBasicInfo.
   ///

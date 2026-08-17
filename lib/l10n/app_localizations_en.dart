@@ -393,7 +393,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recipeSearchHint => 'Search recipes by name or category';
+  String get recipeSearchHint => 'Search recipes';
 
   @override
   String get recipeViewToggleToList => 'Switch to list view';
@@ -499,6 +499,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recipeFormTitleEdit => 'Edit Recipe';
+
+  @override
+  String get recipeFormPhotoSection => 'Photo';
+
+  @override
+  String get recipeFormAddPhoto => 'Add photo';
+
+  @override
+  String get recipeFormChangePhoto => 'Change photo';
+
+  @override
+  String get recipeFormTakePhoto => 'Take photo';
+
+  @override
+  String get recipeFormChooseFromGallery => 'Choose from gallery';
+
+  @override
+  String get recipeFormImagePickFailed =>
+      'Couldn\'t load that photo. Please try again.';
+
+  @override
+  String get recipeFormImagePermissionDenied =>
+      'Permission needed to access the camera or photos. Please enable it in Settings.';
 
   @override
   String get recipeFormBasicInfo => 'Basic info';

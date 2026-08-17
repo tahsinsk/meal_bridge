@@ -10,6 +10,7 @@ import '../../../shared/category_labels.dart';
 import '../../../shared/day_labels.dart';
 import '../../../shared/iso_week.dart';
 import '../../../shared/meal_type_style.dart';
+import '../../recipes/screens/recipe_detail_screen.dart';
 import 'add_to_plan_sheet.dart';
 
 class MealPlanScreen extends StatelessWidget {
@@ -127,6 +128,15 @@ class MealPlanScreen extends StatelessWidget {
     onPasteDay(day);
   }
 
+  // Read-only recipe view, opened by tapping a planned meal's row — lets the
+  // user check the recipe (ingredients/instructions) while cooking without
+  // disturbing the remove/servings controls in the same row.
+  void _openRecipeDetail(BuildContext context, Recipe recipe) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => RecipeDetailScreen(recipe: recipe)),
+    );
+  }
+
   void _openAddToPlanSheet(BuildContext context, String day, MealType mealType) {
     showAddToPlanSheet(
       context,
@@ -180,7 +190,9 @@ class MealPlanScreen extends StatelessWidget {
     final isPlanned = pr != null;
 
     return GestureDetector(
-      onTap: isPlanned ? null : () => _openAddToPlanSheet(context, day, mealType),
+      onTap: isPlanned
+          ? () => _openRecipeDetail(context, pr.recipe)
+          : () => _openAddToPlanSheet(context, day, mealType),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
@@ -240,46 +252,49 @@ class MealPlanScreen extends StatelessWidget {
   }
 
   Widget _buildLegacyMealRow(BuildContext context, String day, PlannedRecipe pr) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceSoft,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        child: Row(
-          children: [
-            const Icon(Icons.restaurant_menu_outlined, size: 18, color: AppColors.primaryDark),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pr.recipe.name,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    _recipeMetaInfo(context, pr.recipe),
-                    style: TextStyle(fontSize: 11, color: AppColors.primaryDark.withValues(alpha: 0.7)),
-                  ),
-                ],
+    return GestureDetector(
+      onTap: () => _openRecipeDetail(context, pr.recipe),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceSoft,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          child: Row(
+            children: [
+              const Icon(Icons.restaurant_menu_outlined, size: 18, color: AppColors.primaryDark),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pr.recipe.name,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      _recipeMetaInfo(context, pr.recipe),
+                      style: TextStyle(fontSize: 11, color: AppColors.primaryDark.withValues(alpha: 0.7)),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            _buildMiniStepper(context, day, null, pr, AppColors.primaryDark),
-            const SizedBox(width: 16),
-            GestureDetector(
-              onTap: () => onRecipeRemoved(day),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(Icons.close, size: 16, color: AppColors.primaryDark.withValues(alpha: 0.45)),
+              _buildMiniStepper(context, day, null, pr, AppColors.primaryDark),
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () => onRecipeRemoved(day),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(Icons.close, size: 16, color: AppColors.primaryDark.withValues(alpha: 0.45)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
