@@ -147,6 +147,8 @@
   "recipeStatIngredients": "ingrediënten",
   "recipeStatSteps": "stappen",
   "recipeStatKcalPerServing": "kcal/portie",
+  "recipeStatMinutes": "min",
+  "recipeStepDurationLabel": "~{minutes} min",
   "recipeFavoriteAdd": "Toevoegen aan favorieten",
   "recipeFavoriteRemove": "Verwijderen uit favorieten",
   "recipeEditTooltip": "Recept bewerken",

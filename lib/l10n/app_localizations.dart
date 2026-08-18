@@ -916,6 +916,18 @@ abstract class AppLocalizations {
   /// **'kcal/serving'**
   String get recipeStatKcalPerServing;
 
+  /// No description provided for @recipeStatMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get recipeStatMinutes;
+
+  /// No description provided for @recipeStepDurationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'~{minutes} min'**
+  String recipeStepDurationLabel(int minutes);
+
   /// No description provided for @recipeFavoriteAdd.
   ///
   /// In en, this message translates to:

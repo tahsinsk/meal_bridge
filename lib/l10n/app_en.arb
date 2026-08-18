@@ -199,6 +199,11 @@
   "recipeStatIngredients": "ingredients",
   "recipeStatSteps": "steps",
   "recipeStatKcalPerServing": "kcal/serving",
+  "recipeStatMinutes": "min",
+  "recipeStepDurationLabel": "~{minutes} min",
+  "@recipeStepDurationLabel": {
+    "placeholders": { "minutes": { "type": "int" } }
+  },
   "recipeFavoriteAdd": "Add to favorites",
   "recipeFavoriteRemove": "Remove from favorites",
   "recipeEditTooltip": "Edit recipe",

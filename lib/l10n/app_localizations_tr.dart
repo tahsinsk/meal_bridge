@@ -488,6 +488,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeStatKcalPerServing => 'kcal/porsiyon';
 
   @override
+  String get recipeStatMinutes => 'dk';
+
+  @override
+  String recipeStepDurationLabel(int minutes) {
+    return '~$minutes dk';
+  }
+
+  @override
   String get recipeFavoriteAdd => 'Favorilere ekle';
 
   @override

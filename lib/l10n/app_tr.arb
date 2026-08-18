@@ -147,6 +147,8 @@
   "recipeStatIngredients": "malzeme",
   "recipeStatSteps": "adım",
   "recipeStatKcalPerServing": "kcal/porsiyon",
+  "recipeStatMinutes": "dk",
+  "recipeStepDurationLabel": "~{minutes} dk",
   "recipeFavoriteAdd": "Favorilere ekle",
   "recipeFavoriteRemove": "Favorilerden çıkar",
   "recipeEditTooltip": "Tarifi düzenle",

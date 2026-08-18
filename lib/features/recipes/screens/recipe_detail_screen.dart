@@ -226,8 +226,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   const SizedBox(height: 20),
                   const Divider(height: 1),
                   const SizedBox(height: 16),
-                  // Stats
-               Row(
+                  // Stats — steps is dropped from this row once a total-
+                  // time estimate exists (its own count is already visible
+                  // in the "Instructions (N)" tab label below), so the row
+                  // stays at 4 stats instead of 5 and never wraps.
+                  Row(
                     children: [
                       _statItem(
                         context,
@@ -242,13 +245,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         '${recipe.ingredients.length}',
                         l10n.recipeStatIngredients,
                       ),
-                      _divider(),
-                      _statItem(
-                        context,
-                        Icons.format_list_numbered,
-                        '${recipe.instructions.length}',
-                        l10n.recipeStatSteps,
-                      ),
+                      if (recipe.totalTimeMinutes == null) ...[
+                        _divider(),
+                        _statItem(
+                          context,
+                          Icons.format_list_numbered,
+                          '${recipe.instructions.length}',
+                          l10n.recipeStatSteps,
+                        ),
+                      ],
                       if (recipe.calories != null) ...[
                         _divider(),
                         _statItem(
@@ -256,6 +261,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                           Icons.local_fire_department_outlined,
                           '${(recipe.calories! / recipe.servings).round()}',
                           l10n.recipeStatKcalPerServing,
+                        ),
+                      ],
+                      if (recipe.totalTimeMinutes != null) ...[
+                        _divider(),
+                        _statItem(
+                          context,
+                          Icons.schedule_outlined,
+                          '${recipe.totalTimeMinutes}',
+                          l10n.recipeStatMinutes,
                         ),
                       ],
                     ],
@@ -379,6 +393,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ...recipe.instructions.asMap().entries.map((entry) {
             final index = entry.key;
             final instruction = entry.value;
+            final duration = index < recipe.instructionDurationsMinutes.length
+                ? recipe.instructionDurationsMinutes[index]
+                : null;
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: Padding(
@@ -408,9 +425,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          instruction,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              instruction,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            if (duration != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.schedule_outlined, size: 13, color: Colors.grey[500]),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    l10n.recipeStepDurationLabel(duration),
+                                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ),
@@ -464,19 +500,24 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, color: AppColors.primaryDark, size: 22),
+          Icon(icon, color: AppColors.primaryDark, size: 20),
           const SizedBox(height: 4),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: AppColors.primaryDark,
             ),
           ),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
           ),
         ],
       ),

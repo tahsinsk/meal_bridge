@@ -497,6 +497,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get recipeStatKcalPerServing => 'kcal/portie';
 
   @override
+  String get recipeStatMinutes => 'min';
+
+  @override
+  String recipeStepDurationLabel(int minutes) {
+    return '~$minutes min';
+  }
+
+  @override
   String get recipeFavoriteAdd => 'Toevoegen aan favorieten';
 
   @override

@@ -494,6 +494,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeStatKcalPerServing => 'kcal/serving';
 
   @override
+  String get recipeStatMinutes => 'min';
+
+  @override
+  String recipeStepDurationLabel(int minutes) {
+    return '~$minutes min';
+  }
+
+  @override
   String get recipeFavoriteAdd => 'Add to favorites';
 
   @override

@@ -42,6 +42,15 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
 
   final List<Ingredient> _ingredients = [];
   final List<String> _instructions = [];
+  // Same length/order as _instructions at all times — kept in sync through
+  // every add/remove/reorder. Null entries mean "no known duration",
+  // including for every manually-typed step (only AI generation fills
+  // these in).
+  final List<int?> _instructionDurationsMinutes = [];
+  // Holistic total-time estimate for the whole recipe — only ever set by
+  // AI generation (no manual form field for it) and carried through to
+  // Recipe on save.
+  int? _totalTimeMinutes;
 
   // Stable per-row ids (independent of list position/content) so
   // ReorderableListView can track each row's identity through a drag —
@@ -84,9 +93,18 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _notesController = TextEditingController(text: recipe?.notes ?? '');
     _caloriesController = TextEditingController(text: recipe?.calories?.toString() ?? '');
     _imagePath = recipe?.imagePath;
+    _totalTimeMinutes = recipe?.totalTimeMinutes;
     if (recipe != null) {
       _ingredients.addAll(recipe.ingredients);
       _instructions.addAll(recipe.instructions);
+      // Recipes saved before this field existed have a shorter (or empty)
+      // durations list than instructions — pad with nulls so every
+      // instruction always has a matching (possibly null) entry.
+      for (var i = 0; i < _instructions.length; i++) {
+        _instructionDurationsMinutes.add(
+          i < recipe.instructionDurationsMinutes.length ? recipe.instructionDurationsMinutes[i] : null,
+        );
+      }
     }
     _ingredientKeys.addAll(List.generate(_ingredients.length, (_) => _nextIngredientKeyId++));
     _instructionKeys.addAll(List.generate(_instructions.length, (_) => _nextInstructionKeyId++));
@@ -356,6 +374,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     }
     setState(() {
       _instructions.add(instruction);
+      _instructionDurationsMinutes.add(null);
       _instructionKeys.add(_nextInstructionKeyId++);
       _instructionController.clear();
     });
@@ -365,6 +384,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   void _removeInstruction(int index) {
     setState(() {
       _instructions.removeAt(index);
+      _instructionDurationsMinutes.removeAt(index);
       _instructionKeys.removeAt(index);
     });
   }
@@ -372,6 +392,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   void _reorderInstructions(int oldIndex, int newIndex) {
     setState(() {
       _instructions.insert(newIndex, _instructions.removeAt(oldIndex));
+      _instructionDurationsMinutes.insert(newIndex, _instructionDurationsMinutes.removeAt(oldIndex));
       _instructionKeys.insert(newIndex, _instructionKeys.removeAt(oldIndex));
     });
   }
@@ -532,6 +553,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         _instructions
           ..clear()
           ..addAll(draft.instructions);
+        _instructionDurationsMinutes
+          ..clear()
+          ..addAll(List.generate(
+            _instructions.length,
+            (i) => i < draft.instructionDurationsMinutes.length ? draft.instructionDurationsMinutes[i] : null,
+          ));
         _instructionKeys
           ..clear()
           ..addAll(List.generate(_instructions.length, (_) => _nextInstructionKeyId++));
@@ -539,6 +566,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
         if (draft.estimatedTotalCalories != null && _caloriesController.text.trim().isEmpty) {
           _caloriesController.text = draft.estimatedTotalCalories.toString();
         }
+        _totalTimeMinutes = draft.totalTimeMinutes;
         _isGeneratingWithAi = false;
       });
     } on GeminiRateLimitException {
@@ -576,6 +604,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       calories: int.tryParse(_caloriesController.text.trim()),
       imagePath: _imagePath,
+      instructionDurationsMinutes: List.unmodifiable(_instructionDurationsMinutes),
+      totalTimeMinutes: _totalTimeMinutes,
     );
     Navigator.of(context).pop(recipe);
   }

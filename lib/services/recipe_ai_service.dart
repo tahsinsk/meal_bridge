@@ -27,22 +27,35 @@ class GeminiException implements Exception {
 class GeneratedRecipeDraft {
   final List<Ingredient> ingredients;
   final List<String> instructions;
+  // Same length/order as [instructions]; a null entry means no estimate for
+  // that step.
+  final List<int?> instructionDurationsMinutes;
   final int? estimatedTotalCalories;
+  final int? totalTimeMinutes;
 
   const GeneratedRecipeDraft({
     required this.ingredients,
     required this.instructions,
+    this.instructionDurationsMinutes = const [],
     this.estimatedTotalCalories,
+    this.totalTimeMinutes,
   });
 }
 
-/// Generates a draft recipe (ingredients + instructions + an estimated
-/// total calorie count) from just a dish name, via the Gemini API's
-/// structured-output mode (responseSchema), so the model is constrained to
-/// return our exact unit/category vocabulary instead of free text we'd
-/// have to guess-parse.
+/// Generates a draft recipe (ingredients + instructions + estimated total
+/// calories/time) from just a dish name, via the Gemini API's structured-
+/// output mode (responseSchema), so the model is constrained to return our
+/// exact unit/category vocabulary instead of free text we'd have to
+/// guess-parse.
 class RecipeAiService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+  // A per-serving ceiling used to sanity-check the model's total-calorie
+  // estimate — real home-cook recipes essentially never exceed this per
+  // serving, so a number above it almost always means the model summed
+  // wrong (e.g. answered per-ingredient or misread "total" as "per
+  // serving"). We'd rather show nothing than a misleading number.
+  static const int _maxReasonableCaloriesPerServing = 2500;
 
   // Kept in sync with the unit/category option lists shown elsewhere in the
   // recipe form — the response schema's enums below reference these so
@@ -105,17 +118,36 @@ class RecipeAiService {
       throw GeminiException('Unexpected status ${response.statusCode}: ${response.body}');
     }
 
-    return _parseResponse(response.body);
+    return _parseResponse(response.body, servings);
   }
 
   String _buildPrompt(String recipeName, int servings) {
     return 'Generate a realistic, practical home-cook recipe for "$recipeName", '
-        'scaled for $servings servings. Provide sensible ingredient amounts '
-        'and units, clear step-by-step instructions in order, and an '
-        'estimated TOTAL calorie count for the whole recipe (all servings '
-        'combined, not per serving). For each ingredient, pick the closest '
-        'matching category from the allowed list. Respond only with the '
-        'requested JSON.';
+        'scaled for $servings servings.\n\n'
+        'LANGUAGE: Respond in the SAME language as the recipe name provided '
+        'above — if the name is in Turkish, write the ingredient names and '
+        'instructions in Turkish; if Dutch, respond in Dutch; if English, '
+        'respond in English. Match the input language exactly.\n\n'
+        'INGREDIENTS: Provide sensible ingredient amounts and units. For '
+        'each ingredient, pick the closest matching category from the '
+        'allowed list.\n\n'
+        'INSTRUCTIONS: Clear step-by-step instructions in order. For each '
+        'step, if it has a meaningful duration, estimate it in minutes '
+        '(e.g. "simmer for 10 minutes" -> 10); omit the duration for steps '
+        'with no real time cost (e.g. "serve and enjoy").\n\n'
+        'TOTAL TIME: Estimate the total time for the whole recipe in '
+        'minutes, as a holistic real-world estimate — NOT just the sum of '
+        'the step durations, since steps often overlap in practice (e.g. '
+        'chopping vegetables while water boils).\n\n'
+        'CALORIES: Estimate the TOTAL calorie count for the ENTIRE recipe '
+        'as written — summing every ingredient, for ALL $servings servings '
+        'combined. This is NOT a per-serving number. Sanity check before '
+        'answering: a simple 2-serving pasta dish is typically 600-1000 '
+        'kcal TOTAL, not per ingredient and not per serving multiplied '
+        'again — if your number implies more than roughly '
+        '$_maxReasonableCaloriesPerServing kcal per serving, you have '
+        'made an arithmetic mistake and must recompute it.\n\n'
+        'Respond only with the requested JSON.';
   }
 
   static const Map<String, dynamic> _responseSchema = {
@@ -136,14 +168,22 @@ class RecipeAiService {
       },
       'instructions': {
         'type': 'ARRAY',
-        'items': {'type': 'STRING'},
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'text': {'type': 'STRING'},
+            'durationMinutes': {'type': 'INTEGER'},
+          },
+          'required': ['text'],
+        },
       },
+      'totalTimeMinutes': {'type': 'INTEGER'},
       'estimatedTotalCalories': {'type': 'INTEGER'},
     },
     'required': ['ingredients', 'instructions', 'estimatedTotalCalories'],
   };
 
-  GeneratedRecipeDraft _parseResponse(String body) {
+  GeneratedRecipeDraft _parseResponse(String body, int servings) {
     try {
       final decoded = jsonDecode(body) as Map<String, dynamic>;
       final candidates = decoded['candidates'] as List<dynamic>?;
@@ -177,23 +217,46 @@ class RecipeAiService {
           .where((i) => i.name.isNotEmpty)
           .toList();
 
+      // Instructions arrive as {text, durationMinutes?} objects (not a flat
+      // string array) specifically so each step's duration stays paired
+      // with its own text — two separately-indexed parallel arrays would
+      // risk the model miscounting and silently misaligning them.
       final instructionsJson = parsed['instructions'] as List<dynamic>? ?? const [];
-      final instructions = instructionsJson
-          .map((s) => s.toString().trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+      final instructions = <String>[];
+      final instructionDurations = <int?>[];
+      for (final raw in instructionsJson) {
+        final map = raw as Map<String, dynamic>;
+        final stepText = (map['text'] as String?)?.trim() ?? '';
+        if (stepText.isEmpty) continue;
+        instructions.add(stepText);
+        final duration = map['durationMinutes'];
+        instructionDurations.add((duration is num && duration > 0) ? duration.toInt() : null);
+      }
 
       if (ingredients.isEmpty || instructions.isEmpty) {
         throw GeminiException('Incomplete recipe data (missing ingredients or instructions)');
       }
 
       final caloriesRaw = parsed['estimatedTotalCalories'];
-      final calories = caloriesRaw is num ? caloriesRaw.toInt() : null;
+      var calories = (caloriesRaw is num && caloriesRaw > 0) ? caloriesRaw.toInt() : null;
+      // Sanity check rather than trust blindly: a wildly high per-serving
+      // implication means the model got the total-vs-per-serving math
+      // wrong. Left blank (not retried) so a bad number never reaches the
+      // form — the user can always fill it in manually, same as any recipe
+      // without an AI estimate.
+      if (calories != null && servings > 0 && calories / servings > _maxReasonableCaloriesPerServing) {
+        calories = null;
+      }
+
+      final totalTimeRaw = parsed['totalTimeMinutes'];
+      final totalTimeMinutes = (totalTimeRaw is num && totalTimeRaw > 0) ? totalTimeRaw.toInt() : null;
 
       return GeneratedRecipeDraft(
         ingredients: ingredients,
         instructions: instructions,
-        estimatedTotalCalories: (calories != null && calories > 0) ? calories : null,
+        instructionDurationsMinutes: instructionDurations,
+        estimatedTotalCalories: calories,
+        totalTimeMinutes: totalTimeMinutes,
       );
     } on GeminiException {
       rethrow;
