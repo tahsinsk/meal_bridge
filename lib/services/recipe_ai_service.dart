@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -21,10 +22,13 @@ class GeminiException implements Exception {
   String toString() => 'GeminiException: $message';
 }
 
-/// A freshly AI-generated recipe draft — ingredients/instructions/calories
-/// meant to populate the Add/Edit Recipe form for the user to review and
-/// edit, not to be saved as-is.
+/// A freshly AI-generated recipe draft — meant to populate the Add/Edit
+/// Recipe form for the user to review and edit, not to be saved as-is.
 class GeneratedRecipeDraft {
+  // Only ever populated by generateRecipeFromImage (extracted from the
+  // photo) — text-based generation already has the name typed by the user,
+  // so it doesn't ask the model for one.
+  final String? name;
   final List<Ingredient> ingredients;
   final List<String> instructions;
   // Same length/order as [instructions]; a null entry means no estimate for
@@ -34,6 +38,7 @@ class GeneratedRecipeDraft {
   final int? totalTimeMinutes;
 
   const GeneratedRecipeDraft({
+    this.name,
     required this.ingredients,
     required this.instructions,
     this.instructionDurationsMinutes = const [],
@@ -43,10 +48,10 @@ class GeneratedRecipeDraft {
 }
 
 /// Generates a draft recipe (ingredients + instructions + estimated total
-/// calories/time) from just a dish name, via the Gemini API's structured-
-/// output mode (responseSchema), so the model is constrained to return our
-/// exact unit/category vocabulary instead of free text we'd have to
-/// guess-parse.
+/// calories/time) either from just a dish name or from a photo of a written
+/// recipe, via the Gemini API's structured-output mode (responseSchema), so
+/// the model is constrained to return our exact unit/category vocabulary
+/// instead of free text we'd have to guess-parse.
 class RecipeAiService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -71,21 +76,45 @@ class RecipeAiService {
   Future<GeneratedRecipeDraft> generateRecipe({
     required String recipeName,
     required int servings,
-  }) async {
+  }) {
+    final parts = [
+      {'text': '${_taskPreamble(recipeName, servings)}\n\n${_sharedInstructions(servings)}'},
+    ];
+    return _generateWithFallback(parts, servings);
+  }
+
+  Future<GeneratedRecipeDraft> generateRecipeFromImage({
+    required Uint8List imageBytes,
+    required String mimeType,
+    required int servings,
+  }) {
+    final parts = [
+      {
+        'inlineData': {'mimeType': mimeType, 'data': base64Encode(imageBytes)},
+      },
+      {'text': '${_imageTaskPreamble(servings)}\n\n${_sharedInstructions(servings)}'},
+    ];
+    return _generateWithFallback(parts, servings);
+  }
+
+  Future<GeneratedRecipeDraft> _generateWithFallback(
+    List<Map<String, dynamic>> parts,
+    int servings,
+  ) async {
     try {
-      return await _generateWithModel(AiConfig.model, recipeName, servings);
+      return await _generateWithModel(AiConfig.model, parts, servings);
     } on GeminiRateLimitException {
       // Retrying a different model won't help if we're rate limited — that
       // rethrows so the UI can show the specific "AI is busy" message.
       rethrow;
     } catch (_) {
-      return await _generateWithModel(AiConfig.fallbackModel, recipeName, servings);
+      return await _generateWithModel(AiConfig.fallbackModel, parts, servings);
     }
   }
 
   Future<GeneratedRecipeDraft> _generateWithModel(
     String model,
-    String recipeName,
+    List<Map<String, dynamic>> parts,
     int servings,
   ) async {
     final uri = Uri.parse('$_baseUrl/$model:generateContent?key=${AiConfig.geminiApiKey}');
@@ -98,7 +127,7 @@ class RecipeAiService {
             headers: const {'Content-Type': 'application/json'},
             body: jsonEncode({
               'contents': [
-                {'parts': [{'text': _buildPrompt(recipeName, servings)}]},
+                {'parts': parts},
               ],
               'generationConfig': {
                 'responseMimeType': 'application/json',
@@ -106,7 +135,7 @@ class RecipeAiService {
               },
             }),
           )
-          .timeout(const Duration(seconds: 30));
+          .timeout(const Duration(seconds: 45));
     } catch (e) {
       throw GeminiException('Request failed: $e');
     }
@@ -121,13 +150,28 @@ class RecipeAiService {
     return _parseResponse(response.body, servings);
   }
 
-  String _buildPrompt(String recipeName, int servings) {
-    return 'Generate a realistic, practical home-cook recipe for "$recipeName", '
-        'scaled for $servings servings.\n\n'
-        'LANGUAGE: Respond in the SAME language as the recipe name provided '
-        'above — if the name is in Turkish, write the ingredient names and '
-        'instructions in Turkish; if Dutch, respond in Dutch; if English, '
-        'respond in English. Match the input language exactly.\n\n'
+  String _taskPreamble(String recipeName, int servings) {
+    return 'Generate a realistic, practical home-cook recipe for '
+        '"$recipeName", scaled for $servings servings.';
+  }
+
+  String _imageTaskPreamble(int servings) {
+    return 'The attached photo shows a recipe — e.g. a cookbook page, a '
+        'printed recipe card, or a handwritten note. Read and transcribe it '
+        'into a structured recipe, scaled for $servings servings if the '
+        "photo's own serving count differs. First extract the recipe's NAME "
+        '(title) exactly as written, or your best short descriptive title '
+        "if none is visible. If the photo is blurry, unreadable, or doesn't "
+        'show a recipe at all, do your best with whatever IS legible rather '
+        'than inventing content — if truly nothing usable is visible, '
+        'respond with empty ingredients and instructions arrays instead of '
+        'guessing.';
+  }
+
+  String _sharedInstructions(int servings) {
+    return 'LANGUAGE: Respond in the SAME language as the recipe name/text '
+        '— if Turkish, respond in Turkish; if Dutch, respond in Dutch; if '
+        'English, respond in English. Match the input language exactly.\n\n'
         'INGREDIENTS: Provide sensible ingredient amounts and units. For '
         'each ingredient, pick the closest matching category from the '
         'allowed list.\n\n'
@@ -153,6 +197,7 @@ class RecipeAiService {
   static const Map<String, dynamic> _responseSchema = {
     'type': 'OBJECT',
     'properties': {
+      'name': {'type': 'STRING'},
       'ingredients': {
         'type': 'ARRAY',
         'items': {
@@ -199,16 +244,19 @@ class RecipeAiService {
 
       final parsed = jsonDecode(text) as Map<String, dynamic>;
 
+      final nameRaw = parsed['name'];
+      final name = (nameRaw is String && nameRaw.trim().isNotEmpty) ? nameRaw.trim() : null;
+
       final ingredientsJson = parsed['ingredients'] as List<dynamic>? ?? const [];
       final ingredients = ingredientsJson
           .map((raw) {
             final map = raw as Map<String, dynamic>;
-            final name = (map['name'] as String?)?.trim() ?? '';
+            final ingredientName = (map['name'] as String?)?.trim() ?? '';
             final amount = (map['amount'] as num?)?.toDouble() ?? 0;
             final unit = map['unit'] as String?;
             final category = map['category'] as String?;
             return Ingredient(
-              name: name,
+              name: ingredientName,
               amount: amount > 0 ? amount : 1,
               unit: _units.contains(unit) ? unit! : 'g',
               categoryOverride: _categories.contains(category) ? category : null,
@@ -252,6 +300,7 @@ class RecipeAiService {
       final totalTimeMinutes = (totalTimeRaw is num && totalTimeRaw > 0) ? totalTimeRaw.toInt() : null;
 
       return GeneratedRecipeDraft(
+        name: name,
         ingredients: ingredients,
         instructions: instructions,
         instructionDurationsMinutes: instructionDurations,

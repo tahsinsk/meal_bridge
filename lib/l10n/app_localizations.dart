@@ -151,32 +151,44 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPage1Body.
   ///
   /// In en, this message translates to:
-  /// **'Save what you cook, with ingredients, steps and calories.'**
+  /// **'Save what you cook — photos, ingredients, steps and calories, ready whenever you need them.'**
   String get onboardingPage1Body;
 
   /// No description provided for @onboardingPage2Title.
   ///
   /// In en, this message translates to:
-  /// **'Plan your week'**
+  /// **'Or let AI do the typing'**
   String get onboardingPage2Title;
 
   /// No description provided for @onboardingPage2Body.
   ///
   /// In en, this message translates to:
-  /// **'Drop meals into breakfast, lunch and dinner — for any week.'**
+  /// **'Describe a dish and get a full recipe back — or snap a photo of one and it fills itself in.'**
   String get onboardingPage2Body;
 
   /// No description provided for @onboardingPage3Title.
   ///
   /// In en, this message translates to:
-  /// **'Your shopping list writes itself'**
+  /// **'Plan any week ahead'**
   String get onboardingPage3Title;
 
   /// No description provided for @onboardingPage3Body.
   ///
   /// In en, this message translates to:
-  /// **'Ingredients are combined and sorted by aisle for the week you\'re viewing, ready for the store.'**
+  /// **'Drop meals into breakfast, lunch and dinner — for this week or any week to come.'**
   String get onboardingPage3Body;
+
+  /// No description provided for @onboardingPage4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shopping list writes itself'**
+  String get onboardingPage4Title;
+
+  /// No description provided for @onboardingPage4Body.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients combine automatically, plus a Quick List for extras and one-tap links to your usual stores.'**
+  String get onboardingPage4Body;
 
   /// No description provided for @settingsTitle.
   ///
@@ -1077,6 +1089,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI is busy right now. Please try again in a moment.'**
   String get recipeFormAiErrorRateLimit;
+
+  /// No description provided for @recipeFormAiAssistTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Create with AI'**
+  String get recipeFormAiAssistTooltip;
+
+  /// No description provided for @recipeFormChoiceSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How would you like to start?'**
+  String get recipeFormChoiceSheetTitle;
+
+  /// No description provided for @recipeFormFillManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in manually'**
+  String get recipeFormFillManually;
+
+  /// No description provided for @recipeFormScanPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a recipe photo'**
+  String get recipeFormScanPhoto;
+
+  /// No description provided for @recipeFormAiScanErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read that recipe photo. Try a clearer photo, or fill in manually.'**
+  String get recipeFormAiScanErrorGeneric;
+
+  /// No description provided for @recipeAiPromptQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to cook?'**
+  String get recipeAiPromptQuestion;
+
+  /// No description provided for @recipeAiPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Spicy vegetable stir-fry'**
+  String get recipeAiPromptHint;
+
+  /// No description provided for @recipeAiPromptButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate'**
+  String get recipeAiPromptButton;
+
+  /// No description provided for @recipeScanPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Take or upload a photo of a recipe'**
+  String get recipeScanPrompt;
+
+  /// No description provided for @recipeScanLoadingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading your recipe...'**
+  String get recipeScanLoadingMessage;
+
+  /// No description provided for @recipeScanErrorRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another photo'**
+  String get recipeScanErrorRetry;
 
   /// No description provided for @recipeFormCategoryLabel.
   ///

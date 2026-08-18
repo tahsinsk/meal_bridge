@@ -79,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.info_outline, size: 20),
-          color: Colors.grey[400],
+          color: Colors.grey[600],
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           visualDensity: VisualDensity.compact,
@@ -97,7 +97,11 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        // Extra bottom clearance (AppSpacing.navBarClearance) so the last
+        // card never ends up behind the floating nav bar now that the body
+        // scrolls underneath it (Scaffold.extendBody) — matches the other
+        // three tabs' bottom padding treatment.
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16 + AppSpacing.navBarClearance),
         children: [
           // Başlık kartı
           Card(
@@ -342,12 +346,12 @@ class SettingsScreen extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3E0),
+                      color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.replay_outlined,
-                      color: Color(0xFFEF6C00),
+                      color: Color(0xFF2E7D32),
                     ),
                   ),
                   title: Text(l10n.settingsResetOnboardingTitle),

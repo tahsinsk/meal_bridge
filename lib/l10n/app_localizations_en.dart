@@ -34,21 +34,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingPage1Body =>
-      'Save what you cook, with ingredients, steps and calories.';
+      'Save what you cook — photos, ingredients, steps and calories, ready whenever you need them.';
 
   @override
-  String get onboardingPage2Title => 'Plan your week';
+  String get onboardingPage2Title => 'Or let AI do the typing';
 
   @override
   String get onboardingPage2Body =>
-      'Drop meals into breakfast, lunch and dinner — for any week.';
+      'Describe a dish and get a full recipe back — or snap a photo of one and it fills itself in.';
 
   @override
-  String get onboardingPage3Title => 'Your shopping list writes itself';
+  String get onboardingPage3Title => 'Plan any week ahead';
 
   @override
   String get onboardingPage3Body =>
-      'Ingredients are combined and sorted by aisle for the week you\'re viewing, ready for the store.';
+      'Drop meals into breakfast, lunch and dinner — for this week or any week to come.';
+
+  @override
+  String get onboardingPage4Title => 'Your shopping list writes itself';
+
+  @override
+  String get onboardingPage4Body =>
+      'Ingredients combine automatically, plus a Quick List for extras and one-tap links to your usual stores.';
 
   @override
   String get settingsTitle => 'Settings';
@@ -582,6 +589,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recipeFormAiErrorRateLimit =>
       'AI is busy right now. Please try again in a moment.';
+
+  @override
+  String get recipeFormAiAssistTooltip => 'Create with AI';
+
+  @override
+  String get recipeFormChoiceSheetTitle => 'How would you like to start?';
+
+  @override
+  String get recipeFormFillManually => 'Fill in manually';
+
+  @override
+  String get recipeFormScanPhoto => 'Scan a recipe photo';
+
+  @override
+  String get recipeFormAiScanErrorGeneric =>
+      'Couldn\'t read that recipe photo. Try a clearer photo, or fill in manually.';
+
+  @override
+  String get recipeAiPromptQuestion => 'What would you like to cook?';
+
+  @override
+  String get recipeAiPromptHint => 'e.g. Spicy vegetable stir-fry';
+
+  @override
+  String get recipeAiPromptButton => 'Generate';
+
+  @override
+  String get recipeScanPrompt => 'Take or upload a photo of a recipe';
+
+  @override
+  String get recipeScanLoadingMessage => 'Reading your recipe...';
+
+  @override
+  String get recipeScanErrorRetry => 'Try another photo';
 
   @override
   String get recipeFormCategoryLabel => 'Category';

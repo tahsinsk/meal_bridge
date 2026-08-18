@@ -110,27 +110,48 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       appBar: AppBar(
         title: Text(recipe.name),
         actions: [
-          IconButton(
-            icon: Icon(
-              recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-            ),
-            color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
-            tooltip: recipe.isFavorite ? l10n.recipeFavoriteRemove : l10n.recipeFavoriteAdd,
-            onPressed: _handleFavoriteToggle,
-          ),
-          if (widget.canEdit)
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: l10n.recipeEditTooltip,
-              onPressed: _handleEdit,
-            ),
-          if (widget.onToggleQuickList != null)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (value) {
-                if (value == 'quick_list') _handleQuickListToggle();
-              },
-              itemBuilder: (context) => [
+          // Favorite/Edit/Quick List all live in one overflow menu instead
+          // of separate always-visible icons, so the AppBar stays down to
+          // just the back arrow and this one button.
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              switch (value) {
+                case 'favorite':
+                  _handleFavoriteToggle();
+                case 'edit':
+                  _handleEdit();
+                case 'quick_list':
+                  _handleQuickListToggle();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'favorite',
+                child: Row(
+                  children: [
+                    Icon(
+                      recipe.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                      size: 18,
+                      color: recipe.isFavorite ? const Color(0xFFF9A825) : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(recipe.isFavorite ? l10n.recipeFavoriteRemove : l10n.recipeFavoriteAdd),
+                  ],
+                ),
+              ),
+              if (widget.canEdit)
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_outlined, size: 18),
+                      const SizedBox(width: 10),
+                      Text(l10n.recipeEditTooltip),
+                    ],
+                  ),
+                ),
+              if (widget.onToggleQuickList != null)
                 PopupMenuItem(
                   value: 'quick_list',
                   child: Row(
@@ -146,8 +167,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ],
                   ),
                 ),
-              ],
-            ),
+            ],
+          ),
         ],
       ),
       body: ListView(
@@ -174,51 +195,30 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        recipe.name,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 6),
                       Container(
-                        width: 56,
-                        height: 56,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: _categoryBgColor(recipe.category),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Icon(
-                          Icons.restaurant_menu_outlined,
-                          color: _categoryColor(recipe.category),
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              recipe.name,
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _categoryBgColor(recipe.category),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                localizedRecipeCategory(l10n, recipe.category),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _categoryColor(recipe.category),
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          localizedRecipeCategory(l10n, recipe.category),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _categoryColor(recipe.category),
+                          ),
                         ),
                       ),
                     ],

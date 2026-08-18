@@ -38,13 +38,13 @@ flutter_launcher_icons:
   min_sdk_android: 21
 
 flutter_native_splash:
-  color: "#2E7D32"
+  color: "#437D5B"
   image: assets/images/logo_mark_white.png
-  color_dark: "#2E7D32"
+  color_dark: "#437D5B"
   image_dark: assets/images/logo_mark_white.png
   android_12:
     image: assets/images/logo_mark_white.png
-    color: "#2E7D32"
+    color: "#437D5B"
   fullscreen: false
 
 flutter:

@@ -60,28 +60,6 @@ class MealPlanScreen extends StatelessWidget {
     return DateFormat.MMMd(locale).format(d);
   }
 
-  String _weekLabel(BuildContext context, int offset) {
-    final l10n = AppLocalizations.of(context)!;
-    switch (offset) {
-      case -1: return l10n.planLastWeek;
-      case 0:  return l10n.planThisWeek;
-      case 1:  return l10n.planNextWeek;
-      default:
-        return _weekDateRange(context, offset);
-    }
-  }
-
-  // "Week 30 · Aug 3 – Aug 9" — the ISO week number alongside the date
-  // range, so it's clear at a glance which week (and its shopping list)
-  // you're looking at.
-  String _weekDateRange(BuildContext context, int offset) {
-    final l10n = AppLocalizations.of(context)!;
-    final monday = _mondayForOffset(offset);
-    final sunday = monday.add(const Duration(days: 6));
-    final weekNum = isoWeekNumberForMonday(monday);
-    return '${l10n.planWeekNumberLabel(weekNum)} · ${_shortDate(context, monday)} – ${_shortDate(context, sunday)}';
-  }
-
   String _dayDate(BuildContext context, String day) {
     final monday = _mondayForOffset(weekOffset);
     final date = monday.add(Duration(days: _days.indexOf(day)));
@@ -190,9 +168,13 @@ class MealPlanScreen extends StatelessWidget {
   Widget _buildMealRow(BuildContext context, String day, MealType mealType) {
     final l10n = AppLocalizations.of(context)!;
     final pr = plannedRecipes[_mealPlanKey(day, mealType)];
-    final bg = mealType.surfaceColor;
-    final onBg = mealType.onSurfaceColor;
     final isPlanned = pr != null;
+    // State-based, not meal-type-based: a filled slot always reads as the
+    // darker "dinner" tone and an empty one as the lighter "lunch" tone,
+    // regardless of which meal this actually is — Breakfast/Lunch/Dinner
+    // stay distinguishable by icon glyph, not by a unique color anymore.
+    final bg = isPlanned ? MealType.dinner.surfaceColor : MealType.lunch.surfaceColor;
+    final onBg = isPlanned ? MealType.dinner.onSurfaceColor : MealType.lunch.onSurfaceColor;
 
     return GestureDetector(
       onTap: isPlanned
@@ -256,15 +238,16 @@ class MealPlanScreen extends StatelessWidget {
     );
   }
 
-  // Small round tappable icon for an EMPTY slot — same icon/pastel colors
-  // as the filled row uses, just compact so several can sit side by side
-  // instead of each claiming a full-width row before anything's planned.
+  // Small round tappable icon for an EMPTY slot — always the lighter
+  // "lunch" tone (state-based, not meal-type-based; see _buildMealRow),
+  // just compact so several can sit side by side instead of each claiming
+  // a full-width row before anything's planned.
   Widget _buildEmptySlotButton(BuildContext context, String day, MealType mealType) {
     final l10n = AppLocalizations.of(context)!;
     return Tooltip(
       message: l10n.planAddMealType(localizedMealTypeLabel(l10n, mealType)),
       child: Material(
-        color: mealType.surfaceColor,
+        color: MealType.lunch.surfaceColor,
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
@@ -272,7 +255,7 @@ class MealPlanScreen extends StatelessWidget {
           child: SizedBox(
             width: 44,
             height: 44,
-            child: Icon(mealType.icon, size: 20, color: mealType.onSurfaceColor),
+            child: Icon(mealType.icon, size: 20, color: MealType.lunch.onSurfaceColor),
           ),
         ),
       ),
@@ -396,7 +379,7 @@ class MealPlanScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: isToday
-            ? const BorderSide(color: AppColors.primaryDark, width: 2)
+            ? const BorderSide(color: AppColors.primary, width: 2)
             : BorderSide.none,
       ),
       child: Padding(
@@ -419,7 +402,7 @@ class MealPlanScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: isToday ? AppColors.primaryDark : null,
+                              color: isToday ? AppColors.primary : null,
                             ),
                           ),
                           if (isToday) ...[
@@ -427,7 +410,7 @@ class MealPlanScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryDark,
+                                color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -502,47 +485,111 @@ class MealPlanScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, AppSpacing.navBarClearance + 16),
       children: [
         // Week navigation + general add
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: () => onWeekChanged(weekOffset - 1),
-                  color: AppColors.primaryDark,
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _weekLabel(context, weekOffset),
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                      ),
-                      if (weekOffset.abs() <= 1)
-                        Text(
-                          _weekDateRange(context, weekOffset),
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                        ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () => onWeekChanged(weekOffset + 1),
-                  color: AppColors.primaryDark,
-                ),
-              ],
-            ),
-          ),
-        ),
+        _WeekHeaderCard(weekOffset: weekOffset, onWeekChanged: onWeekChanged),
 
         const SizedBox(height: 16),
 
         // Day cards
         ..._days.map((day) => _buildDayCard(context, day)),
       ],
+    );
+  }
+}
+
+/// Week nav row: chevrons either side of a small header that, when there's
+/// a relative label ("This week"/"Next week"/"Last week"), shows it as a
+/// constant top line with the week-number/date-range toggle beneath it —
+/// otherwise (further-out weeks, with no relative label) the toggle is the
+/// whole header by itself. The toggle itself mirrors the Shopping List
+/// week header: "Week 34" by default, tap swaps to "Aug 17 – Aug 23" in
+/// the same spot, tap again swaps back — never both at once.
+class _WeekHeaderCard extends StatefulWidget {
+  final int weekOffset;
+  final void Function(int) onWeekChanged;
+
+  const _WeekHeaderCard({required this.weekOffset, required this.onWeekChanged});
+
+  @override
+  State<_WeekHeaderCard> createState() => _WeekHeaderCardState();
+}
+
+class _WeekHeaderCardState extends State<_WeekHeaderCard> {
+  bool _showDateRange = false;
+
+  String _shortDate(BuildContext context, DateTime d) {
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat.MMMd(locale).format(d);
+  }
+
+  String? _relativeLabel(AppLocalizations l10n) {
+    switch (widget.weekOffset) {
+      case -1: return l10n.planLastWeek;
+      case 0: return l10n.planThisWeek;
+      case 1: return l10n.planNextWeek;
+      default: return null;
+    }
+  }
+
+  String _toggleLabel(BuildContext context, AppLocalizations l10n) {
+    final monday = MealPlanScreen._mondayForOffset(widget.weekOffset);
+    if (!_showDateRange) {
+      return l10n.planWeekNumberLabel(isoWeekNumberForMonday(monday));
+    }
+    final sunday = monday.add(const Duration(days: 6));
+    return '${_shortDate(context, monday)} – ${_shortDate(context, sunday)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final relativeLabel = _relativeLabel(l10n);
+
+    return Card(
+      // Subtle frame around the header, in the same green as the nav bar's
+      // selected-tab capsule — thin enough to read as a soft outline, not
+      // a heavy border.
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        side: const BorderSide(color: AppColors.primary, width: 1.2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: () => widget.onWeekChanged(widget.weekOffset - 1),
+              color: AppColors.primaryDark,
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _showDateRange = !_showDateRange),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (relativeLabel != null)
+                      Text(
+                        relativeLabel,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                    Text(
+                      _toggleLabel(context, l10n),
+                      style: relativeLabel != null
+                          ? TextStyle(fontSize: 12, color: Colors.grey[600])
+                          : const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.chevron_right),
+              onPressed: () => widget.onWeekChanged(widget.weekOffset + 1),
+              color: AppColors.primaryDark,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

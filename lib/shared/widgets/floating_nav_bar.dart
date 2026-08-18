@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../app_constants.dart';
@@ -33,11 +35,12 @@ class FloatingNavBar extends StatelessWidget {
     return SafeArea(
       top: false,
       minimum: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      // Shadow lives on this outer, unclipped layer — a BoxShadow painted
+      // inside the ClipRRect below would get cut off at the pill's own
+      // bounds, since a shadow extends past the box it's attached to.
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.pill),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.10),
@@ -46,24 +49,42 @@ class FloatingNavBar extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            for (var i = 0; i < destinations.length; i++)
-              // Flexible (not a fixed size) so longer localized labels
-              // shrink to fit instead of overflowing the Row on narrow
-              // phones — labels are translated and vary in length per
-              // language.
-              Flexible(
-                child: _FloatingNavItem(
-                  destination: destinations[i],
-                  selected: i == selectedIndex,
-                  onTap: () => onDestinationSelected(i),
-                ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          // Frosted-glass pill: blurs whatever content is scrolling behind
+          // it (BackdropFilter only affects what's already painted below
+          // it, not its own child), while the semi-transparent white fill
+          // and everything drawn on top — icons, labels, the selected-tab
+          // capsule — stay fully crisp and opaque.
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
               ),
-          ],
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    // Flexible (not a fixed size) so longer localized labels
+                    // shrink to fit instead of overflowing the Row on narrow
+                    // phones — labels are translated and vary in length per
+                    // language.
+                    Flexible(
+                      child: _FloatingNavItem(
+                        destination: destinations[i],
+                        selected: i == selectedIndex,
+                        onTap: () => onDestinationSelected(i),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

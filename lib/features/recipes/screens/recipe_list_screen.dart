@@ -9,8 +9,12 @@ import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
 import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/recipe_image.dart';
+import 'ai_generate_recipe_screen.dart';
 import 'recipe_detail_screen.dart';
 import 'recipe_form_screen.dart';
+import 'scan_recipe_photo_screen.dart';
+
+enum _AddRecipeChoice { manual, ai, scan }
 
 class RecipeListScreen extends StatefulWidget {
   final List<Recipe> recipes;
@@ -102,11 +106,68 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     });
   }
 
-  /// Public so [MainShell]'s AppBar "+" action can trigger it via a GlobalKey.
+  /// Public so [MainShell]'s AppBar "+" action can trigger it via a
+  /// GlobalKey. Shows a choice sheet (manual / AI / scan) then routes to
+  /// the matching entry point — the AI and scan screens each hand off to
+  /// [RecipeFormScreen] internally once they have a draft, so this always
+  /// awaits exactly one final `Recipe?` result regardless of which path
+  /// the user took.
   Future<void> openAddRecipeScreen() async {
-    final newRecipe = await Navigator.of(context).push<Recipe>(
-      MaterialPageRoute(builder: (context) => const RecipeFormScreen()),
+    final l10n = AppLocalizations.of(context)!;
+    final choice = await showModalBottomSheet<_AddRecipeChoice>(
+      context: context,
+      sheetAnimationStyle: AppMotion.sheet,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(l10n.recipeFormChoiceSheetTitle, style: Theme.of(context).textTheme.titleMedium),
+                ),
+              ),
+              const SizedBox(height: 4),
+              ListTile(
+                leading: const Icon(Icons.edit_note_outlined),
+                title: Text(l10n.recipeFormFillManually),
+                onTap: () => Navigator.of(context).pop(_AddRecipeChoice.manual),
+              ),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome_outlined),
+                title: Text(l10n.recipeFormGenerateWithAi),
+                onTap: () => Navigator.of(context).pop(_AddRecipeChoice.ai),
+              ),
+              ListTile(
+                leading: const Icon(Icons.document_scanner_outlined),
+                title: Text(l10n.recipeFormScanPhoto),
+                onTap: () => Navigator.of(context).pop(_AddRecipeChoice.scan),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
+    if (choice == null || !mounted) return;
+
+    Recipe? newRecipe;
+    switch (choice) {
+      case _AddRecipeChoice.manual:
+        newRecipe = await Navigator.of(context).push<Recipe>(
+          MaterialPageRoute(builder: (context) => const RecipeFormScreen()),
+        );
+      case _AddRecipeChoice.ai:
+        newRecipe = await Navigator.of(context).push<Recipe>(
+          MaterialPageRoute(builder: (context) => const AiGenerateRecipeScreen()),
+        );
+      case _AddRecipeChoice.scan:
+        newRecipe = await Navigator.of(context).push<Recipe>(
+          MaterialPageRoute(builder: (context) => const ScanRecipePhotoScreen()),
+        );
+    }
     if (newRecipe != null) widget.onRecipeAdded(newRecipe);
   }
 

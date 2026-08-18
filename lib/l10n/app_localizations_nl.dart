@@ -34,21 +34,28 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get onboardingPage1Body =>
-      'Bewaar wat je kookt, met ingrediënten, stappen en calorieën.';
+      'Bewaar wat je kookt — foto\'s, ingrediënten, stappen en calorieën, altijd binnen handbereik.';
 
   @override
-  String get onboardingPage2Title => 'Plan je week';
+  String get onboardingPage2Title => 'Of laat AI het typen doen';
 
   @override
   String get onboardingPage2Body =>
-      'Zet maaltijden bij ontbijt, lunch en diner — voor elke week.';
+      'Beschrijf een gerecht en krijg een compleet recept terug — of maak een foto en het vult zichzelf in.';
 
   @override
-  String get onboardingPage3Title => 'Je boodschappenlijst schrijft zichzelf';
+  String get onboardingPage3Title => 'Plan elke week vooruit';
 
   @override
   String get onboardingPage3Body =>
-      'Ingrediënten worden gecombineerd en gesorteerd per gangpad voor de week die je bekijkt, klaar voor de winkel.';
+      'Zet maaltijden bij ontbijt, lunch en diner — voor deze week of voor elke week die nog komt.';
+
+  @override
+  String get onboardingPage4Title => 'Je boodschappenlijst schrijft zichzelf';
+
+  @override
+  String get onboardingPage4Body =>
+      'Ingrediënten worden automatisch gecombineerd, plus een Snellijst voor extra\'s en snelkoppelingen naar je vaste winkels.';
 
   @override
   String get settingsTitle => 'Instellingen';
@@ -585,6 +592,40 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get recipeFormAiErrorRateLimit =>
       'AI heeft het nu druk. Probeer het straks opnieuw.';
+
+  @override
+  String get recipeFormAiAssistTooltip => 'Maken met AI';
+
+  @override
+  String get recipeFormChoiceSheetTitle => 'Hoe wil je beginnen?';
+
+  @override
+  String get recipeFormFillManually => 'Handmatig invullen';
+
+  @override
+  String get recipeFormScanPhoto => 'Receptfoto scannen';
+
+  @override
+  String get recipeFormAiScanErrorGeneric =>
+      'Kon die receptfoto niet lezen. Probeer een duidelijkere foto, of vul handmatig in.';
+
+  @override
+  String get recipeAiPromptQuestion => 'Wat wil je koken?';
+
+  @override
+  String get recipeAiPromptHint => 'bijv. Pittige groente-roerbak';
+
+  @override
+  String get recipeAiPromptButton => 'Genereren';
+
+  @override
+  String get recipeScanPrompt => 'Maak of upload een foto van een recept';
+
+  @override
+  String get recipeScanLoadingMessage => 'Je recept wordt gelezen...';
+
+  @override
+  String get recipeScanErrorRetry => 'Probeer een andere foto';
 
   @override
   String get recipeFormCategoryLabel => 'Categorie';

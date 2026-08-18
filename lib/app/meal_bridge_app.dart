@@ -95,16 +95,22 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
         // GoogleFonts.quicksand style, which overrides this fallback.
         textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.light().textTheme),
         scaffoldBackgroundColor: AppColors.creamBackground,
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           centerTitle: false,
           elevation: 0,
           scrolledUnderElevation: 0,
           backgroundColor: AppColors.creamBackground,
-          foregroundColor: Color(0xFF1A1C19),
-          iconTheme: IconThemeData(color: Color(0xFF1A1C19)),
-          actionsIconTheme: IconThemeData(color: Color(0xFF1A1C19)),
-          titleTextStyle: TextStyle(
-            color: Color(0xFF1A1C19),
+          foregroundColor: const Color(0xFF1A1C19),
+          iconTheme: const IconThemeData(color: Color(0xFF1A1C19)),
+          actionsIconTheme: const IconThemeData(color: Color(0xFF1A1C19)),
+          // A bare TextStyle here (no fontFamily) would silently opt every
+          // AppBar title with a default Text(...) out of the app's Plus
+          // Jakarta Sans theme and back to the platform default font (SF
+          // Pro/Roboto) — AppBar uses this titleTextStyle directly rather
+          // than falling back through Theme.textTheme, so it has to name
+          // the font explicitly.
+          titleTextStyle: GoogleFonts.plusJakartaSans(
+            color: const Color(0xFF1A1C19),
             fontSize: 20,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
@@ -151,7 +157,13 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
-            textStyle: const TextStyle(
+            // Material's Button widget uses this as the FULL replacement
+            // text style for its child (not merged with Theme.textTheme),
+            // so — same as appBarTheme.titleTextStyle above — it has to
+            // name Plus Jakarta Sans explicitly or every filled button
+            // label (Save, Add Ingredient, Generate, Get started, ...)
+            // silently falls back to the platform default font.
+            textStyle: GoogleFonts.plusJakartaSans(
               fontSize: 15,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
@@ -181,8 +193,14 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
         ),
         chipTheme: ChipThemeData(
           backgroundColor: AppColors.surfaceSoft,
-          labelStyle: const TextStyle(
-            color: Color(0xFF1B5E20),
+          // Individual Chip/FilterChip instances across the app often
+          // layer their own inline labelStyle (color/weight only) on top
+          // of this one via TextStyle.merge, which preserves whichever
+          // side sets fontFamily — so naming Plus Jakarta Sans here is
+          // enough to cover every chip, not just the ones using this
+          // default as-is.
+          labelStyle: GoogleFonts.plusJakartaSans(
+            color: const Color(0xFF1B5E20),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -206,7 +224,12 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
         ),
         snackBarTheme: SnackBarThemeData(
           backgroundColor: const Color(0xFF1B5E20),
-          contentTextStyle: const TextStyle(color: Colors.white),
+          // SnackBar wraps its content in DefaultTextStyle(style:
+          // contentTextStyle) directly — same full-replacement mechanism
+          // as the other component themes above, so this needs the font
+          // named explicitly too, or every snackbar message in the app
+          // falls back to the platform default font.
+          contentTextStyle: GoogleFonts.plusJakartaSans(color: Colors.white),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -848,7 +871,17 @@ class _MainShellState extends State<MainShell> {
           }
           return false;
         },
-        child: showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex]),
+        // bottom: false — extendBody inflates MediaQuery.padding.bottom to
+        // (at least) the floating nav bar's height specifically so a body
+        // CAN pad itself away from it; SafeArea's default bottom:true would
+        // consume that inflated value as real layout padding, stopping
+        // content short and leaving a flat, unpainted scaffoldBackgroundColor
+        // gap behind the bar — a solid rectangle the blur just samples back
+        // to itself. Each tab already adds its own AppSpacing.navBarClearance
+        // bottom padding, so only the top status-bar inset is needed here.
+        child: showAppBar
+            ? screens[_selectedIndex]
+            : SafeArea(bottom: false, child: screens[_selectedIndex]),
       ),
       // Shrinks (rather than hides) on scroll down so it's always visible
       // and tappable; scrolling up smoothly restores full size. Anchored at

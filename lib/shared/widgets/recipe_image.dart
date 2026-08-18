@@ -86,6 +86,10 @@ class _LocalFileImage extends StatelessWidget {
   }
 }
 
+// The single "no photo" look shared by every recipe placeholder — recipe
+// grid cards, list rows, and the Recipe Detail hero image all render this
+// exact same crossed fork-and-spoon-on-gradient treatment, centralized
+// here rather than each screen styling its own empty state.
 class _Placeholder extends StatelessWidget {
   final double iconSize;
 
@@ -100,14 +104,14 @@ class _Placeholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFEFF6E6), Color(0xFFD7EAC4)],
+          colors: [Color(0xFFF3F8EC), Color(0xFFA9D6AE)],
         ),
       ),
       child: Center(
         child: Icon(
-          Icons.restaurant_rounded,
+          Icons.restaurant_menu_outlined,
           size: iconSize,
-          color: const Color(0xFF7CB342).withValues(alpha: 0.75),
+          color: const Color(0xFF4C7A3F).withValues(alpha: 0.8),
         ),
       ),
     );

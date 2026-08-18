@@ -17,9 +17,10 @@ class _OnboardingPageData {
   });
 }
 
-/// First-run intro flow: 3 swipeable pages previewing Recipes / Plan /
-/// Shopping List. Shown once, gated by a persisted flag the caller
-/// (MainShell) owns — this widget only reports back via [onFinished].
+/// First-run intro flow: 4 swipeable pages previewing Recipes (incl. AI
+/// generation/photo scan) / Plan / Shopping List. Shown once, gated by a
+/// persisted flag the caller (MainShell) owns — this widget only reports
+/// back via [onFinished].
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onFinished;
 
@@ -42,11 +43,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _OnboardingPageData(
           title: l10n.onboardingPage2Title,
           body: l10n.onboardingPage2Body,
-          illustration: const WeekStripIllustration(),
+          illustration: const AiRecipeIllustration(),
         ),
         _OnboardingPageData(
           title: l10n.onboardingPage3Title,
           body: l10n.onboardingPage3Body,
+          illustration: const WeekStripIllustration(),
+        ),
+        _OnboardingPageData(
+          title: l10n.onboardingPage4Title,
+          body: l10n.onboardingPage4Body,
           illustration: const ShoppingListIllustration(),
         ),
       ];
@@ -179,7 +185,7 @@ class _PageIndicator extends StatelessWidget {
           width: isActive ? 22 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: isActive ? AppColors.primaryDark : Colors.grey[300],
+            color: isActive ? AppColors.primary : Colors.grey[300],
             borderRadius: BorderRadius.circular(4),
           ),
         );

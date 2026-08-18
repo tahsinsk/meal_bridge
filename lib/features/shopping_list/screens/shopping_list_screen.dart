@@ -93,6 +93,10 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _isQuickMode = false;
   bool _groupByRecipe = false;
 
+  // Week header toggle: shows either the week number or the date range in
+  // the same spot, tap to swap — never both at once.
+  bool _weekHeaderShowsDateRange = false;
+
   // Ephemeral UI-only state: which recipe rows are expanded in the Quick
   // List picker (not persisted — collapses again next visit, which is fine).
   final Set<String> _expandedQuickRecipeIds = {};
@@ -357,19 +361,23 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     return amount.toString();
   }
 
-  // "Week 30 · Aug 3 – Aug 9" for the week this Weekly Plan list is
-  // currently generated from — mirrors the Plan screen's header format.
-  String _weekRangeLabel(BuildContext context) {
+  // Single toggle, one label at a time: "Week 30" by default, tap swaps to
+  // "Aug 3 – Aug 9" (same week, the date-range spelling) in the same spot,
+  // tap again swaps back — never both shown together.
+  String _weekHeaderLabel(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final monday = now
         .subtract(Duration(days: now.weekday - 1))
         .add(Duration(days: 7 * widget.weekOffset));
     final sunday = monday.add(const Duration(days: 6));
-    final weekNum = isoWeekNumberForMonday(monday);
+    if (!_weekHeaderShowsDateRange) {
+      final weekNum = isoWeekNumberForMonday(monday);
+      return l10n.planWeekNumberLabel(weekNum);
+    }
     final locale = Localizations.localeOf(context).toString();
     final shortDate = DateFormat.MMMd(locale);
-    return '${l10n.planWeekNumberLabel(weekNum)} · ${shortDate.format(monday)} – ${shortDate.format(sunday)}';
+    return '${shortDate.format(monday)} – ${shortDate.format(sunday)}';
   }
 
   String _itemKey(ShoppingListItem item) => ingredientKey(item.name, item.unit);
@@ -1158,20 +1166,25 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
 
         const SizedBox(height: 12),
 
-        // Week number + date range — Weekly Plan mode only, so it's clear
-        // which week this generated list belongs to.
+        // Week number, tap to swap to the date range in the same spot (and
+        // back) — Weekly Plan mode only, so it's clear which week this
+        // generated list belongs to.
         if (!_isQuickMode) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey[500]),
-                const SizedBox(width: 6),
-                Text(
-                  _weekRangeLabel(context),
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600]),
-                ),
-              ],
+            child: GestureDetector(
+              onTap: () => setState(() => _weekHeaderShowsDateRange = !_weekHeaderShowsDateRange),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey[500]),
+                  const SizedBox(width: 6),
+                  Text(
+                    _weekHeaderLabel(context),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 8),

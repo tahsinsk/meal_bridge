@@ -1,23 +1,25 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/ingredient.dart';
 import '../../../models/recipe.dart';
-import '../../../services/recipe_ai_service.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
+import '../../../shared/local_image_storage.dart';
 import '../../../shared/widgets/option_picker_sheet.dart';
 import '../../../shared/widgets/recipe_image.dart';
 
 class RecipeFormScreen extends StatefulWidget {
   final Recipe? initialRecipe;
+  // A freshly AI-generated/scanned recipe used only to pre-fill the form's
+  // fields — unlike [initialRecipe], this keeps the screen in "Add" framing
+  // (title/button label, fresh id on save) since nothing has been saved
+  // yet. Ignored when [initialRecipe] is also set.
+  final Recipe? draft;
 
-  const RecipeFormScreen({super.key, this.initialRecipe});
+  const RecipeFormScreen({super.key, this.initialRecipe, this.draft});
 
   @override
   State<RecipeFormScreen> createState() => _RecipeFormScreenState();
@@ -64,9 +66,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   String? _imagePath;
   final ImagePicker _imagePicker = ImagePicker();
 
-  final RecipeAiService _recipeAiService = RecipeAiService();
-  bool _isGeneratingWithAi = false;
-
   // Sticky save/update button: hidden on open, fades/slides in once the
   // user has scrolled down past a small threshold, hides again back at the
   // very top — not visible at all until they've engaged with the form.
@@ -86,7 +85,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   @override
   void initState() {
     super.initState();
-    final recipe = widget.initialRecipe;
+    final recipe = widget.initialRecipe ?? widget.draft;
     _nameController = TextEditingController(text: recipe?.name ?? '');
     _categoryController = TextEditingController(text: recipe?.category ?? 'Dinner');
     _servings = recipe?.servings ?? 2;
@@ -486,100 +485,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     if (picked == null) return;
 
     try {
-      final docsDir = await getApplicationDocumentsDirectory();
-      final imagesDir = Directory('${docsDir.path}/recipe_images');
-      if (!await imagesDir.exists()) {
-        await imagesDir.create(recursive: true);
-      }
-      final dotIndex = picked.path.lastIndexOf('.');
-      final ext = dotIndex == -1 ? '.jpg' : picked.path.substring(dotIndex);
-      final fileName = 'recipe_${DateTime.now().millisecondsSinceEpoch}$ext';
-      await File(picked.path).copy('${imagesDir.path}/$fileName');
+      final relativePath = await saveRecipeImageToAppStorage(picked.path);
       if (!mounted) return;
-      // Stored relative to the documents directory (not the absolute path
-      // returned by copy()'s File) — see RecipeImage for why: an absolute
-      // path embeds the app's sandbox container id, which can change across
-      // reinstalls/rebuilds and silently orphan the saved photo.
-      setState(() => _imagePath = 'recipe_images/$fileName');
+      setState(() => _imagePath = relativePath);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.recipeFormImagePickFailed)),
-      );
-    }
-  }
-
-  // Populates (never auto-saves) the ingredients/instructions lists from a
-  // freshly AI-generated draft, and fills in calories only if that field
-  // is still empty — the user reviews/edits everything before saving, same
-  // as if they'd typed it all in themselves.
-  Future<void> _generateWithAi() async {
-    final l10n = AppLocalizations.of(context)!;
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.recipeFormGenerateWithAiHint)),
-      );
-      return;
-    }
-
-    if (_ingredients.isNotEmpty || _instructions.isNotEmpty) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n.recipeFormAiReplaceDialogTitle),
-          content: Text(l10n.recipeFormAiReplaceDialogContent),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.recipeFormAiReplaceConfirm)),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
-    }
-
-    setState(() => _isGeneratingWithAi = true);
-    try {
-      final draft = await _recipeAiService.generateRecipe(recipeName: name, servings: _servings);
-      if (!mounted) return;
-      setState(() {
-        _ingredients
-          ..clear()
-          ..addAll(draft.ingredients);
-        _ingredientKeys
-          ..clear()
-          ..addAll(List.generate(_ingredients.length, (_) => _nextIngredientKeyId++));
-
-        _instructions
-          ..clear()
-          ..addAll(draft.instructions);
-        _instructionDurationsMinutes
-          ..clear()
-          ..addAll(List.generate(
-            _instructions.length,
-            (i) => i < draft.instructionDurationsMinutes.length ? draft.instructionDurationsMinutes[i] : null,
-          ));
-        _instructionKeys
-          ..clear()
-          ..addAll(List.generate(_instructions.length, (_) => _nextInstructionKeyId++));
-
-        if (draft.estimatedTotalCalories != null && _caloriesController.text.trim().isEmpty) {
-          _caloriesController.text = draft.estimatedTotalCalories.toString();
-        }
-        _totalTimeMinutes = draft.totalTimeMinutes;
-        _isGeneratingWithAi = false;
-      });
-    } on GeminiRateLimitException {
-      if (!mounted) return;
-      setState(() => _isGeneratingWithAi = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.recipeFormAiErrorRateLimit)),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isGeneratingWithAi = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.recipeFormAiErrorGeneric)),
       );
     }
   }
@@ -732,20 +644,6 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                       decoration: InputDecoration(
                         labelText: l10n.recipeFormNameLabel,
                         border: const OutlineInputBorder(),
-                        suffixIcon: _isGeneratingWithAi
-                            ? const Padding(
-                                padding: EdgeInsets.all(14),
-                                child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.auto_awesome_outlined),
-                                tooltip: l10n.recipeFormGenerateWithAi,
-                                onPressed: _generateWithAi,
-                              ),
                       ),
                       textCapitalization: TextCapitalization.sentences,
                       validator: (value) {

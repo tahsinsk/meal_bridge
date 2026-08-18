@@ -34,21 +34,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get onboardingPage1Body =>
-      'Pişirdiklerini malzeme, adım ve kalorileriyle kaydet.';
+      'Pişirdiklerini fotoğraf, malzeme, adım ve kalorileriyle kaydet — ne zaman istersen elinin altında.';
 
   @override
-  String get onboardingPage2Title => 'Haftanı planla';
+  String get onboardingPage2Title => 'Ya da yazmayı yapay zekaya bırak';
 
   @override
   String get onboardingPage2Body =>
-      'Yemekleri kahvaltı, öğle ve akşam yemeğine ekle — istediğin hafta için.';
+      'Bir yemek tarif et, tarifi hazır bul — ya da bir fotoğrafını çek, kendiliğinden doldursun.';
 
   @override
-  String get onboardingPage3Title => 'Alışveriş listen kendi kendine oluşsun';
+  String get onboardingPage3Title => 'İstediğin haftayı planla';
 
   @override
   String get onboardingPage3Body =>
-      'Malzemeler, görüntülediğin hafta için birleştirilip reyona göre sıralanır, markete hazır.';
+      'Yemekleri kahvaltı, öğle ve akşam yemeğine ekle — bu hafta ya da ileride herhangi bir hafta için.';
+
+  @override
+  String get onboardingPage4Title => 'Alışveriş listen kendi kendine oluşsun';
+
+  @override
+  String get onboardingPage4Body =>
+      'Malzemeler otomatik birleşir; ekstralar için Hızlı Liste, sık kullandığın marketlere de tek dokunuşluk kısayollar var.';
 
   @override
   String get settingsTitle => 'Ayarlar';
@@ -575,6 +582,40 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get recipeFormAiErrorRateLimit =>
       'Yapay zeka şu anda yoğun. Lütfen birazdan tekrar deneyin.';
+
+  @override
+  String get recipeFormAiAssistTooltip => 'Yapay Zeka ile Oluştur';
+
+  @override
+  String get recipeFormChoiceSheetTitle => 'Nasıl başlamak istersiniz?';
+
+  @override
+  String get recipeFormFillManually => 'Elle doldur';
+
+  @override
+  String get recipeFormScanPhoto => 'Tarif fotoğrafı tara';
+
+  @override
+  String get recipeFormAiScanErrorGeneric =>
+      'Bu tarif fotoğrafı okunamadı. Daha net bir fotoğraf deneyin veya elle doldurun.';
+
+  @override
+  String get recipeAiPromptQuestion => 'Ne pişirmek istersiniz?';
+
+  @override
+  String get recipeAiPromptHint => 'örn. Acılı sebze sote';
+
+  @override
+  String get recipeAiPromptButton => 'Oluştur';
+
+  @override
+  String get recipeScanPrompt => 'Bir tarifin fotoğrafını çekin veya yükleyin';
+
+  @override
+  String get recipeScanLoadingMessage => 'Tarifiniz okunuyor...';
+
+  @override
+  String get recipeScanErrorRetry => 'Başka bir fotoğraf dene';
 
   @override
   String get recipeFormCategoryLabel => 'Kategori';
