@@ -182,17 +182,22 @@ class MealPlanScreen extends StatelessWidget {
     );
   }
 
-  // Full-width row for a FILLED slot only — empty slots render as the small
-  // round buttons from _buildEmptySlotButton instead, so callers must only
-  // reach this once plannedRecipes[_mealPlanKey(day, mealType)] is known
-  // non-null.
+  // Full-width row for a slot — used for BOTH filled and empty slots once
+  // the day has at least one planned meal (see _buildMealsSection): filled
+  // shows the recipe info + stepper + remove, empty shows an "Add X" row
+  // that opens the add-to-plan sheet, same as a filled row's tap opens the
+  // recipe detail.
   Widget _buildMealRow(BuildContext context, String day, MealType mealType) {
-    final pr = plannedRecipes[_mealPlanKey(day, mealType)]!;
+    final l10n = AppLocalizations.of(context)!;
+    final pr = plannedRecipes[_mealPlanKey(day, mealType)];
     final bg = mealType.surfaceColor;
     final onBg = mealType.onSurfaceColor;
+    final isPlanned = pr != null;
 
     return GestureDetector(
-      onTap: () => _openRecipeDetail(context, pr.recipe),
+      onTap: isPlanned
+          ? () => _openRecipeDetail(context, pr.recipe)
+          : () => _openAddToPlanSheet(context, day, mealType),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
@@ -206,32 +211,44 @@ class MealPlanScreen extends StatelessWidget {
               Icon(mealType.icon, size: 18, color: onBg),
               const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      pr.recipe.name,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onBg),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      _recipeMetaInfo(context, pr.recipe),
-                      style: TextStyle(fontSize: 11, color: onBg.withValues(alpha: 0.75)),
-                    ),
-                  ],
-                ),
+                child: isPlanned
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            pr.recipe.name,
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onBg),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            _recipeMetaInfo(context, pr.recipe),
+                            style: TextStyle(fontSize: 11, color: onBg.withValues(alpha: 0.75)),
+                          ),
+                        ],
+                      )
+                    : Text(
+                        l10n.planAddMealType(localizedMealTypeLabel(l10n, mealType)),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: onBg.withValues(alpha: 0.7),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
               ),
-              _buildMiniStepper(context, day, mealType, pr, onBg),
-              const SizedBox(width: 16),
-              GestureDetector(
-                onTap: () => onRecipeRemoved(day, mealType),
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(Icons.close, size: 16, color: onBg.withValues(alpha: 0.45)),
+              if (isPlanned) ...[
+                _buildMiniStepper(context, day, mealType, pr, onBg),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: () => onRecipeRemoved(day, mealType),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 16, color: onBg.withValues(alpha: 0.45)),
+                  ),
                 ),
-              ),
+              ] else
+                Icon(Icons.add, size: 16, color: onBg.withValues(alpha: 0.5)),
             ],
           ),
         ),
@@ -276,15 +293,17 @@ class MealPlanScreen extends StatelessWidget {
     );
   }
 
-  // Wraps the filled rows + empty-slot buttons so a slot going from empty
-  // (round button) to filled (full row) — or back, on removal — animates
-  // instead of snapping: the Column's identity (via its key) changes
-  // whenever the filled/empty split changes, so AnimatedSwitcher cross-
-  // fades the old arrangement into the new one while AnimatedSize smoothly
-  // grows/shrinks the day card to match.
+  // All-or-nothing per day: zero planned meals shows the compact round-icon
+  // row; as soon as ONE meal is planned, all three slots switch to
+  // full-width rows at once (filled ones show recipe info, the rest show
+  // "Add X") so the card is immediately "full size" rather than growing
+  // one row at a time as more meals get added. The AnimatedSwitcher key is
+  // just this boolean, not which specific slots are filled, so only the
+  // one-time compact-to-full switch animates — going from 1 to 2 to 3
+  // filled slots re-renders the same-sized Column in place with no
+  // transition to trigger.
   Widget _buildMealsSection(BuildContext context, String day) {
-    final filled = _mealTypes.where((m) => plannedRecipes[_mealPlanKey(day, m)] != null).toList();
-    final empty = _mealTypes.where((m) => plannedRecipes[_mealPlanKey(day, m)] == null).toList();
+    final hasAnyMeal = _mealTypes.any((m) => plannedRecipes[_mealPlanKey(day, m)] != null);
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 260),
@@ -292,14 +311,16 @@ class MealPlanScreen extends StatelessWidget {
       alignment: Alignment.topLeft,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 220),
-        child: Column(
-          key: ValueKey(filled.map((m) => m.name).join(',')),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ...filled.map((mealType) => _buildMealRow(context, day, mealType)),
-            if (empty.isNotEmpty) _buildEmptySlotsRow(context, day, empty),
-          ],
-        ),
+        child: hasAnyMeal
+            ? Column(
+                key: const ValueKey('full'),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _mealTypes.map((mealType) => _buildMealRow(context, day, mealType)).toList(),
+              )
+            : KeyedSubtree(
+                key: const ValueKey('compact'),
+                child: _buildEmptySlotsRow(context, day, _mealTypes),
+              ),
       ),
     );
   }
@@ -475,7 +496,10 @@ class MealPlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      // Extra bottom clearance (AppSpacing.navBarClearance) so the last day
+      // card never ends up behind the floating nav bar now that the body
+      // scrolls underneath it (Scaffold.extendBody).
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, AppSpacing.navBarClearance + 16),
       children: [
         // Week navigation + general add
         Card(

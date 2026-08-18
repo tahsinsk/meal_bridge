@@ -321,6 +321,20 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get shoppingBulkDeleteTooltip => 'Aangevinkte items verwijderen';
+
+  @override
+  String shoppingBulkDeleteDialogTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count aangevinkte items verwijderen?',
+      one: '1 aangevinkt item verwijderen?',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get categoryBreakfast => 'Ontbijt';
 
   @override

@@ -54,13 +54,20 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   String? _imagePath;
   final ImagePicker _imagePicker = ImagePicker();
 
+  // Sticky save/update button: hidden on open, fades/slides in once the
+  // user has scrolled down past a small threshold, hides again back at the
+  // very top — not visible at all until they've engaged with the form.
+  final _scrollController = ScrollController();
+  bool _showStickyButton = false;
+  static const _stickyButtonScrollThreshold = 32.0;
+
   final List<String> _marketCategories = const [
     'Vegetables', 'Fruit', 'Meat', 'Dairy', 'Bakery',
     'Pantry', 'Frozen', 'Drinks', 'Snacks', 'Spices', 'Other',
   ];
 
   final List<String> _units = const [
-    'g', 'kg', 'ml', 'l', 'pcs', 'tbsp', 'tsp', 'cup', 'slice', 'can', 'pack',
+    'can', 'cup', 'g', 'kg', 'l', 'ml', 'pack', 'pcs', 'slice', 'tbsp', 'tsp',
   ];
 
   @override
@@ -79,10 +86,20 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     }
     _ingredientKeys.addAll(List.generate(_ingredients.length, (_) => _nextIngredientKeyId++));
     _instructionKeys.addAll(List.generate(_instructions.length, (_) => _nextInstructionKeyId++));
+    _scrollController.addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    final shouldShow = _scrollController.offset > _stickyButtonScrollThreshold;
+    if (shouldShow != _showStickyButton) {
+      setState(() => _showStickyButton = shouldShow);
+    }
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
     _nameController.dispose();
     _categoryController.dispose();
     _notesController.dispose();
@@ -163,6 +180,12 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   void _showCategoryPicker(int index) {
     final l10n = AppLocalizations.of(context)!;
     final ingredient = _ingredients[index];
+    // Alphabetical by the localized label (not the raw English id), so the
+    // picker reads alphabetized in every supported language.
+    final sortedCategories = [..._marketCategories]
+      ..sort((a, b) => localizedMarketCategory(l10n, a)
+          .toLowerCase()
+          .compareTo(localizedMarketCategory(l10n, b).toLowerCase()));
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -196,7 +219,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _marketCategories.map((cat) {
+                  children: sortedCategories.map((cat) {
                     final isSelected = ingredient.resolvedCategory == cat;
                     return FilterChip(
                       label: Text(localizedMarketCategory(l10n, cat)),
@@ -446,9 +469,13 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       final dotIndex = picked.path.lastIndexOf('.');
       final ext = dotIndex == -1 ? '.jpg' : picked.path.substring(dotIndex);
       final fileName = 'recipe_${DateTime.now().millisecondsSinceEpoch}$ext';
-      final savedFile = await File(picked.path).copy('${imagesDir.path}/$fileName');
+      await File(picked.path).copy('${imagesDir.path}/$fileName');
       if (!mounted) return;
-      setState(() => _imagePath = savedFile.path);
+      // Stored relative to the documents directory (not the absolute path
+      // returned by copy()'s File) — see RecipeImage for why: an absolute
+      // path embeds the app's sandbox container id, which can change across
+      // reinstalls/rebuilds and silently orphan the saved photo.
+      setState(() => _imagePath = 'recipe_images/$fileName');
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -481,6 +508,53 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     Navigator.of(context).pop(recipe);
   }
 
+  // Floats over the scrolling content (as a Stack overlay, not a docked
+  // Scaffold.bottomNavigationBar) so it never reserves layout space of its
+  // own — on open the form looks like a plain full-screen scrollable page.
+  // It fades/slides in once _showStickyButton flips true (past the scroll
+  // threshold) and back out at the top. The background is a cream gradient
+  // fading to transparent, not a solid bar, so the button reads as
+  // floating over the content rather than sitting in its own footer.
+  Widget _buildStickyButtonOverlay(BuildContext context, AppLocalizations l10n) {
+    return IgnorePointer(
+      ignoring: !_showStickyButton,
+      child: AnimatedSlide(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut,
+        offset: _showStickyButton ? Offset.zero : const Offset(0, 0.4),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          opacity: _showStickyButton ? 1 : 0,
+          child: Container(
+            padding: EdgeInsets.fromLTRB(16, 32, 16, MediaQuery.of(context).padding.bottom + 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0, 0.45, 1],
+                colors: [
+                  AppColors.creamBackground.withValues(alpha: 0),
+                  AppColors.creamBackground.withValues(alpha: 0.9),
+                  AppColors.creamBackground,
+                ],
+              ),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                onPressed: _saveRecipe,
+                icon: const Icon(Icons.save_outlined),
+                label: Text(widget.initialRecipe == null ? l10n.recipeFormSaveButton : l10n.recipeFormUpdateButton),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -488,11 +562,14 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       appBar: AppBar(
         title: Text(widget.initialRecipe == null ? l10n.recipeFormTitleAdd : l10n.recipeFormTitleEdit),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
+      body: Stack(
+        children: [
+          Form(
+            key: _formKey,
+            child: ListView(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              children: [
             // Photo
             GestureDetector(
               onTap: _showImageSourcePicker,
@@ -988,19 +1065,24 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
-
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: _saveRecipe,
-                icon: const Icon(Icons.save_outlined),
-                label: Text(widget.initialRecipe == null ? l10n.recipeFormSaveButton : l10n.recipeFormUpdateButton),
-              ),
-            ),
+            // Reserves room for the floating sticky button below (its
+            // padding-top 32 + button height 48 + bottom safe-area inset +
+            // padding-bottom 16, plus a little extra margin) so the button
+            // — once scrolled into view — floats over empty space instead
+            // of covering the Notes card or any other real content.
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 32 + 48 + 16 + 16),
           ],
-        ),
+            ),
+          ),
+          // Floating overlay instead of a docked bottomNavigationBar or the
+          // last ListView item — hidden until the user scrolls down past
+          // _stickyButtonScrollThreshold, then fades/slides in and stays
+          // reachable while scrolling, so it never occupies space on open.
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildStickyButtonOverlay(context, l10n),
+          ),
+        ],
       ),
     );
   }

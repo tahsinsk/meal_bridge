@@ -9,6 +9,8 @@ import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/recipe_image.dart';
 import 'recipe_form_screen.dart';
 
+enum _DetailTab { ingredients, instructions }
+
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
   final bool isInQuickList;
@@ -34,6 +36,7 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late bool _isInQuickList;
   late Recipe _recipe;
+  _DetailTab _activeTab = _DetailTab.ingredients;
 
   @override
   void initState() {
@@ -264,9 +267,52 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
           const SizedBox(height: 20),
 
-          // Ingredients
-          _sectionHeader(context, Icons.shopping_basket_outlined, l10n.recipeSectionIngredients),
-          const SizedBox(height: 8),
+          // Ingredients / Instructions toggle — same segmented-pill pattern
+          // as the Shopping List screen's Weekly Plan/Quick List toggle.
+          // Read-only view, so only the active tab's list is shown; nothing
+          // here is editable.
+          SegmentedButton<_DetailTab>(
+            segments: [
+              ButtonSegment(
+                value: _DetailTab.ingredients,
+                icon: const Icon(Icons.shopping_basket_outlined),
+                label: Text(recipe.ingredients.isEmpty
+                    ? l10n.recipeSectionIngredients
+                    : '${l10n.recipeSectionIngredients} (${recipe.ingredients.length})'),
+              ),
+              ButtonSegment(
+                value: _DetailTab.instructions,
+                icon: const Icon(Icons.format_list_numbered),
+                label: Text(recipe.instructions.isEmpty
+                    ? l10n.recipeSectionInstructions
+                    : '${l10n.recipeSectionInstructions} (${recipe.instructions.length})'),
+              ),
+            ],
+            selected: {_activeTab},
+            onSelectionChanged: (value) => setState(() => _activeTab = value.first),
+            style: ButtonStyle(
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return AppColors.primary;
+                return AppColors.surfaceSoft;
+              }),
+              foregroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return Colors.white;
+                return AppColors.primaryDark;
+              }),
+              iconColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return Colors.white;
+                return AppColors.primaryDark;
+              }),
+              side: const WidgetStatePropertyAll(BorderSide.none),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          if (_activeTab == _DetailTab.ingredients)
           ...recipe.ingredients.map(
             (ingredient) => Card(
               margin: const EdgeInsets.only(bottom: 8),
@@ -328,13 +374,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Instructions
-          _sectionHeader(context, Icons.format_list_numbered, l10n.recipeSectionInstructions),
-          const SizedBox(height: 8),
+          )
+          else
           ...recipe.instructions.asMap().entries.map((entry) {
             final index = entry.key;
             final instruction = entry.value;

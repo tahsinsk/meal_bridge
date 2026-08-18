@@ -774,7 +774,10 @@ class RecipeListScreenState extends State<RecipeListScreen> {
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              // Extra bottom clearance (AppSpacing.navBarClearance) so the
+              // last card never ends up behind the floating nav bar now
+              // that the body scrolls underneath it (Scaffold.extendBody).
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24 + AppSpacing.navBarClearance),
               sliver: _isGridView
                   ? SliverGrid.builder(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

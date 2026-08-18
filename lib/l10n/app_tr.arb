@@ -95,6 +95,8 @@
   "shoppingItemDuplicate": "Bu öğe zaten listede.",
   "shoppingDeleteItemDialogTitle": "Bu öğe silinsin mi?",
   "shoppingDeleteItemDialogContent": "\"{name}\" listeden kaldırılsın mı?",
+  "shoppingBulkDeleteTooltip": "İşaretli öğeleri sil",
+  "shoppingBulkDeleteDialogTitle": "{count, plural, other{İşaretli {count} öğe silinsin mi?}}",
 
   "categoryBreakfast": "Kahvaltı",
   "categoryLunch": "Öğle Yemeği",

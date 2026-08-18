@@ -22,6 +22,7 @@ Future<void> showAddToPlanSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    sheetAnimationStyle: AppMotion.sheet,
     builder: (context) => _AddToPlanSheet(
       recipes: recipes,
       day: day,
@@ -118,7 +119,8 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
       final matchesCategory = _categoryFilter == null ||
           r.category.toLowerCase() == _categoryFilter!.toLowerCase();
       return matchesQuery && matchesCategory;
-    }).toList();
+    }).toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,

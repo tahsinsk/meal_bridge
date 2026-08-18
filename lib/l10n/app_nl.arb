@@ -95,6 +95,8 @@
   "shoppingItemDuplicate": "Dat item staat al op de lijst.",
   "shoppingDeleteItemDialogTitle": "Dit item verwijderen?",
   "shoppingDeleteItemDialogContent": "\"{name}\" van je lijst verwijderen?",
+  "shoppingBulkDeleteTooltip": "Aangevinkte items verwijderen",
+  "shoppingBulkDeleteDialogTitle": "{count, plural, one{1 aangevinkt item verwijderen?} other{{count} aangevinkte items verwijderen?}}",
 
   "categoryBreakfast": "Ontbijt",
   "categoryLunch": "Lunch",

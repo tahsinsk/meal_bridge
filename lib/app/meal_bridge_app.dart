@@ -297,12 +297,18 @@ class _MainShellState extends State<MainShell> {
   // recipeId -> selected ingredient keys (name+unit) for that recipe.
   Map<String, Set<String>> _quickSelectedIngredients = {};
   List<Ingredient> _customQuickItems = [];
-  List<Ingredient> _customWeeklyItems = [];
+  // Weekly Plan mode's manually-added custom items, scoped per ISO week
+  // key — same per-week pattern as _excludedShoppingItemsByWeek, so an item
+  // added while viewing one week doesn't leak into every other week's list.
+  Map<String, List<Ingredient>> _customWeeklyItemsByWeek = {};
 
   // "Copy day" clipboard — lives here (not in the stateless MealPlanScreen)
   // so it survives week navigation and screen rebuilds.
   Map<MealType, PlannedRecipe>? _copiedDayMeals;
   bool get _hasCopiedDay => _copiedDayMeals != null && _copiedDayMeals!.isNotEmpty;
+
+  List<Ingredient> get _currentWeekCustomItems =>
+      _customWeeklyItemsByWeek[isoWeekKeyForOffset(_weekOffset)] ?? const [];
 
   // Current week's recipes with week prefix stripped (keys like "Monday-breakfast")
   Map<String, PlannedRecipe> get _currentWeekPlannedRecipes {
@@ -362,8 +368,8 @@ class _MainShellState extends State<MainShell> {
         await _recipeStorageService.loadQuickSelectedIngredients(allRecipes);
     final savedCustomQuickItems =
         await _recipeStorageService.loadCustomQuickItems();
-    final savedCustomWeeklyItems =
-        await _recipeStorageService.loadCustomWeeklyItems();
+    final savedCustomWeeklyItemsByWeek =
+        await _recipeStorageService.loadCustomWeeklyItemsByWeek(currentWeekKey);
     final onboardingCompleted =
         await _recipeStorageService.loadOnboardingCompleted();
 
@@ -404,7 +410,7 @@ class _MainShellState extends State<MainShell> {
       _quickListExcludedItemKeys = savedQuickListExcludedItems;
       _quickSelectedIngredients = savedQuickSelectedIngredients;
       _customQuickItems = savedCustomQuickItems;
-      _customWeeklyItems = savedCustomWeeklyItems;
+      _customWeeklyItemsByWeek = savedCustomWeeklyItemsByWeek;
       _onboardingCompleted = onboardingCompleted;
       _isLoadingData = false;
     });
@@ -677,14 +683,28 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _addCustomWeeklyItem(Ingredient item) {
-    if (_customWeeklyItems.any((i) => i.name.toLowerCase() == item.name.toLowerCase())) return;
-    setState(() => _customWeeklyItems = [..._customWeeklyItems, item]);
-    _recipeStorageService.saveCustomWeeklyItems(_customWeeklyItems);
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
+    final current = _customWeeklyItemsByWeek[weekKey] ?? const <Ingredient>[];
+    if (current.any((i) => i.name.toLowerCase() == item.name.toLowerCase())) return;
+    setState(() {
+      _customWeeklyItemsByWeek = {
+        ..._customWeeklyItemsByWeek,
+        weekKey: [...current, item],
+      };
+    });
+    _recipeStorageService.saveCustomWeeklyItemsByWeek(_customWeeklyItemsByWeek);
   }
 
   void _removeCustomWeeklyItem(String name) {
-    setState(() => _customWeeklyItems = _customWeeklyItems.where((i) => i.name != name).toList());
-    _recipeStorageService.saveCustomWeeklyItems(_customWeeklyItems);
+    final weekKey = isoWeekKeyForOffset(_weekOffset);
+    final current = _customWeeklyItemsByWeek[weekKey] ?? const <Ingredient>[];
+    setState(() {
+      _customWeeklyItemsByWeek = {
+        ..._customWeeklyItemsByWeek,
+        weekKey: current.where((i) => i.name != name).toList(),
+      };
+    });
+    _recipeStorageService.saveCustomWeeklyItemsByWeek(_customWeeklyItemsByWeek);
   }
 
   /// Per-tab AppBar actions. Only Recipes needs one (its "add recipe"
@@ -775,7 +795,7 @@ class _MainShellState extends State<MainShell> {
         customQuickItems: _customQuickItems,
         onAddQuickItem: _addCustomQuickItem,
         onRemoveQuickItem: _removeCustomQuickItem,
-        customWeeklyItems: _customWeeklyItems,
+        customWeeklyItems: _currentWeekCustomItems,
         onAddWeeklyItem: _addCustomWeeklyItem,
         onRemoveWeeklyItem: _removeCustomWeeklyItem,
         weekOffset: _weekOffset,
@@ -797,6 +817,15 @@ class _MainShellState extends State<MainShell> {
     final showAppBar = _selectedIndex == 0 || (appBarActions?.isNotEmpty ?? false);
 
     return Scaffold(
+      // Lets body content scroll underneath the floating pill nav bar
+      // instead of stopping above a reserved bottom strip — without this,
+      // Scaffold paints that strip in scaffoldBackgroundColor, which reads
+      // as a solid backdrop rectangle behind the pill (same cream as the
+      // page, but a visibly separate flat block once the pill is smaller
+      // than the strip during the scroll-shrink animation). Screens must
+      // each add their own bottom padding (see AppSpacing.navBarClearance)
+      // so their last item never ends up hidden behind the pill.
+      extendBody: true,
       // Each screen keeps its own large in-content heading as the real
       // title ("Your recipes", the week title, etc.); the AppBar only shows
       // the brand logo on the Recipes tab, and stays title-less elsewhere.

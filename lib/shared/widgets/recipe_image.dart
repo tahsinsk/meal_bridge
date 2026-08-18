@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Displays a recipe photo when [imagePath] is a reachable URL or a local
 /// file path (e.g. a photo picked via the camera/gallery and copied into
@@ -41,16 +42,47 @@ class RecipeImage extends StatelessWidget {
     }
 
     if (_isLocalFileImage) {
-      return Image.file(
-        File(imagePath!),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (context, error, stackTrace) => _Placeholder(iconSize: iconSize),
+      final path = imagePath!;
+      // Recipes saved before this fix stored a full absolute path (which
+      // embeds the app's sandbox container id on iOS/its internal-storage
+      // path on Android) — that breaks the moment the container changes
+      // across a reinstall/rebuild, even though the underlying file is
+      // still there. New saves store a path relative to the documents
+      // directory instead and get resolved fresh here every time, so they
+      // stay valid across reinstalls. Absolute legacy paths are used as-is
+      // for backward compatibility with recipes saved before this fix.
+      if (path.startsWith('/')) {
+        return _LocalFileImage(file: File(path), iconSize: iconSize);
+      }
+      return FutureBuilder<Directory>(
+        future: getApplicationDocumentsDirectory(),
+        builder: (context, snapshot) {
+          final docsDir = snapshot.data;
+          if (docsDir == null) return _Placeholder(iconSize: iconSize);
+          return _LocalFileImage(file: File('${docsDir.path}/$path'), iconSize: iconSize);
+        },
       );
     }
 
     return _Placeholder(iconSize: iconSize);
+  }
+}
+
+class _LocalFileImage extends StatelessWidget {
+  final File file;
+  final double iconSize;
+
+  const _LocalFileImage({required this.file, required this.iconSize});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.file(
+      file,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) => _Placeholder(iconSize: iconSize),
+    );
   }
 }
 

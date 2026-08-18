@@ -316,6 +316,19 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get shoppingBulkDeleteTooltip => 'İşaretli öğeleri sil';
+
+  @override
+  String shoppingBulkDeleteDialogTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'İşaretli $count öğe silinsin mi?',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get categoryBreakfast => 'Kahvaltı';
 
   @override

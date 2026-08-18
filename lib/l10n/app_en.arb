@@ -132,6 +132,11 @@
   "@shoppingDeleteItemDialogContent": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "shoppingBulkDeleteTooltip": "Delete checked items",
+  "shoppingBulkDeleteDialogTitle": "{count, plural, one{Delete 1 checked item?} other{Delete {count} checked items?}}",
+  "@shoppingBulkDeleteDialogTitle": {
+    "placeholders": { "count": { "type": "int" } }
+  },
 
   "categoryBreakfast": "Breakfast",
   "categoryLunch": "Lunch",

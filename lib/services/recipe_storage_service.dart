@@ -14,6 +14,7 @@ class RecipeStorageService {
   static const String _quickRecipeIdsKey = 'quick_recipe_ids';
   static const String _customQuickItemsKey = 'custom_quick_items';
   static const String _customWeeklyItemsKey = 'custom_weekly_items';
+  static const String _customWeeklyItemsByWeekKey = 'custom_weekly_items_by_week';
   static const String _recipeGridViewKey = 'recipe_grid_view';
   static const String _onboardingCompletedKey = 'onboarding_completed';
   static const String _localeCodeKey = 'locale_code';
@@ -233,23 +234,50 @@ class RecipeStorageService {
     );
   }
 
-  /// Weekly Plan mode's own "extra items" list — kept separate from Quick
-  /// List's so an item added in one mode never shows up in the other mode's
-  /// generated list.
-  Future<List<Ingredient>> loadCustomWeeklyItems() async {
+  /// Weekly Plan mode's own "extra items", scoped per ISO week key ("2026-
+  /// W30" -> items) so an item manually added while viewing one week
+  /// doesn't leak into every other week's list — same per-week pattern as
+  /// [loadExcludedShoppingItemsByWeek]. Kept separate from Quick List's
+  /// (flat, no week concept) so an item added in one mode never shows up in
+  /// the other mode's generated list either. If nothing has been saved in
+  /// this format yet, migrates the old flat (global, non-week-scoped) list
+  /// once into [currentWeekKey] — the best available approximation, since
+  /// the old data had no week concept at all — then persists under the new
+  /// key so this only ever runs once.
+  Future<Map<String, List<Ingredient>>> loadCustomWeeklyItemsByWeek(String currentWeekKey) async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_customWeeklyItemsKey);
-    if (jsonString == null || jsonString.isEmpty) return [];
-    final jsonList = jsonDecode(jsonString) as List<dynamic>;
-    return jsonList.map((item) => Ingredient.fromJson(item as Map<String, dynamic>)).toList();
+    final jsonString = prefs.getString(_customWeeklyItemsByWeekKey);
+
+    if (jsonString != null && jsonString.isNotEmpty) {
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      return jsonMap.map((weekKey, items) => MapEntry(
+          weekKey,
+          (items as List<dynamic>)
+              .map((item) => Ingredient.fromJson(item as Map<String, dynamic>))
+              .toList()));
+    }
+
+    final oldJsonString = prefs.getString(_customWeeklyItemsKey);
+    if (oldJsonString != null && oldJsonString.isNotEmpty) {
+      final oldItems = (jsonDecode(oldJsonString) as List<dynamic>)
+          .map((item) => Ingredient.fromJson(item as Map<String, dynamic>))
+          .toList();
+      final migrated = <String, List<Ingredient>>{
+        if (oldItems.isNotEmpty) currentWeekKey: oldItems,
+      };
+      await saveCustomWeeklyItemsByWeek(migrated);
+      await prefs.remove(_customWeeklyItemsKey);
+      return migrated;
+    }
+
+    return {};
   }
 
-  Future<void> saveCustomWeeklyItems(List<Ingredient> items) async {
+  Future<void> saveCustomWeeklyItemsByWeek(Map<String, List<Ingredient>> itemsByWeek) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _customWeeklyItemsKey,
-      jsonEncode(items.map((i) => i.toJson()).toList()),
-    );
+    final jsonMap = itemsByWeek.map(
+        (weekKey, items) => MapEntry(weekKey, items.map((i) => i.toJson()).toList()));
+    await prefs.setString(_customWeeklyItemsByWeekKey, jsonEncode(jsonMap));
   }
 
   Future<bool> loadRecipeGridView() async {

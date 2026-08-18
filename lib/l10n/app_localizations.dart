@@ -628,6 +628,18 @@ abstract class AppLocalizations {
   /// **'Remove \"{name}\" from your list?'**
   String shoppingDeleteItemDialogContent(String name);
 
+  /// No description provided for @shoppingBulkDeleteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete checked items'**
+  String get shoppingBulkDeleteTooltip;
+
+  /// No description provided for @shoppingBulkDeleteDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Delete 1 checked item?} other{Delete {count} checked items?}}'**
+  String shoppingBulkDeleteDialogTitle(int count);
+
   /// No description provided for @categoryBreakfast.
   ///
   /// In en, this message translates to:

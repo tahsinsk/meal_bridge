@@ -21,6 +21,7 @@ Future<void> showAddCustomItemSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    sheetAnimationStyle: AppMotion.sheet,
     builder: (context) => _AddCustomItemSheet(
       existingItems: existingItems,
       onAdd: onAdd,
@@ -52,7 +53,7 @@ class _AddCustomItemSheetState extends State<_AddCustomItemSheet> {
   List<Ingredient> _items = [];
 
   static const _units = [
-    'g', 'kg', 'ml', 'l', 'pcs', 'tbsp', 'tsp', 'cup', 'slice', 'can', 'pack',
+    'can', 'cup', 'g', 'kg', 'l', 'ml', 'pack', 'pcs', 'slice', 'tbsp', 'tsp',
   ];
 
   @override

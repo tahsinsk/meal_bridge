@@ -102,6 +102,11 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   final _quickRecipeSearchController = TextEditingController();
   var _quickRecipeSearchQuery = '';
 
+  // Collapsed by default every time the screen loads (not persisted) — the
+  // search field + full recipe list only reveal once the user taps the
+  // "Recipes" header to expand it.
+  bool _recipesExpanded = false;
+
   @override
   void dispose() {
     _quickRecipeSearchController.dispose();
@@ -495,9 +500,10 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
   Widget _buildInlineRecipeSelector() {
     final l10n = AppLocalizations.of(context)!;
     final query = _quickRecipeSearchQuery.trim().toLowerCase();
-    final filteredRecipes = query.isEmpty
-        ? widget.allRecipes
-        : widget.allRecipes.where((r) => r.name.toLowerCase().contains(query)).toList();
+    final filteredRecipes = (query.isEmpty
+        ? List<Recipe>.from(widget.allRecipes)
+        : widget.allRecipes.where((r) => r.name.toLowerCase().contains(query)).toList())
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     return Card(
       child: Padding(
@@ -505,54 +511,77 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.restaurant_menu_outlined, size: 16, color: AppColors.primaryDark),
-                const SizedBox(width: 6),
-                Text(l10n.navRecipes, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1C19))),
-                const Spacer(),
-                if (widget.quickRecipes.isNotEmpty)
-                  TextButton(
-                    onPressed: widget.onClearQuickRecipes,
-                    style: TextButton.styleFrom(
-                      minimumSize: Size.zero,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            InkWell(
+              onTap: () => setState(() => _recipesExpanded = !_recipesExpanded),
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  const Icon(Icons.restaurant_menu_outlined, size: 16, color: AppColors.primaryDark),
+                  const SizedBox(width: 6),
+                  Text(l10n.navRecipes, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1C19))),
+                  const Spacer(),
+                  if (widget.quickRecipes.isNotEmpty)
+                    TextButton(
+                      onPressed: widget.onClearQuickRecipes,
+                      style: TextButton.styleFrom(
+                        minimumSize: Size.zero,
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(l10n.commonClearAll, style: const TextStyle(fontSize: 12)),
                     ),
-                    child: Text(l10n.commonClearAll, style: const TextStyle(fontSize: 12)),
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    turns: _recipesExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    child: Icon(Icons.expand_more, size: 20, color: Colors.grey[500]),
                   ),
-              ],
-            ),
-            if (widget.allRecipes.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              TextField(
-                controller: _quickRecipeSearchController,
-                style: AppTextStyles.searchInput,
-                decoration: InputDecoration(
-                  hintText: l10n.planSearchRecipesHint,
-                  hintStyle: AppTextStyles.searchHint,
-                  prefixIcon: const Icon(Icons.search),
-                  isDense: true,
-                ),
-                onChanged: (v) => setState(() => _quickRecipeSearchQuery = v),
+                ],
               ),
-              const SizedBox(height: 4),
-            ],
-            if (widget.allRecipes.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(l10n.shoppingNoRecipesYet,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-              )
-            else if (filteredRecipes.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(l10n.planNoRecipesMatch,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[500])),
-              )
-            else
-              ...filteredRecipes.map((recipe) => _buildQuickRecipeRow(recipe)),
-            const SizedBox(height: 6),
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: !_recipesExpanded
+                  ? const SizedBox(width: double.infinity)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.allRecipes.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _quickRecipeSearchController,
+                            style: AppTextStyles.searchInput,
+                            decoration: InputDecoration(
+                              hintText: l10n.planSearchRecipesHint,
+                              hintStyle: AppTextStyles.searchHint,
+                              prefixIcon: const Icon(Icons.search),
+                              isDense: true,
+                            ),
+                            onChanged: (v) => setState(() => _quickRecipeSearchQuery = v),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                        if (widget.allRecipes.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Text(l10n.shoppingNoRecipesYet,
+                              style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                          )
+                        else if (filteredRecipes.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Text(l10n.planNoRecipesMatch,
+                              style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                          )
+                        else
+                          ...filteredRecipes.map((recipe) => _buildQuickRecipeRow(recipe)),
+                        const SizedBox(height: 6),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),
@@ -654,9 +683,9 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       width: 20,
       height: 20,
       decoration: BoxDecoration(
-        color: isFull ? AppColors.primaryDark : (isPartial ? AppColors.surfaceSoft : Colors.transparent),
+        color: isFull ? AppColors.primary : (isPartial ? AppColors.surfaceSoft : Colors.transparent),
         border: Border.all(
-          color: (isFull || isPartial) ? AppColors.primaryDark : Theme.of(context).dividerColor,
+          color: isFull ? AppColors.primary : (isPartial ? AppColors.primaryDark : Theme.of(context).dividerColor),
           width: 2,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -673,9 +702,9 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       width: 18,
       height: 18,
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.primaryDark : Colors.transparent,
+        color: isSelected ? AppColors.primary : Colors.transparent,
         border: Border.all(
-          color: isSelected ? AppColors.primaryDark : Theme.of(context).dividerColor,
+          color: isSelected ? AppColors.primary : Theme.of(context).dividerColor,
           width: 2,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -817,7 +846,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                     decoration: isChecked ? TextDecoration.lineThrough : null,
-                    color: isChecked ? Theme.of(context).disabledColor : null,
+                    color: isChecked ? Colors.grey[400] : null,
                   ),
                 ),
               ),
@@ -825,9 +854,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isChecked
-                        ? Theme.of(context).disabledColor.withValues(alpha: 0.1)
-                        : AppColors.surfaceSoft,
+                    color: isChecked ? Colors.grey[200] : AppColors.surfaceSoft,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -835,7 +862,7 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isChecked ? Theme.of(context).disabledColor : AppColors.primaryDark,
+                      color: isChecked ? Colors.grey[400] : AppColors.primaryDark,
                     ),
                   ),
                 ),
@@ -906,6 +933,20 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
+  // Actually removes an item (custom items are removed for good, recipe-
+  // derived items are added to the excluded set) — no confirmation here,
+  // callers (single-item swipe delete, bulk delete) each handle their own
+  // confirmation dialog before calling this.
+  void _deleteItem(ShoppingListItem item) {
+    if (item.isCustom) {
+      _onRemoveActiveCustomItem(item.name);
+    } else if (_isQuickMode) {
+      widget.onExcludeQuickListItem(_itemKey(item));
+    } else {
+      widget.onExcludeWeeklyItem(_itemKey(item));
+    }
+  }
+
   Future<void> _confirmDeleteItem(ShoppingListItem item) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
@@ -920,13 +961,69 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       ),
     );
     if (confirmed != true) return;
-    if (item.isCustom) {
-      _onRemoveActiveCustomItem(item.name);
-    } else if (_isQuickMode) {
-      widget.onExcludeQuickListItem(_itemKey(item));
-    } else {
-      widget.onExcludeWeeklyItem(_itemKey(item));
+    _deleteItem(item);
+  }
+
+  List<ShoppingListItem> get _checkedVisibleItems {
+    final items = _computeShoppingItems().items;
+    return items.where((i) => widget.checkedItemKeys.contains(_itemKey(i))).toList();
+  }
+
+  Future<void> _confirmBulkDeleteChecked() async {
+    final l10n = AppLocalizations.of(context)!;
+    final checkedItems = _checkedVisibleItems;
+    if (checkedItems.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.shoppingBulkDeleteDialogTitle(checkedItems.length)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.commonDelete)),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    for (final item in checkedItems) {
+      _deleteItem(item);
     }
+  }
+
+  // Floating round delete button, sitting right beside the nav pill at the
+  // same height (not floating higher up the screen) — hidden entirely at
+  // zero checked items, fades/scales in as soon as one is checked in either
+  // mode. Soft pastel treatment (pale pink fill, red icon) instead of a
+  // solid red fill — matches the same "soft" delete-accent pattern already
+  // used for the swipe-to-delete action chips elsewhere in this screen,
+  // rather than reading as an alarming solid-red circle.
+  Widget _buildBulkDeleteButton() {
+    final checkedCount = _checkedVisibleItems.length;
+    final visible = checkedCount > 0;
+    return Positioned(
+      right: 16,
+      bottom: MediaQuery.of(context).padding.bottom + 14,
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          scale: visible ? 1 : 0,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            opacity: visible ? 1 : 0,
+            child: FloatingActionButton(
+              heroTag: 'shoppingBulkDelete',
+              backgroundColor: const Color(0xFFFBE4E6),
+              foregroundColor: const Color(0xFFD8434F),
+              tooltip: AppLocalizations.of(context)!.shoppingBulkDeleteTooltip,
+              onPressed: _confirmBulkDeleteChecked,
+              child: const Icon(Icons.delete_outline),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _checkbox(bool isChecked) {
@@ -935,9 +1032,9 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
       width: 24,
       height: 24,
       decoration: BoxDecoration(
-        color: isChecked ? AppColors.primaryDark : Colors.transparent,
+        color: isChecked ? AppColors.primary : Colors.transparent,
         border: Border.all(
-          color: isChecked ? AppColors.primaryDark : Theme.of(context).dividerColor,
+          color: isChecked ? AppColors.primary : Theme.of(context).dividerColor,
           width: 2,
         ),
         borderRadius: BorderRadius.circular(6),
@@ -981,8 +1078,14 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
     final hasContent = computed.hasContent;
     final groupedItems = _groupItemsByCategory(shoppingItems);
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Stack(
+      children: [
+        ListView(
+      // Extra bottom clearance (AppSpacing.navBarClearance) so the last
+      // item never ends up behind the floating nav bar now that the body
+      // scrolls underneath it (Scaffold.extendBody) — also clears the
+      // floating bulk-delete button when it's showing.
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16 + AppSpacing.navBarClearance),
       children: [
         // Heading + share/add actions
         Padding(
@@ -1002,13 +1105,13 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              IconButton.filledTonal(
+              IconButton.filled(
                 icon: const Icon(Icons.add),
                 tooltip: l10n.shoppingAddItemTooltip,
                 onPressed: openAddCustomItemSheet,
                 style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceSoft,
-                  foregroundColor: AppColors.primaryDark,
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
                 ),
               ),
             ],
@@ -1172,6 +1275,9 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
             ...groupedItems.entries.map((entry) => _buildCategorySection(entry.key, entry.value)),
           ],
         ],
+      ],
+        ),
+        _buildBulkDeleteButton(),
       ],
     );
   }
