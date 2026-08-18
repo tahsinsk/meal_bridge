@@ -4,12 +4,10 @@ import '../app_constants.dart';
 
 class FloatingNavDestination {
   final IconData icon;
-  final IconData selectedIcon;
   final String label;
 
   const FloatingNavDestination({
     required this.icon,
-    required this.selectedIcon,
     required this.label,
   });
 }
@@ -102,7 +100,7 @@ class _FloatingNavItem extends StatelessWidget {
           constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? AppColors.primaryDark : Colors.transparent,
+            color: selected ? AppColors.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Column(
@@ -110,7 +108,7 @@ class _FloatingNavItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                selected ? destination.selectedIcon : destination.icon,
+                destination.icon,
                 size: 22,
                 color: selected ? Colors.white : Colors.grey[500],
               ),

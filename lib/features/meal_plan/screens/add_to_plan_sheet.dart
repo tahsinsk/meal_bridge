@@ -196,7 +196,7 @@ class _AddToPlanSheetState extends State<_AddToPlanSheet> {
                         return FilterChip(
                           label: Text(localizedRecipeCategory(l10n, cat)),
                           selected: isSelected,
-                          selectedColor: AppColors.primaryDark,
+                          selectedColor: AppColors.primary,
                           checkmarkColor: Colors.white,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : AppColors.primaryDark,

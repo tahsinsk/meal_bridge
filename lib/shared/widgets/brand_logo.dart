@@ -27,9 +27,21 @@ class BrandLogo extends StatelessWidget {
           fit: BoxFit.contain,
         ),
         SizedBox(width: size * 0.06),
-        Padding(
-          padding: EdgeInsets.only(top: size * 0.08),
+        // Text widgets reserve extra vertical space above/below the visible
+        // glyphs based on the font's line-height metrics — with
+        // crossAxisAlignment.center, the Row centers that whole box
+        // (glyphs + invisible padding), not the glyphs themselves, so the
+        // wordmark reads as sitting high next to the icon. Stripping the
+        // ascent/descent padding via textHeightBehavior is the "proper"
+        // fix; the Transform.translate nudge on top of it is a pragmatic
+        // correction for Quicksand's remaining optical offset.
+        Transform.translate(
+          offset: Offset(0, size * 0.12),
           child: RichText(
+            textHeightBehavior: const TextHeightBehavior(
+              applyHeightToFirstAscent: false,
+              applyHeightToLastDescent: false,
+            ),
             text: TextSpan(
               style: GoogleFonts.quicksand(
                 fontSize: fontSize,

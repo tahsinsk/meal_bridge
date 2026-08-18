@@ -173,7 +173,7 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                   return FilterChip(
                     label: Text(localizedRecipeCategory(l10n, cat)),
                     selected: isSelected,
-                    selectedColor: AppColors.primaryDark,
+                    selectedColor: AppColors.primary,
                     checkmarkColor: Colors.white,
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : AppColors.primaryDark,
@@ -221,14 +221,28 @@ class RecipeListScreenState extends State<RecipeListScreen> {
     );
   }
 
-  String _subtitle(BuildContext context, Recipe recipe) {
+  // A flame WidgetSpan ahead of the kcal figure (when present) followed by
+  // the step count — kept as spans (not a plain joined string) so the flame
+  // icon can sit inline with the text and still collapse cleanly under a
+  // single Text.rich's maxLines/overflow like a plain string would.
+  List<InlineSpan> _subtitleSpans(BuildContext context, Recipe recipe) {
     final l10n = AppLocalizations.of(context)!;
-    final parts = <String>[];
+    final spans = <InlineSpan>[];
     if (recipe.calories != null) {
-      parts.add(l10n.recipeKcalPerServing((recipe.calories! / recipe.servings).round()));
+      spans.add(const WidgetSpan(
+        alignment: PlaceholderAlignment.middle,
+        child: Padding(
+          padding: EdgeInsets.only(right: 2),
+          child: Icon(Icons.local_fire_department, size: 14, color: Color(0xFFFF7043)),
+        ),
+      ));
+      spans.add(TextSpan(
+        text: l10n.recipeKcalPerServing((recipe.calories! / recipe.servings).round()),
+      ));
+      spans.add(const TextSpan(text: ' · '));
     }
-    parts.add(l10n.recipeStepCount(recipe.instructions.length));
-    return parts.join(' · ');
+    spans.add(TextSpan(text: l10n.recipeStepCount(recipe.instructions.length)));
+    return spans;
   }
 
   // Shared 32x32 circular glyph used by both overlay buttons, so the star
@@ -372,9 +386,11 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    _subtitle(context, recipe),
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  Text.rich(
+                    TextSpan(
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      children: _subtitleSpans(context, recipe),
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -487,9 +503,11 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                         ),
                         const SizedBox(width: 6),
                         Expanded(
-                          child: Text(
-                            _subtitle(context, recipe),
-                            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                          child: Text.rich(
+                            TextSpan(
+                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              children: _subtitleSpans(context, recipe),
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -609,23 +627,14 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                       const SizedBox(width: 8),
                       Stack(
                         children: [
-                          _activeFilterCount > 0
-                              ? IconButton.filled(
-                                  onPressed: () => _showFilterSheet(context),
-                                  icon: const Icon(Icons.filter_list),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: AppColors.primaryDark,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                )
-                              : IconButton.filledTonal(
-                                  onPressed: () => _showFilterSheet(context),
-                                  icon: const Icon(Icons.filter_list_outlined),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: AppColors.surfaceSoft,
-                                    foregroundColor: AppColors.primaryDark,
-                                  ),
-                                ),
+                          IconButton.filled(
+                            onPressed: () => _showFilterSheet(context),
+                            icon: Icon(_activeFilterCount > 0 ? Icons.filter_list : Icons.filter_list_outlined),
+                            style: IconButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
                           if (_activeFilterCount > 0)
                             Positioned(
                               right: 6, top: 6,
@@ -645,13 +654,13 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                         ],
                       ),
                       const SizedBox(width: 8),
-                      IconButton.filledTonal(
+                      IconButton.filled(
                         onPressed: _toggleViewMode,
                         tooltip: _isGridView ? l10n.recipeViewToggleToList : l10n.recipeViewToggleToGrid,
                         icon: Icon(_isGridView ? Icons.view_list_outlined : Icons.grid_view_outlined),
                         style: IconButton.styleFrom(
-                          backgroundColor: AppColors.surfaceSoft,
-                          foregroundColor: AppColors.primaryDark,
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
                         ),
                       ),
                     ],

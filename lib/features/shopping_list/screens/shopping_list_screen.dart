@@ -1015,48 +1015,45 @@ class ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
         ),
 
-        // Mode toggle
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(
-                  value: false,
-                  icon: const Icon(Icons.calendar_month_outlined),
-                  label: Text(l10n.shoppingWeeklyPlanMode),
-                ),
-                ButtonSegment(
-                  value: true,
-                  icon: const Icon(Icons.bolt_outlined),
-                  label: Text(l10n.shoppingQuickListMode),
-                ),
-              ],
-              selected: {_isQuickMode},
-              onSelectionChanged: (value) => setState(() => _isQuickMode = value.first),
-              style: ButtonStyle(
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                backgroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) return AppColors.primaryDark;
-                  return AppColors.surfaceSoft;
-                }),
-                foregroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) return Colors.white;
-                  return AppColors.primaryDark;
-                }),
-                iconColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) return Colors.white;
-                  return AppColors.primaryDark;
-                }),
-                side: const WidgetStatePropertyAll(BorderSide.none),
-              ),
+        // Mode toggle — no outer card; the SegmentedButton already has its
+        // own pill-shaped green/white styling, so it sits directly on the
+        // cream scaffold background instead of inside an extra white frame.
+        SegmentedButton<bool>(
+          segments: [
+            ButtonSegment(
+              value: false,
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: Text(l10n.shoppingWeeklyPlanMode),
             ),
+            ButtonSegment(
+              value: true,
+              icon: const Icon(Icons.bolt_outlined),
+              label: Text(l10n.shoppingQuickListMode),
+            ),
+          ],
+          selected: {_isQuickMode},
+          onSelectionChanged: (value) => setState(() => _isQuickMode = value.first),
+          style: ButtonStyle(
+            shape: WidgetStateProperty.all(
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) return AppColors.primary;
+              return AppColors.surfaceSoft;
+            }),
+            foregroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) return Colors.white;
+              return AppColors.primaryDark;
+            }),
+            iconColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) return Colors.white;
+              return AppColors.primaryDark;
+            }),
+            side: const WidgetStatePropertyAll(BorderSide.none),
           ),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
         // Week number + date range — Weekly Plan mode only, so it's clear
         // which week this generated list belongs to.

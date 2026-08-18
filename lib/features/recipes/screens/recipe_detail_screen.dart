@@ -6,6 +6,7 @@ import '../../../models/recipe.dart';
 import '../../../shared/app_constants.dart';
 import '../../../shared/category_labels.dart';
 import '../../../shared/meal_type_style.dart';
+import '../../../shared/widgets/recipe_image.dart';
 import 'recipe_form_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -149,6 +150,20 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Hero photo — full width, same RecipeImage widget (and gradient
+          // placeholder fallback) used on the Recipes list/grid cards, so
+          // the detail screen actually shows the photo once one is set.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: SizedBox(
+              height: 220,
+              width: double.infinity,
+              child: RecipeImage(imagePath: recipe.imagePath, iconSize: 56),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           // Hero kart
           Card(
             child: Padding(

@@ -11,9 +11,23 @@ class AppInfo {
 /// unrelated hues) so the app reads as one consistent palette.
 class AppColors {
   static const Color primaryDark = Color(0xFF2E7D32);
+  // Accent green for large filled CTA buttons (Add Ingredient/Instruction,
+  // Save Recipe, Add Item, filter sheet actions), the bottom nav bar's
+  // selected-tab capsule, and the Shopping List mode toggle's active
+  // segment — primaryDark stays reserved for the logo wordmark and small
+  // text/icon accents.
+  //
+  // Requested as the bright mint 0xFF79E4A5, but white text/icons on that
+  // tone measure ~1.6:1 contrast (well under WCAG AA's 3:1 floor even for
+  // large text). Scaled down uniformly (same R:G:B ratio, so identical
+  // hue/saturation, just darker) to 0xFF437D5B, ~4.86:1 for white text —
+  // passes AA for normal-size text.
+  static const Color primary = Color(0xFF437D5B);
   static const Color accentMid = Color(0xFF66BB6A);
   static const Color surfaceSoft = Color(0xFFE8F3E9);
-  static const Color creamBackground = Color(0xFFF5F3EA);
+  // Nudged a small, deliberate step darker/warmer from 0xFFF5F3EA, which
+  // was reading as too light/washed out.
+  static const Color creamBackground = Color(0xFFEEEADD);
 }
 
 class AppRadius {

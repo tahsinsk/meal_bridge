@@ -182,17 +182,17 @@ class MealPlanScreen extends StatelessWidget {
     );
   }
 
+  // Full-width row for a FILLED slot only — empty slots render as the small
+  // round buttons from _buildEmptySlotButton instead, so callers must only
+  // reach this once plannedRecipes[_mealPlanKey(day, mealType)] is known
+  // non-null.
   Widget _buildMealRow(BuildContext context, String day, MealType mealType) {
-    final l10n = AppLocalizations.of(context)!;
-    final pr = plannedRecipes[_mealPlanKey(day, mealType)];
+    final pr = plannedRecipes[_mealPlanKey(day, mealType)]!;
     final bg = mealType.surfaceColor;
     final onBg = mealType.onSurfaceColor;
-    final isPlanned = pr != null;
 
     return GestureDetector(
-      onTap: isPlanned
-          ? () => _openRecipeDetail(context, pr.recipe)
-          : () => _openAddToPlanSheet(context, day, mealType),
+      onTap: () => _openRecipeDetail(context, pr.recipe),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
@@ -206,46 +206,99 @@ class MealPlanScreen extends StatelessWidget {
               Icon(mealType.icon, size: 18, color: onBg),
               const SizedBox(width: 8),
               Expanded(
-                child: isPlanned
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            pr.recipe.name,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onBg),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            _recipeMetaInfo(context, pr.recipe),
-                            style: TextStyle(fontSize: 11, color: onBg.withValues(alpha: 0.75)),
-                          ),
-                        ],
-                      )
-                    : Text(
-                        l10n.planAddMealType(localizedMealTypeLabel(l10n, mealType)),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: onBg.withValues(alpha: 0.7),
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-              ),
-              if (isPlanned) ...[
-                _buildMiniStepper(context, day, mealType, pr, onBg),
-                const SizedBox(width: 16),
-                GestureDetector(
-                  onTap: () => onRecipeRemoved(day, mealType),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.close, size: 16, color: onBg.withValues(alpha: 0.45)),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pr.recipe.name,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: onBg),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      _recipeMetaInfo(context, pr.recipe),
+                      style: TextStyle(fontSize: 11, color: onBg.withValues(alpha: 0.75)),
+                    ),
+                  ],
                 ),
-              ] else
-                Icon(Icons.add, size: 16, color: onBg.withValues(alpha: 0.5)),
+              ),
+              _buildMiniStepper(context, day, mealType, pr, onBg),
+              const SizedBox(width: 16),
+              GestureDetector(
+                onTap: () => onRecipeRemoved(day, mealType),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(Icons.close, size: 16, color: onBg.withValues(alpha: 0.45)),
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Small round tappable icon for an EMPTY slot — same icon/pastel colors
+  // as the filled row uses, just compact so several can sit side by side
+  // instead of each claiming a full-width row before anything's planned.
+  Widget _buildEmptySlotButton(BuildContext context, String day, MealType mealType) {
+    final l10n = AppLocalizations.of(context)!;
+    return Tooltip(
+      message: l10n.planAddMealType(localizedMealTypeLabel(l10n, mealType)),
+      child: Material(
+        color: mealType.surfaceColor,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => _openAddToPlanSheet(context, day, mealType),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(mealType.icon, size: 20, color: mealType.onSurfaceColor),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // All still-empty slots for the day, side by side — placed after any
+  // already-filled full-width rows so a partially-planned day shows filled
+  // rows on top and the remaining round buttons together below them.
+  Widget _buildEmptySlotsRow(BuildContext context, String day, List<MealType> emptyMealTypes) {
+    return Row(
+      children: [
+        for (final mealType in emptyMealTypes) ...[
+          _buildEmptySlotButton(context, day, mealType),
+          if (mealType != emptyMealTypes.last) const SizedBox(width: 10),
+        ],
+      ],
+    );
+  }
+
+  // Wraps the filled rows + empty-slot buttons so a slot going from empty
+  // (round button) to filled (full row) — or back, on removal — animates
+  // instead of snapping: the Column's identity (via its key) changes
+  // whenever the filled/empty split changes, so AnimatedSwitcher cross-
+  // fades the old arrangement into the new one while AnimatedSize smoothly
+  // grows/shrinks the day card to match.
+  Widget _buildMealsSection(BuildContext context, String day) {
+    final filled = _mealTypes.where((m) => plannedRecipes[_mealPlanKey(day, m)] != null).toList();
+    final empty = _mealTypes.where((m) => plannedRecipes[_mealPlanKey(day, m)] == null).toList();
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeInOut,
+      alignment: Alignment.topLeft,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        child: Column(
+          key: ValueKey(filled.map((m) => m.name).join(',')),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ...filled.map((mealType) => _buildMealRow(context, day, mealType)),
+            if (empty.isNotEmpty) _buildEmptySlotsRow(context, day, empty),
+          ],
         ),
       ),
     );
@@ -406,8 +459,9 @@ class MealPlanScreen extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // Meal rows
-            ..._mealTypes.map((mealType) => _buildMealRow(context, day, mealType)),
+            // Meal rows (filled full-width rows + a row of round buttons
+            // for whatever's still empty), animated as slots fill in.
+            _buildMealsSection(context, day),
 
             // Legacy planned recipe (no mealType) — only shown if no typed meals
             if (legacyPr != null && mealEntries.isEmpty)

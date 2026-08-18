@@ -201,7 +201,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                     return FilterChip(
                       label: Text(localizedMarketCategory(l10n, cat)),
                       selected: isSelected,
-                      selectedColor: AppColors.primaryDark,
+                      selectedColor: AppColors.primary,
                       checkmarkColor: Colors.white,
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.primaryDark,

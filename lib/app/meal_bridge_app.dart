@@ -144,7 +144,7 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primaryDark,
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             minimumSize: const Size(0, 48),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -194,7 +194,7 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           elevation: 3,
-          backgroundColor: AppColors.primaryDark,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16)),
@@ -219,7 +219,7 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
         checkboxTheme: CheckboxThemeData(
           fillColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.primaryDark;
+              return AppColors.primary;
             }
             return Colors.transparent;
           }),
@@ -228,6 +228,24 @@ class _MealBridgeAppState extends State<MealBridgeApp> {
             borderRadius: BorderRadius.circular(4),
           ),
           side: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+        ),
+        // Explicit override so Switch/SwitchListTile (e.g. the Recipe
+        // filter sheet's "Favorites only" toggle) uses the shared active
+        // color instead of falling back to colorScheme.primary, which is
+        // intentionally kept as primaryDark for small accents elsewhere.
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return AppColors.primary;
+            return Colors.white;
+          }),
+          trackColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return AppColors.primary;
+            return Colors.grey[300];
+          }),
+          trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) return Colors.transparent;
+            return Colors.grey[400];
+          }),
         ),
       ),
       home: MainShell(
@@ -261,11 +279,12 @@ class _MainShellState extends State<MainShell> {
   bool _isLoadingData = true;
   bool _onboardingCompleted = false;
   int _weekOffset = 0;
-  // Instagram-style scroll-driven visibility for the floating bottom nav
-  // bar: scrolling content down (finger moving up) hides it, scrolling up
-  // brings it back. Reset to visible on every tab switch so a new screen
-  // never opens with the bar already hidden from a previous scroll position.
-  bool _navBarVisible = true;
+  // Scroll-driven size for the floating bottom nav bar: scrolling content
+  // down shrinks it slightly (it never fully disappears, so it's always
+  // visible and tappable); scrolling up returns it to full size. Reset on
+  // every tab switch so a new screen never opens with the bar mid-shrink
+  // from a previous scroll position.
+  bool _navBarShrunk = false;
 
   List<Recipe> _recipes = List<Recipe>.from(sampleRecipes);
   Map<String, PlannedRecipe> _allPlannedRecipes = {};
@@ -676,13 +695,13 @@ class _MainShellState extends State<MainShell> {
       return [
         Padding(
           padding: const EdgeInsets.only(right: 12),
-          child: IconButton.filledTonal(
+          child: IconButton.filled(
             icon: const Icon(Icons.add),
             tooltip: 'Add recipe',
             onPressed: () => _recipeListKey.currentState?.openAddRecipeScreen(),
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.surfaceSoft,
-              foregroundColor: AppColors.primaryDark,
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
             ),
           ),
         ),
@@ -792,9 +811,9 @@ class _MainShellState extends State<MainShell> {
         onNotification: (notification) {
           switch (notification.direction) {
             case ScrollDirection.reverse:
-              if (_navBarVisible) setState(() => _navBarVisible = false);
+              if (!_navBarShrunk) setState(() => _navBarShrunk = true);
             case ScrollDirection.forward:
-              if (!_navBarVisible) setState(() => _navBarVisible = true);
+              if (_navBarShrunk) setState(() => _navBarShrunk = false);
             case ScrollDirection.idle:
               break;
           }
@@ -802,58 +821,41 @@ class _MainShellState extends State<MainShell> {
         },
         child: showAppBar ? screens[_selectedIndex] : SafeArea(child: screens[_selectedIndex]),
       ),
-      // Instagram-style show/hide: a small slide + scale-down + fade, all on
-      // the same short duration/curve, so the bar visually shrinks and
-      // fades away rather than sliding far enough to get clipped by the
-      // bottomNavigationBar slot's fixed bounds (which would read as an
-      // abrupt pop instead of a smooth transition).
-      bottomNavigationBar: AnimatedSlide(
+      // Shrinks (rather than hides) on scroll down so it's always visible
+      // and tappable; scrolling up smoothly restores full size. Anchored at
+      // bottomCenter so it shrinks toward the bottom edge instead of
+      // leaving a gap below it.
+      bottomNavigationBar: AnimatedScale(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
-        offset: _navBarVisible ? Offset.zero : const Offset(0, 0.35),
-        child: AnimatedScale(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          scale: _navBarVisible ? 1.0 : 0.85,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-            opacity: _navBarVisible ? 1 : 0,
-            child: IgnorePointer(
-              ignoring: !_navBarVisible,
-              child: FloatingNavBar(
-                selectedIndex: _selectedIndex,
-                onDestinationSelected: (index) {
-                  setState(() {
-                    _selectedIndex = index;
-                    _navBarVisible = true;
-                  });
-                },
-                destinations: [
-                  FloatingNavDestination(
-                    icon: Icons.restaurant_menu_outlined,
-                    selectedIcon: Icons.restaurant_menu,
-                    label: l10n.navRecipes,
-                  ),
-                  FloatingNavDestination(
-                    icon: Icons.calendar_month_outlined,
-                    selectedIcon: Icons.calendar_month,
-                    label: l10n.navPlan,
-                  ),
-                  FloatingNavDestination(
-                    icon: Icons.shopping_cart_outlined,
-                    selectedIcon: Icons.shopping_cart,
-                    label: l10n.navShopping,
-                  ),
-                  FloatingNavDestination(
-                    icon: Icons.settings_outlined,
-                    selectedIcon: Icons.settings,
-                    label: l10n.navSettings,
-                  ),
-                ],
-              ),
+        scale: _navBarShrunk ? 0.88 : 1.0,
+        alignment: Alignment.bottomCenter,
+        child: FloatingNavBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              _selectedIndex = index;
+              _navBarShrunk = false;
+            });
+          },
+          destinations: [
+            FloatingNavDestination(
+              icon: Icons.menu_book_rounded,
+              label: l10n.navRecipes,
             ),
-          ),
+            FloatingNavDestination(
+              icon: Icons.calendar_month_rounded,
+              label: l10n.navPlan,
+            ),
+            FloatingNavDestination(
+              icon: Icons.shopping_cart_rounded,
+              label: l10n.navShopping,
+            ),
+            FloatingNavDestination(
+              icon: Icons.settings_rounded,
+              label: l10n.navSettings,
+            ),
+          ],
         ),
       ),
     );
