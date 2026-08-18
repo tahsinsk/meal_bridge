@@ -554,6 +554,31 @@ class AppLocalizationsNl extends AppLocalizations {
       'Naam van het recept moet minstens 2 tekens bevatten.';
 
   @override
+  String get recipeFormGenerateWithAi => 'Genereren met AI';
+
+  @override
+  String get recipeFormGenerateWithAiHint => 'Voer eerst een receptnaam in.';
+
+  @override
+  String get recipeFormAiReplaceDialogTitle =>
+      'Huidige ingrediënten en instructies vervangen?';
+
+  @override
+  String get recipeFormAiReplaceDialogContent =>
+      'Genereren met AI vervangt wat je hieronder al hebt ingevoerd. Dit kan niet ongedaan worden gemaakt.';
+
+  @override
+  String get recipeFormAiReplaceConfirm => 'Vervangen';
+
+  @override
+  String get recipeFormAiErrorGeneric =>
+      'Kon nu geen recept genereren. Probeer het opnieuw.';
+
+  @override
+  String get recipeFormAiErrorRateLimit =>
+      'AI heeft het nu druk. Probeer het straks opnieuw.';
+
+  @override
   String get recipeFormCategoryLabel => 'Categorie';
 
   @override

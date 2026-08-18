@@ -544,6 +544,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeFormNameTooShort => 'Tarif adı en az 2 karakter olmalı.';
 
   @override
+  String get recipeFormGenerateWithAi => 'Yapay Zeka ile Oluştur';
+
+  @override
+  String get recipeFormGenerateWithAiHint => 'Önce bir tarif adı yazın.';
+
+  @override
+  String get recipeFormAiReplaceDialogTitle =>
+      'Mevcut malzemeler ve talimatlar değiştirilsin mi?';
+
+  @override
+  String get recipeFormAiReplaceDialogContent =>
+      'Yapay zeka ile oluşturmak, aşağıda zaten girdiğiniz bilgilerin yerini alacak. Bu geri alınamaz.';
+
+  @override
+  String get recipeFormAiReplaceConfirm => 'Değiştir';
+
+  @override
+  String get recipeFormAiErrorGeneric =>
+      'Şu anda tarif oluşturulamadı. Lütfen tekrar deneyin.';
+
+  @override
+  String get recipeFormAiErrorRateLimit =>
+      'Yapay zeka şu anda yoğun. Lütfen birazdan tekrar deneyin.';
+
+  @override
   String get recipeFormCategoryLabel => 'Kategori';
 
   @override

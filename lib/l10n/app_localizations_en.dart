@@ -551,6 +551,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'Recipe name must be at least 2 characters.';
 
   @override
+  String get recipeFormGenerateWithAi => 'Generate with AI';
+
+  @override
+  String get recipeFormGenerateWithAiHint => 'Type a recipe name first.';
+
+  @override
+  String get recipeFormAiReplaceDialogTitle =>
+      'Replace current ingredients and instructions?';
+
+  @override
+  String get recipeFormAiReplaceDialogContent =>
+      'Generating with AI will replace what you\'ve already entered below. This can\'t be undone.';
+
+  @override
+  String get recipeFormAiReplaceConfirm => 'Replace';
+
+  @override
+  String get recipeFormAiErrorGeneric =>
+      'Couldn\'t generate a recipe right now. Please try again.';
+
+  @override
+  String get recipeFormAiErrorRateLimit =>
+      'AI is busy right now. Please try again in a moment.';
+
+  @override
   String get recipeFormCategoryLabel => 'Category';
 
   @override

@@ -1024,6 +1024,48 @@ abstract class AppLocalizations {
   /// **'Recipe name must be at least 2 characters.'**
   String get recipeFormNameTooShort;
 
+  /// No description provided for @recipeFormGenerateWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate with AI'**
+  String get recipeFormGenerateWithAi;
+
+  /// No description provided for @recipeFormGenerateWithAiHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a recipe name first.'**
+  String get recipeFormGenerateWithAiHint;
+
+  /// No description provided for @recipeFormAiReplaceDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace current ingredients and instructions?'**
+  String get recipeFormAiReplaceDialogTitle;
+
+  /// No description provided for @recipeFormAiReplaceDialogContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating with AI will replace what you\'ve already entered below. This can\'t be undone.'**
+  String get recipeFormAiReplaceDialogContent;
+
+  /// No description provided for @recipeFormAiReplaceConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get recipeFormAiReplaceConfirm;
+
+  /// No description provided for @recipeFormAiErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t generate a recipe right now. Please try again.'**
+  String get recipeFormAiErrorGeneric;
+
+  /// No description provided for @recipeFormAiErrorRateLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'AI is busy right now. Please try again in a moment.'**
+  String get recipeFormAiErrorRateLimit;
+
   /// No description provided for @recipeFormCategoryLabel.
   ///
   /// In en, this message translates to:
