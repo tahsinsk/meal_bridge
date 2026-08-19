@@ -628,6 +628,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String get recipeScanErrorRetry => 'Probeer een andere foto';
 
   @override
+  String get recipeFormPantrySuggest => 'Wat kan ik maken?';
+
+  @override
+  String get recipePantryQuestion => 'Welke ingrediënten heb je?';
+
+  @override
+  String get recipePantryHint => 'bijv. kip, room, pasta, knoflook';
+
+  @override
+  String get recipePantryButton => 'Stel een recept voor';
+
+  @override
+  String get recipePantryEmptyHint => 'Voer eerst minstens één ingrediënt in.';
+
+  @override
   String get recipeFormCategoryLabel => 'Categorie';
 
   @override

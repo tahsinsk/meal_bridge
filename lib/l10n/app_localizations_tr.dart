@@ -618,6 +618,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipeScanErrorRetry => 'Başka bir fotoğraf dene';
 
   @override
+  String get recipeFormPantrySuggest => 'Ne yapabilirim?';
+
+  @override
+  String get recipePantryQuestion => 'Hangi malzemeleriniz var?';
+
+  @override
+  String get recipePantryHint => 'örn. tavuk, krema, makarna, sarımsak';
+
+  @override
+  String get recipePantryButton => 'Tarif öner';
+
+  @override
+  String get recipePantryEmptyHint => 'Önce en az bir malzeme yazın.';
+
+  @override
   String get recipeFormCategoryLabel => 'Kategori';
 
   @override

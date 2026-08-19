@@ -625,6 +625,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipeScanErrorRetry => 'Try another photo';
 
   @override
+  String get recipeFormPantrySuggest => 'What can I make?';
+
+  @override
+  String get recipePantryQuestion => 'What ingredients do you have?';
+
+  @override
+  String get recipePantryHint => 'e.g. chicken, cream, pasta, garlic';
+
+  @override
+  String get recipePantryButton => 'Suggest a recipe';
+
+  @override
+  String get recipePantryEmptyHint => 'List at least one ingredient first.';
+
+  @override
   String get recipeFormCategoryLabel => 'Category';
 
   @override

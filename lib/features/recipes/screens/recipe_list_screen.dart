@@ -10,11 +10,12 @@ import '../../../shared/category_labels.dart';
 import '../../../shared/meal_type_style.dart';
 import '../../../shared/widgets/recipe_image.dart';
 import 'ai_generate_recipe_screen.dart';
+import 'pantry_recipe_screen.dart';
 import 'recipe_detail_screen.dart';
 import 'recipe_form_screen.dart';
 import 'scan_recipe_photo_screen.dart';
 
-enum _AddRecipeChoice { manual, ai, scan }
+enum _AddRecipeChoice { manual, ai, scan, pantry }
 
 class RecipeListScreen extends StatefulWidget {
   final List<Recipe> recipes;
@@ -107,11 +108,11 @@ class RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   /// Public so [MainShell]'s AppBar "+" action can trigger it via a
-  /// GlobalKey. Shows a choice sheet (manual / AI / scan) then routes to
-  /// the matching entry point — the AI and scan screens each hand off to
-  /// [RecipeFormScreen] internally once they have a draft, so this always
-  /// awaits exactly one final `Recipe?` result regardless of which path
-  /// the user took.
+  /// GlobalKey. Shows a choice sheet (manual / AI / scan / pantry) then
+  /// routes to the matching entry point — the AI, scan, and pantry screens
+  /// each hand off to [RecipeFormScreen] internally once they have a
+  /// draft, so this always awaits exactly one final `Recipe?` result
+  /// regardless of which path the user took.
   Future<void> openAddRecipeScreen() async {
     final l10n = AppLocalizations.of(context)!;
     final choice = await showModalBottomSheet<_AddRecipeChoice>(
@@ -145,6 +146,11 @@ class RecipeListScreenState extends State<RecipeListScreen> {
                 title: Text(l10n.recipeFormScanPhoto),
                 onTap: () => Navigator.of(context).pop(_AddRecipeChoice.scan),
               ),
+              ListTile(
+                leading: const Icon(Icons.kitchen_outlined),
+                title: Text(l10n.recipeFormPantrySuggest),
+                onTap: () => Navigator.of(context).pop(_AddRecipeChoice.pantry),
+              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -166,6 +172,10 @@ class RecipeListScreenState extends State<RecipeListScreen> {
       case _AddRecipeChoice.scan:
         newRecipe = await Navigator.of(context).push<Recipe>(
           MaterialPageRoute(builder: (context) => const ScanRecipePhotoScreen()),
+        );
+      case _AddRecipeChoice.pantry:
+        newRecipe = await Navigator.of(context).push<Recipe>(
+          MaterialPageRoute(builder: (context) => const PantryRecipeScreen()),
         );
     }
     if (newRecipe != null) widget.onRecipeAdded(newRecipe);

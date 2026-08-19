@@ -1156,6 +1156,36 @@ abstract class AppLocalizations {
   /// **'Try another photo'**
   String get recipeScanErrorRetry;
 
+  /// No description provided for @recipeFormPantrySuggest.
+  ///
+  /// In en, this message translates to:
+  /// **'What can I make?'**
+  String get recipeFormPantrySuggest;
+
+  /// No description provided for @recipePantryQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What ingredients do you have?'**
+  String get recipePantryQuestion;
+
+  /// No description provided for @recipePantryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. chicken, cream, pasta, garlic'**
+  String get recipePantryHint;
+
+  /// No description provided for @recipePantryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a recipe'**
+  String get recipePantryButton;
+
+  /// No description provided for @recipePantryEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'List at least one ingredient first.'**
+  String get recipePantryEmptyHint;
+
   /// No description provided for @recipeFormCategoryLabel.
   ///
   /// In en, this message translates to:

@@ -48,10 +48,11 @@ class GeneratedRecipeDraft {
 }
 
 /// Generates a draft recipe (ingredients + instructions + estimated total
-/// calories/time) either from just a dish name or from a photo of a written
-/// recipe, via the Gemini API's structured-output mode (responseSchema), so
-/// the model is constrained to return our exact unit/category vocabulary
-/// instead of free text we'd have to guess-parse.
+/// calories/time) from a dish name, a photo of a written recipe, or a
+/// free-text list of ingredients the user already has, via the Gemini
+/// API's structured-output mode (responseSchema), so the model is
+/// constrained to return our exact unit/category vocabulary instead of
+/// free text we'd have to guess-parse.
 class RecipeAiService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -93,6 +94,19 @@ class RecipeAiService {
         'inlineData': {'mimeType': mimeType, 'data': base64Encode(imageBytes)},
       },
       {'text': '${_imageTaskPreamble(servings)}\n\n${_sharedInstructions(servings)}'},
+    ];
+    return _generateWithFallback(parts, servings);
+  }
+
+  /// "What can I make?" — suggests one recipe built primarily around the
+  /// free-text ingredient list the user already has on hand, rather than a
+  /// dish name or a photo.
+  Future<GeneratedRecipeDraft> generateRecipeFromPantry({
+    required String ingredientsText,
+    required int servings,
+  }) {
+    final parts = [
+      {'text': '${_pantryTaskPreamble(ingredientsText, servings)}\n\n${_sharedInstructions(servings)}'},
     ];
     return _generateWithFallback(parts, servings);
   }
@@ -166,6 +180,18 @@ class RecipeAiService {
         'than inventing content — if truly nothing usable is visible, '
         'respond with empty ingredients and instructions arrays instead of '
         'guessing.';
+  }
+
+  String _pantryTaskPreamble(String ingredientsText, int servings) {
+    return 'The user has these ingredients available: "$ingredientsText". '
+        'Suggest ONE realistic, practical home-cook recipe that primarily '
+        'uses these ingredients, scaled for $servings servings. You may '
+        'assume common pantry staples are on hand even if not listed — '
+        'salt, pepper, cooking oil, water, sugar — but do NOT assume any '
+        'other unlisted main ingredient is available. Prefer using as many '
+        'of the listed ingredients as make sense together; it is fine to '
+        "leave one unused if it wouldn't combine well with the rest. First "
+        'give the recipe a short, fitting NAME (title).';
   }
 
   String _sharedInstructions(int servings) {
