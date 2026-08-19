@@ -70,6 +70,25 @@
   "planNoRecipesYet": "Nog geen recepten. Voeg eerst een recept toe.",
   "planNoRecipesMatch": "Geen recepten komen overeen met je zoekopdracht of filter.",
 
+  "planWithAiButton": "Plan met AI",
+  "planAiDaysLabel": "Hoeveel dagen?",
+  "planAiDaysUnit": "dagen",
+  "planAiMealsLabel": "Welke maaltijden?",
+  "planAiGenerateButton": "Plan genereren",
+  "planAiMealsRequiredHint": "Selecteer minstens één maaltijdtype.",
+  "planAiLoadingMessage": "Je week wordt gepland...",
+  "planAiReviewTitle": "Bekijk je plan",
+  "planAiRegenerateTooltip": "Opnieuw genereren",
+  "planAiRemoveTooltip": "Verwijderen",
+  "planAiSlotRemovedLabel": "Verwijderd",
+  "planAiBringBackButton": "Terugzetten",
+  "planAiEmptyAfterRemovalHint": "Zet eerst minstens één recept terug.",
+  "planAiOverwriteTitle": "Geplande maaltijden overschrijven?",
+  "planAiOverwriteContent": "{count, plural, one{1 slot heeft deze week al een gepland recept.} other{{count} slots hebben deze week al een gepland recept.}} Dit plan toevoegen vervangt ze.",
+  "@planAiOverwriteContent": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
   "shoppingListHeading": "Boodschappenlijst",
   "shoppingShopAtCaption": "Open je favoriete winkel",
   "shoppingOnlineTooltip": "Online winkelen",

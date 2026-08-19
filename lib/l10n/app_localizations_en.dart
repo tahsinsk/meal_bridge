@@ -229,6 +229,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planNoRecipesMatch => 'No recipes match your search/filter.';
 
   @override
+  String get planWithAiButton => 'Plan with AI';
+
+  @override
+  String get planAiDaysLabel => 'How many days?';
+
+  @override
+  String get planAiDaysUnit => 'days';
+
+  @override
+  String get planAiMealsLabel => 'Which meals?';
+
+  @override
+  String get planAiGenerateButton => 'Generate plan';
+
+  @override
+  String get planAiMealsRequiredHint => 'Select at least one meal type.';
+
+  @override
+  String get planAiLoadingMessage => 'Planning your week...';
+
+  @override
+  String get planAiReviewTitle => 'Review your plan';
+
+  @override
+  String get planAiRegenerateTooltip => 'Regenerate';
+
+  @override
+  String get planAiRemoveTooltip => 'Remove';
+
+  @override
+  String get planAiSlotRemovedLabel => 'Removed';
+
+  @override
+  String get planAiBringBackButton => 'Bring back';
+
+  @override
+  String get planAiEmptyAfterRemovalHint =>
+      'Bring back at least one recipe first.';
+
+  @override
+  String get planAiOverwriteTitle => 'Overwrite planned meals?';
+
+  @override
+  String planAiOverwriteContent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slots already have a recipe planned this week.',
+      one: '1 slot already has a recipe planned this week.',
+    );
+    return '$_temp0 Adding this plan will replace them.';
+  }
+
+  @override
   String get shoppingListHeading => 'Shopping list';
 
   @override

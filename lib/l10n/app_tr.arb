@@ -70,6 +70,25 @@
   "planNoRecipesYet": "Henüz tarif yok. Önce bir tarif ekle.",
   "planNoRecipesMatch": "Aramanla veya filtrenle eşleşen tarif yok.",
 
+  "planWithAiButton": "Yapay Zeka ile Planla",
+  "planAiDaysLabel": "Kaç gün?",
+  "planAiDaysUnit": "gün",
+  "planAiMealsLabel": "Hangi öğünler?",
+  "planAiGenerateButton": "Plan oluştur",
+  "planAiMealsRequiredHint": "En az bir öğün türü seçin.",
+  "planAiLoadingMessage": "Haftan planlanıyor...",
+  "planAiReviewTitle": "Planını incele",
+  "planAiRegenerateTooltip": "Yeniden oluştur",
+  "planAiRemoveTooltip": "Kaldır",
+  "planAiSlotRemovedLabel": "Kaldırıldı",
+  "planAiBringBackButton": "Geri getir",
+  "planAiEmptyAfterRemovalHint": "Önce en az bir tarifi geri getirin.",
+  "planAiOverwriteTitle": "Planlanan yemeklerin üzerine yazılsın mı?",
+  "planAiOverwriteContent": "{count, plural, one{Bu haftada 1 slotta zaten planlanmış bir tarif var.} other{Bu haftada {count} slotta zaten planlanmış bir tarif var.}} Bu planı eklemek onların yerini alacak.",
+  "@planAiOverwriteContent": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
   "shoppingListHeading": "Alışveriş listesi",
   "shoppingShopAtCaption": "Favori marketini aç",
   "shoppingOnlineTooltip": "Online alışveriş",

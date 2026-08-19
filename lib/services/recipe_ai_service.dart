@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../models/ingredient.dart';
+import '../models/meal_type.dart';
 import '../models/recipe_preference.dart';
 import '../shared/ai_config.dart';
 
@@ -26,9 +27,9 @@ class GeminiException implements Exception {
 /// A freshly AI-generated recipe draft — meant to populate the Add/Edit
 /// Recipe form for the user to review and edit, not to be saved as-is.
 class GeneratedRecipeDraft {
-  // Only ever populated by generateRecipeFromImage (extracted from the
-  // photo) — text-based generation already has the name typed by the user,
-  // so it doesn't ask the model for one.
+  // Populated by generateRecipeFromImage and generateMealPlan (neither has
+  // a user-typed name to fall back on) — text-based/pantry generation
+  // already has one, so they don't ask the model for it.
   final String? name;
   final List<Ingredient> ingredients;
   final List<String> instructions;
@@ -49,11 +50,12 @@ class GeneratedRecipeDraft {
 }
 
 /// Generates a draft recipe (ingredients + instructions + estimated total
-/// calories/time) from a dish name, a photo of a written recipe, or a
-/// free-text list of ingredients the user already has, via the Gemini
-/// API's structured-output mode (responseSchema), so the model is
-/// constrained to return our exact unit/category vocabulary instead of
-/// free text we'd have to guess-parse.
+/// calories/time) from a dish name, a photo of a written recipe, a
+/// free-text list of ingredients the user already has, or a whole
+/// multi-day/multi-meal batch at once, via the Gemini API's
+/// structured-output mode (responseSchema), so the model is constrained to
+/// return our exact unit/category vocabulary instead of free text we'd
+/// have to guess-parse.
 class RecipeAiService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -87,7 +89,11 @@ class RecipeAiService {
             '${_sharedInstructions(servings)}',
       },
     ];
-    return _generateWithFallback(parts, servings);
+    return _generateWithFallback<GeneratedRecipeDraft>(
+      parts,
+      _responseSchema,
+      (body) => _parseResponse(body, servings),
+    );
   }
 
   Future<GeneratedRecipeDraft> generateRecipeFromImage({
@@ -101,7 +107,11 @@ class RecipeAiService {
       },
       {'text': '${_imageTaskPreamble(servings)}\n\n${_sharedInstructions(servings)}'},
     ];
-    return _generateWithFallback(parts, servings);
+    return _generateWithFallback<GeneratedRecipeDraft>(
+      parts,
+      _responseSchema,
+      (body) => _parseResponse(body, servings),
+    );
   }
 
   /// "What can I make?" — suggests one recipe built primarily around the
@@ -119,28 +129,62 @@ class RecipeAiService {
             '${_sharedInstructions(servings)}',
       },
     ];
-    return _generateWithFallback(parts, servings);
+    return _generateWithFallback<GeneratedRecipeDraft>(
+      parts,
+      _responseSchema,
+      (body) => _parseResponse(body, servings),
+    );
   }
 
-  Future<GeneratedRecipeDraft> _generateWithFallback(
+  /// "Plan with AI" — one request for a whole multi-day plan instead of N
+  /// separate single-recipe calls. Returns drafts in the exact order the
+  /// prompt requested them (day-major: all of day 1's meals — in
+  /// [mealTypes] order — then day 2's, and so on), so the caller can zip
+  /// the result against its own (day, mealType) slot list by index. If the
+  /// model returns fewer than requested, the caller just ends up with that
+  /// many filled slots — never throws for a partial batch.
+  Future<List<GeneratedRecipeDraft>> generateMealPlan({
+    required int dayCount,
+    required List<MealType> mealTypes,
+    required int servings,
+    Set<RecipePreference> preferences = const {},
+  }) {
+    final slotCount = dayCount * mealTypes.length;
+    final parts = [
+      {
+        'text': '${_mealPlanTaskPreamble(dayCount, mealTypes, servings)}'
+            '${_preferenceConstraints(preferences)}\n\n'
+            '${_sharedInstructions(servings)}',
+      },
+    ];
+    return _generateWithFallback<List<GeneratedRecipeDraft>>(
+      parts,
+      _mealPlanResponseSchema,
+      (body) => _parseBatchResponse(body, servings),
+    ).then((drafts) => drafts.take(slotCount).toList());
+  }
+
+  Future<T> _generateWithFallback<T>(
     List<Map<String, dynamic>> parts,
-    int servings,
+    Map<String, dynamic> schema,
+    T Function(String body) parseResponse,
   ) async {
     try {
-      return await _generateWithModel(AiConfig.model, parts, servings);
+      return await _generateWithModel<T>(AiConfig.model, parts, schema, parseResponse);
     } on GeminiRateLimitException {
       // Retrying a different model won't help if we're rate limited — that
       // rethrows so the UI can show the specific "AI is busy" message.
       rethrow;
     } catch (_) {
-      return await _generateWithModel(AiConfig.fallbackModel, parts, servings);
+      return await _generateWithModel<T>(AiConfig.fallbackModel, parts, schema, parseResponse);
     }
   }
 
-  Future<GeneratedRecipeDraft> _generateWithModel(
+  Future<T> _generateWithModel<T>(
     String model,
     List<Map<String, dynamic>> parts,
-    int servings,
+    Map<String, dynamic> schema,
+    T Function(String body) parseResponse,
   ) async {
     final uri = Uri.parse('$_baseUrl/$model:generateContent?key=${AiConfig.geminiApiKey}');
 
@@ -156,11 +200,11 @@ class RecipeAiService {
               ],
               'generationConfig': {
                 'responseMimeType': 'application/json',
-                'responseSchema': _responseSchema,
+                'responseSchema': schema,
               },
             }),
           )
-          .timeout(const Duration(seconds: 45));
+          .timeout(const Duration(seconds: 60));
     } catch (e) {
       throw GeminiException('Request failed: $e');
     }
@@ -172,7 +216,7 @@ class RecipeAiService {
       throw GeminiException('Unexpected status ${response.statusCode}: ${response.body}');
     }
 
-    return _parseResponse(response.body, servings);
+    return parseResponse(response.body);
   }
 
   String _taskPreamble(String recipeName, int servings) {
@@ -203,6 +247,34 @@ class RecipeAiService {
         'of the listed ingredients as make sense together; it is fine to '
         "leave one unused if it wouldn't combine well with the rest. First "
         'give the recipe a short, fitting NAME (title).';
+  }
+
+  String _mealPlanTaskPreamble(int dayCount, List<MealType> mealTypes, int servings) {
+    final mealsPerDay = mealTypes.map(_mealTypeLabel).join(', ');
+    final slotCount = dayCount * mealTypes.length;
+    return 'Generate a coherent $dayCount-day home-cook meal plan, scaled '
+        'for $servings servings per recipe. Every day needs these meals, '
+        'in this order: $mealsPerDay. That is exactly $slotCount recipes '
+        'in total. Vary the recipes across days and meals — avoid '
+        'repeating the same dish or dominant main ingredient too often, '
+        'like a realistic, balanced week of home cooking, not the same '
+        'thing every day. Give every recipe a short, fitting NAME (title).'
+        '\n\nRespond with a JSON ARRAY of exactly $slotCount recipe '
+        'objects, ordered day by day — day 1\'s meals first (in the '
+        '"$mealsPerDay" order above), then day 2\'s, and so on through '
+        'day $dayCount. Array index 0 must be day 1\'s first meal, and the '
+        'last index must be day $dayCount\'s last meal.';
+  }
+
+  String _mealTypeLabel(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return 'Breakfast';
+      case MealType.lunch:
+        return 'Lunch';
+      case MealType.dinner:
+        return 'Dinner';
+    }
   }
 
   // Empty string when nothing's selected, so generation behaves exactly as
@@ -255,123 +327,175 @@ class RecipeAiService {
         'Respond only with the requested JSON.';
   }
 
+  static const Map<String, dynamic> _ingredientsSchema = {
+    'type': 'ARRAY',
+    'items': {
+      'type': 'OBJECT',
+      'properties': {
+        'name': {'type': 'STRING'},
+        'amount': {'type': 'NUMBER'},
+        'unit': {'type': 'STRING', 'enum': _units},
+        'category': {'type': 'STRING', 'enum': _categories},
+      },
+      'required': ['name', 'amount', 'unit', 'category'],
+    },
+  };
+
+  static const Map<String, dynamic> _instructionsSchema = {
+    'type': 'ARRAY',
+    'items': {
+      'type': 'OBJECT',
+      'properties': {
+        'text': {'type': 'STRING'},
+        'durationMinutes': {'type': 'INTEGER'},
+      },
+      'required': ['text'],
+    },
+  };
+
   static const Map<String, dynamic> _responseSchema = {
     'type': 'OBJECT',
     'properties': {
       'name': {'type': 'STRING'},
-      'ingredients': {
-        'type': 'ARRAY',
-        'items': {
-          'type': 'OBJECT',
-          'properties': {
-            'name': {'type': 'STRING'},
-            'amount': {'type': 'NUMBER'},
-            'unit': {'type': 'STRING', 'enum': _units},
-            'category': {'type': 'STRING', 'enum': _categories},
-          },
-          'required': ['name', 'amount', 'unit', 'category'],
-        },
-      },
-      'instructions': {
-        'type': 'ARRAY',
-        'items': {
-          'type': 'OBJECT',
-          'properties': {
-            'text': {'type': 'STRING'},
-            'durationMinutes': {'type': 'INTEGER'},
-          },
-          'required': ['text'],
-        },
-      },
+      'ingredients': _ingredientsSchema,
+      'instructions': _instructionsSchema,
       'totalTimeMinutes': {'type': 'INTEGER'},
       'estimatedTotalCalories': {'type': 'INTEGER'},
     },
     'required': ['ingredients', 'instructions', 'estimatedTotalCalories'],
   };
 
+  // Same shape as _responseSchema, wrapped in an array — 'name' becomes
+  // required here since a meal-plan slot has no user-typed name to fall
+  // back on the way single-recipe text generation does.
+  static const Map<String, dynamic> _mealPlanResponseSchema = {
+    'type': 'ARRAY',
+    'items': {
+      'type': 'OBJECT',
+      'properties': {
+        'name': {'type': 'STRING'},
+        'ingredients': _ingredientsSchema,
+        'instructions': _instructionsSchema,
+        'totalTimeMinutes': {'type': 'INTEGER'},
+        'estimatedTotalCalories': {'type': 'INTEGER'},
+      },
+      'required': ['name', 'ingredients', 'instructions', 'estimatedTotalCalories'],
+    },
+  };
+
+  // Pulls the model's JSON text out of the Gemini response envelope —
+  // shared by both the single-recipe and batch parse paths, which only
+  // differ in whether that text decodes to one object or an array of them.
+  String _extractResponseText(String body) {
+    final decoded = jsonDecode(body) as Map<String, dynamic>;
+    final candidates = decoded['candidates'] as List<dynamic>?;
+    if (candidates == null || candidates.isEmpty) {
+      throw GeminiException('No candidates in response');
+    }
+    final content = candidates.first['content'] as Map<String, dynamic>?;
+    final parts = content?['parts'] as List<dynamic>?;
+    final text = (parts != null && parts.isNotEmpty) ? parts.first['text'] as String? : null;
+    if (text == null || text.trim().isEmpty) {
+      throw GeminiException('Empty response text');
+    }
+    return text;
+  }
+
   GeneratedRecipeDraft _parseResponse(String body, int servings) {
     try {
-      final decoded = jsonDecode(body) as Map<String, dynamic>;
-      final candidates = decoded['candidates'] as List<dynamic>?;
-      if (candidates == null || candidates.isEmpty) {
-        throw GeminiException('No candidates in response');
-      }
-      final content = candidates.first['content'] as Map<String, dynamic>?;
-      final parts = content?['parts'] as List<dynamic>?;
-      final text = (parts != null && parts.isNotEmpty) ? parts.first['text'] as String? : null;
-      if (text == null || text.trim().isEmpty) {
-        throw GeminiException('Empty response text');
-      }
-
+      final text = _extractResponseText(body);
       final parsed = jsonDecode(text) as Map<String, dynamic>;
-
-      final nameRaw = parsed['name'];
-      final name = (nameRaw is String && nameRaw.trim().isNotEmpty) ? nameRaw.trim() : null;
-
-      final ingredientsJson = parsed['ingredients'] as List<dynamic>? ?? const [];
-      final ingredients = ingredientsJson
-          .map((raw) {
-            final map = raw as Map<String, dynamic>;
-            final ingredientName = (map['name'] as String?)?.trim() ?? '';
-            final amount = (map['amount'] as num?)?.toDouble() ?? 0;
-            final unit = map['unit'] as String?;
-            final category = map['category'] as String?;
-            return Ingredient(
-              name: ingredientName,
-              amount: amount > 0 ? amount : 1,
-              unit: _units.contains(unit) ? unit! : 'g',
-              categoryOverride: _categories.contains(category) ? category : null,
-            );
-          })
-          .where((i) => i.name.isNotEmpty)
-          .toList();
-
-      // Instructions arrive as {text, durationMinutes?} objects (not a flat
-      // string array) specifically so each step's duration stays paired
-      // with its own text — two separately-indexed parallel arrays would
-      // risk the model miscounting and silently misaligning them.
-      final instructionsJson = parsed['instructions'] as List<dynamic>? ?? const [];
-      final instructions = <String>[];
-      final instructionDurations = <int?>[];
-      for (final raw in instructionsJson) {
-        final map = raw as Map<String, dynamic>;
-        final stepText = (map['text'] as String?)?.trim() ?? '';
-        if (stepText.isEmpty) continue;
-        instructions.add(stepText);
-        final duration = map['durationMinutes'];
-        instructionDurations.add((duration is num && duration > 0) ? duration.toInt() : null);
-      }
-
-      if (ingredients.isEmpty || instructions.isEmpty) {
-        throw GeminiException('Incomplete recipe data (missing ingredients or instructions)');
-      }
-
-      final caloriesRaw = parsed['estimatedTotalCalories'];
-      var calories = (caloriesRaw is num && caloriesRaw > 0) ? caloriesRaw.toInt() : null;
-      // Sanity check rather than trust blindly: a wildly high per-serving
-      // implication means the model got the total-vs-per-serving math
-      // wrong. Left blank (not retried) so a bad number never reaches the
-      // form — the user can always fill it in manually, same as any recipe
-      // without an AI estimate.
-      if (calories != null && servings > 0 && calories / servings > _maxReasonableCaloriesPerServing) {
-        calories = null;
-      }
-
-      final totalTimeRaw = parsed['totalTimeMinutes'];
-      final totalTimeMinutes = (totalTimeRaw is num && totalTimeRaw > 0) ? totalTimeRaw.toInt() : null;
-
-      return GeneratedRecipeDraft(
-        name: name,
-        ingredients: ingredients,
-        instructions: instructions,
-        instructionDurationsMinutes: instructionDurations,
-        estimatedTotalCalories: calories,
-        totalTimeMinutes: totalTimeMinutes,
-      );
+      return _parseRecipeObject(parsed, servings);
     } on GeminiException {
       rethrow;
     } catch (e) {
       throw GeminiException('Malformed response: $e');
     }
+  }
+
+  List<GeneratedRecipeDraft> _parseBatchResponse(String body, int servings) {
+    try {
+      final text = _extractResponseText(body);
+      final parsedList = jsonDecode(text) as List<dynamic>;
+      final drafts = parsedList
+          .map((item) => _parseRecipeObject(item as Map<String, dynamic>, servings))
+          .toList();
+      if (drafts.isEmpty) {
+        throw GeminiException('Empty meal plan response');
+      }
+      return drafts;
+    } on GeminiException {
+      rethrow;
+    } catch (e) {
+      throw GeminiException('Malformed response: $e');
+    }
+  }
+
+  // Parses a single recipe object — shared by both the single-recipe and
+  // batch (one call per array item) paths.
+  GeneratedRecipeDraft _parseRecipeObject(Map<String, dynamic> parsed, int servings) {
+    final nameRaw = parsed['name'];
+    final name = (nameRaw is String && nameRaw.trim().isNotEmpty) ? nameRaw.trim() : null;
+
+    final ingredientsJson = parsed['ingredients'] as List<dynamic>? ?? const [];
+    final ingredients = ingredientsJson
+        .map((raw) {
+          final map = raw as Map<String, dynamic>;
+          final ingredientName = (map['name'] as String?)?.trim() ?? '';
+          final amount = (map['amount'] as num?)?.toDouble() ?? 0;
+          final unit = map['unit'] as String?;
+          final category = map['category'] as String?;
+          return Ingredient(
+            name: ingredientName,
+            amount: amount > 0 ? amount : 1,
+            unit: _units.contains(unit) ? unit! : 'g',
+            categoryOverride: _categories.contains(category) ? category : null,
+          );
+        })
+        .where((i) => i.name.isNotEmpty)
+        .toList();
+
+    // Instructions arrive as {text, durationMinutes?} objects (not a flat
+    // string array) specifically so each step's duration stays paired
+    // with its own text — two separately-indexed parallel arrays would
+    // risk the model miscounting and silently misaligning them.
+    final instructionsJson = parsed['instructions'] as List<dynamic>? ?? const [];
+    final instructions = <String>[];
+    final instructionDurations = <int?>[];
+    for (final raw in instructionsJson) {
+      final map = raw as Map<String, dynamic>;
+      final stepText = (map['text'] as String?)?.trim() ?? '';
+      if (stepText.isEmpty) continue;
+      instructions.add(stepText);
+      final duration = map['durationMinutes'];
+      instructionDurations.add((duration is num && duration > 0) ? duration.toInt() : null);
+    }
+
+    if (ingredients.isEmpty || instructions.isEmpty) {
+      throw GeminiException('Incomplete recipe data (missing ingredients or instructions)');
+    }
+
+    final caloriesRaw = parsed['estimatedTotalCalories'];
+    var calories = (caloriesRaw is num && caloriesRaw > 0) ? caloriesRaw.toInt() : null;
+    // Sanity check rather than trust blindly: a wildly high per-serving
+    // implication means the model got the total-vs-per-serving math
+    // wrong. Left blank (not retried) so a bad number never reaches the
+    // form — the user can always fill it in manually, same as any recipe
+    // without an AI estimate.
+    if (calories != null && servings > 0 && calories / servings > _maxReasonableCaloriesPerServing) {
+      calories = null;
+    }
+
+    final totalTimeRaw = parsed['totalTimeMinutes'];
+    final totalTimeMinutes = (totalTimeRaw is num && totalTimeRaw > 0) ? totalTimeRaw.toInt() : null;
+
+    return GeneratedRecipeDraft(
+      name: name,
+      ingredients: ingredients,
+      instructions: instructions,
+      instructionDurationsMinutes: instructionDurations,
+      estimatedTotalCalories: calories,
+      totalTimeMinutes: totalTimeMinutes,
+    );
   }
 }

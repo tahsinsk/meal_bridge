@@ -478,6 +478,96 @@ abstract class AppLocalizations {
   /// **'No recipes match your search/filter.'**
   String get planNoRecipesMatch;
 
+  /// No description provided for @planWithAiButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan with AI'**
+  String get planWithAiButton;
+
+  /// No description provided for @planAiDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many days?'**
+  String get planAiDaysLabel;
+
+  /// No description provided for @planAiDaysUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get planAiDaysUnit;
+
+  /// No description provided for @planAiMealsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Which meals?'**
+  String get planAiMealsLabel;
+
+  /// No description provided for @planAiGenerateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate plan'**
+  String get planAiGenerateButton;
+
+  /// No description provided for @planAiMealsRequiredHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one meal type.'**
+  String get planAiMealsRequiredHint;
+
+  /// No description provided for @planAiLoadingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning your week...'**
+  String get planAiLoadingMessage;
+
+  /// No description provided for @planAiReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your plan'**
+  String get planAiReviewTitle;
+
+  /// No description provided for @planAiRegenerateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get planAiRegenerateTooltip;
+
+  /// No description provided for @planAiRemoveTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get planAiRemoveTooltip;
+
+  /// No description provided for @planAiSlotRemovedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed'**
+  String get planAiSlotRemovedLabel;
+
+  /// No description provided for @planAiBringBackButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring back'**
+  String get planAiBringBackButton;
+
+  /// No description provided for @planAiEmptyAfterRemovalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring back at least one recipe first.'**
+  String get planAiEmptyAfterRemovalHint;
+
+  /// No description provided for @planAiOverwriteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite planned meals?'**
+  String get planAiOverwriteTitle;
+
+  /// No description provided for @planAiOverwriteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 slot already has a recipe planned this week.} other{{count} slots already have a recipe planned this week.}} Adding this plan will replace them.'**
+  String planAiOverwriteContent(int count);
+
   /// No description provided for @shoppingListHeading.
   ///
   /// In en, this message translates to:

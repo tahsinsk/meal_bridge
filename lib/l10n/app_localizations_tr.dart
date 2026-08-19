@@ -228,6 +228,61 @@ class AppLocalizationsTr extends AppLocalizations {
   String get planNoRecipesMatch => 'Aramanla veya filtrenle eşleşen tarif yok.';
 
   @override
+  String get planWithAiButton => 'Yapay Zeka ile Planla';
+
+  @override
+  String get planAiDaysLabel => 'Kaç gün?';
+
+  @override
+  String get planAiDaysUnit => 'gün';
+
+  @override
+  String get planAiMealsLabel => 'Hangi öğünler?';
+
+  @override
+  String get planAiGenerateButton => 'Plan oluştur';
+
+  @override
+  String get planAiMealsRequiredHint => 'En az bir öğün türü seçin.';
+
+  @override
+  String get planAiLoadingMessage => 'Haftan planlanıyor...';
+
+  @override
+  String get planAiReviewTitle => 'Planını incele';
+
+  @override
+  String get planAiRegenerateTooltip => 'Yeniden oluştur';
+
+  @override
+  String get planAiRemoveTooltip => 'Kaldır';
+
+  @override
+  String get planAiSlotRemovedLabel => 'Kaldırıldı';
+
+  @override
+  String get planAiBringBackButton => 'Geri getir';
+
+  @override
+  String get planAiEmptyAfterRemovalHint =>
+      'Önce en az bir tarifi geri getirin.';
+
+  @override
+  String get planAiOverwriteTitle =>
+      'Planlanan yemeklerin üzerine yazılsın mı?';
+
+  @override
+  String planAiOverwriteContent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Bu haftada $count slotta zaten planlanmış bir tarif var.',
+      one: 'Bu haftada 1 slotta zaten planlanmış bir tarif var.',
+    );
+    return '$_temp0 Bu planı eklemek onların yerini alacak.';
+  }
+
+  @override
   String get shoppingListHeading => 'Alışveriş listesi';
 
   @override

@@ -231,6 +231,60 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen recepten komen overeen met je zoekopdracht of filter.';
 
   @override
+  String get planWithAiButton => 'Plan met AI';
+
+  @override
+  String get planAiDaysLabel => 'Hoeveel dagen?';
+
+  @override
+  String get planAiDaysUnit => 'dagen';
+
+  @override
+  String get planAiMealsLabel => 'Welke maaltijden?';
+
+  @override
+  String get planAiGenerateButton => 'Plan genereren';
+
+  @override
+  String get planAiMealsRequiredHint => 'Selecteer minstens één maaltijdtype.';
+
+  @override
+  String get planAiLoadingMessage => 'Je week wordt gepland...';
+
+  @override
+  String get planAiReviewTitle => 'Bekijk je plan';
+
+  @override
+  String get planAiRegenerateTooltip => 'Opnieuw genereren';
+
+  @override
+  String get planAiRemoveTooltip => 'Verwijderen';
+
+  @override
+  String get planAiSlotRemovedLabel => 'Verwijderd';
+
+  @override
+  String get planAiBringBackButton => 'Terugzetten';
+
+  @override
+  String get planAiEmptyAfterRemovalHint =>
+      'Zet eerst minstens één recept terug.';
+
+  @override
+  String get planAiOverwriteTitle => 'Geplande maaltijden overschrijven?';
+
+  @override
+  String planAiOverwriteContent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count slots hebben deze week al een gepland recept.',
+      one: '1 slot heeft deze week al een gepland recept.',
+    );
+    return '$_temp0 Dit plan toevoegen vervangt ze.';
+  }
+
+  @override
   String get shoppingListHeading => 'Boodschappenlijst';
 
   @override

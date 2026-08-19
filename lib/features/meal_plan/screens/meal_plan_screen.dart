@@ -12,6 +12,7 @@ import '../../../shared/iso_week.dart';
 import '../../../shared/meal_type_style.dart';
 import '../../recipes/screens/recipe_detail_screen.dart';
 import 'add_to_plan_sheet.dart';
+import 'ai_meal_plan_input_screen.dart';
 
 class MealPlanScreen extends StatelessWidget {
   final List<Recipe> recipes;
@@ -24,6 +25,9 @@ class MealPlanScreen extends StatelessWidget {
   final bool hasCopiedDay;
   final void Function(String day) onCopyDay;
   final void Function(String day) onPasteDay;
+  // Lets the "Plan with AI" flow save its newly-generated recipes into the
+  // user's recipe library, same as adding one from the Recipes tab.
+  final ValueChanged<Recipe> onRecipeAdded;
 
   const MealPlanScreen({
     super.key,
@@ -37,6 +41,7 @@ class MealPlanScreen extends StatelessWidget {
     required this.hasCopiedDay,
     required this.onCopyDay,
     required this.onPasteDay,
+    required this.onRecipeAdded,
   });
 
   static const List<String> _days = [
@@ -122,6 +127,18 @@ class MealPlanScreen extends StatelessWidget {
       day: day,
       mealType: mealType,
       onAdd: (recipe, servings) => onRecipeSelected(day, recipe, servings, mealType),
+    );
+  }
+
+  void _openAiMealPlan(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AiMealPlanInputScreen(
+          plannedRecipes: plannedRecipes,
+          onRecipeSelected: onRecipeSelected,
+          onRecipeAdded: onRecipeAdded,
+        ),
+      ),
     );
   }
 
@@ -486,6 +503,17 @@ class MealPlanScreen extends StatelessWidget {
       children: [
         // Week navigation + general add
         _WeekHeaderCard(weekOffset: weekOffset, onWeekChanged: onWeekChanged),
+
+        const SizedBox(height: 12),
+
+        SizedBox(
+          height: 44,
+          child: OutlinedButton.icon(
+            onPressed: () => _openAiMealPlan(context),
+            icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+            label: Text(AppLocalizations.of(context)!.planWithAiButton),
+          ),
+        ),
 
         const SizedBox(height: 16),
 

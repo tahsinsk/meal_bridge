@@ -799,6 +799,7 @@ class _MainShellState extends State<MainShell> {
         hasCopiedDay: _hasCopiedDay,
         onCopyDay: _copyDay,
         onPasteDay: _pasteDay,
+        onRecipeAdded: _addRecipe,
       ),
       ShoppingListScreen(
         key: _shoppingListKey,

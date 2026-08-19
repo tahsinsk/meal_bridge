@@ -98,6 +98,25 @@
   "planNoRecipesYet": "No recipes yet. Add a recipe first.",
   "planNoRecipesMatch": "No recipes match your search/filter.",
 
+  "planWithAiButton": "Plan with AI",
+  "planAiDaysLabel": "How many days?",
+  "planAiDaysUnit": "days",
+  "planAiMealsLabel": "Which meals?",
+  "planAiGenerateButton": "Generate plan",
+  "planAiMealsRequiredHint": "Select at least one meal type.",
+  "planAiLoadingMessage": "Planning your week...",
+  "planAiReviewTitle": "Review your plan",
+  "planAiRegenerateTooltip": "Regenerate",
+  "planAiRemoveTooltip": "Remove",
+  "planAiSlotRemovedLabel": "Removed",
+  "planAiBringBackButton": "Bring back",
+  "planAiEmptyAfterRemovalHint": "Bring back at least one recipe first.",
+  "planAiOverwriteTitle": "Overwrite planned meals?",
+  "planAiOverwriteContent": "{count, plural, one{1 slot already has a recipe planned this week.} other{{count} slots already have a recipe planned this week.}} Adding this plan will replace them.",
+  "@planAiOverwriteContent": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
   "shoppingListHeading": "Shopping list",
   "shoppingShopAtCaption": "Open your favorite store",
   "shoppingOnlineTooltip": "Shop online",
