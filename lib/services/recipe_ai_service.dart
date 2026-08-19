@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../models/ingredient.dart';
+import '../models/recipe_preference.dart';
 import '../shared/ai_config.dart';
 
 /// Thrown when Gemini responds with HTTP 429 (rate limited), so the UI can
@@ -77,9 +78,14 @@ class RecipeAiService {
   Future<GeneratedRecipeDraft> generateRecipe({
     required String recipeName,
     required int servings,
+    Set<RecipePreference> preferences = const {},
   }) {
     final parts = [
-      {'text': '${_taskPreamble(recipeName, servings)}\n\n${_sharedInstructions(servings)}'},
+      {
+        'text': '${_taskPreamble(recipeName, servings)}'
+            '${_preferenceConstraints(preferences)}\n\n'
+            '${_sharedInstructions(servings)}',
+      },
     ];
     return _generateWithFallback(parts, servings);
   }
@@ -104,9 +110,14 @@ class RecipeAiService {
   Future<GeneratedRecipeDraft> generateRecipeFromPantry({
     required String ingredientsText,
     required int servings,
+    Set<RecipePreference> preferences = const {},
   }) {
     final parts = [
-      {'text': '${_pantryTaskPreamble(ingredientsText, servings)}\n\n${_sharedInstructions(servings)}'},
+      {
+        'text': '${_pantryTaskPreamble(ingredientsText, servings)}'
+            '${_preferenceConstraints(preferences)}\n\n'
+            '${_sharedInstructions(servings)}',
+      },
     ];
     return _generateWithFallback(parts, servings);
   }
@@ -192,6 +203,30 @@ class RecipeAiService {
         'of the listed ingredients as make sense together; it is fine to '
         "leave one unused if it wouldn't combine well with the rest. First "
         'give the recipe a short, fitting NAME (title).';
+  }
+
+  // Empty string when nothing's selected, so generation behaves exactly as
+  // it did before this feature existed — otherwise one explicit constraint
+  // line per selected chip, appended straight after the task preamble.
+  String _preferenceConstraints(Set<RecipePreference> preferences) {
+    if (preferences.isEmpty) return '';
+    final lines = <String>[];
+    if (preferences.contains(RecipePreference.highProtein)) {
+      lines.add('The recipe must be high in protein — prioritize '
+          'protein-rich ingredients (e.g. meat, fish, eggs, legumes, dairy).');
+    }
+    if (preferences.contains(RecipePreference.vegetarian)) {
+      lines.add('The recipe must be vegetarian — no meat, poultry, or '
+          'fish/seafood.');
+    }
+    if (preferences.contains(RecipePreference.quick)) {
+      lines.add('Keep the total cooking time under 20 minutes.');
+    }
+    if (preferences.contains(RecipePreference.budgetFriendly)) {
+      lines.add('Use inexpensive, easy-to-find, everyday ingredients — '
+          'avoid costly or specialty items.');
+    }
+    return '\n\nPREFERENCES (must all be satisfied):\n${lines.join('\n')}';
   }
 
   String _sharedInstructions(int servings) {

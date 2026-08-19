@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/recipe.dart';
+import '../../../models/recipe_preference.dart';
 import '../../../services/recipe_ai_service.dart';
 import '../../../shared/app_constants.dart';
+import '../../../shared/widgets/preference_chips.dart';
 import 'recipe_form_screen.dart';
 
 /// Lightweight AI-generation entry point: a single prompt for what to cook,
@@ -22,6 +24,7 @@ class _AiGenerateRecipeScreenState extends State<AiGenerateRecipeScreen> {
   final _promptController = TextEditingController();
   final _recipeAiService = RecipeAiService();
   bool _isGenerating = false;
+  Set<RecipePreference> _preferences = {};
 
   @override
   void dispose() {
@@ -41,7 +44,11 @@ class _AiGenerateRecipeScreenState extends State<AiGenerateRecipeScreen> {
 
     setState(() => _isGenerating = true);
     try {
-      final draft = await _recipeAiService.generateRecipe(recipeName: prompt, servings: 2);
+      final draft = await _recipeAiService.generateRecipe(
+        recipeName: prompt,
+        servings: 2,
+        preferences: _preferences,
+      );
       if (!mounted) return;
       final draftRecipe = Recipe(
         id: 'draft',
@@ -81,7 +88,7 @@ class _AiGenerateRecipeScreenState extends State<AiGenerateRecipeScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.recipeFormGenerateWithAi)),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,6 +113,11 @@ class _AiGenerateRecipeScreenState extends State<AiGenerateRecipeScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 enabled: !_isGenerating,
                 onSubmitted: (_) => _generate(),
+              ),
+              const SizedBox(height: 16),
+              PreferenceChips(
+                selected: _preferences,
+                onChanged: (next) => setState(() => _preferences = next),
               ),
               const SizedBox(height: 20),
               SizedBox(

@@ -640,6 +640,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recipePantryEmptyHint => 'List at least one ingredient first.';
 
   @override
+  String get recipePreferenceHighProtein => 'High protein';
+
+  @override
+  String get recipePreferenceVegetarian => 'Vegetarian';
+
+  @override
+  String get recipePreferenceQuick => 'Quick';
+
+  @override
+  String get recipePreferenceBudgetFriendly => 'Budget-friendly';
+
+  @override
   String get recipeFormCategoryLabel => 'Category';
 
   @override
@@ -708,6 +720,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recipeFormInstructionTooShort =>
       'Instruction must be at least 5 characters.';
+
+  @override
+  String get recipeFormTotalTimeSection => 'Total time';
+
+  @override
+  String get recipeFormTotalTimeLabel => 'Total time (minutes, optional)';
+
+  @override
+  String get recipeFormTotalTimeHint => 'e.g. 30';
 
   @override
   String get recipeFormCaloriesSection => 'Calories';

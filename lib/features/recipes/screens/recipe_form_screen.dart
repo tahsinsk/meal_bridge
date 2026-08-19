@@ -49,10 +49,10 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
   // including for every manually-typed step (only AI generation fills
   // these in).
   final List<int?> _instructionDurationsMinutes = [];
-  // Holistic total-time estimate for the whole recipe — only ever set by
-  // AI generation (no manual form field for it) and carried through to
-  // Recipe on save.
-  int? _totalTimeMinutes;
+  // Holistic total-time estimate for the whole recipe — pre-filled by AI
+  // generation when present, but a regular editable field like calories
+  // (optional, nullable on save).
+  late final TextEditingController _totalTimeController;
 
   // Stable per-row ids (independent of list position/content) so
   // ReorderableListView can track each row's identity through a drag —
@@ -91,8 +91,8 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _servings = recipe?.servings ?? 2;
     _notesController = TextEditingController(text: recipe?.notes ?? '');
     _caloriesController = TextEditingController(text: recipe?.calories?.toString() ?? '');
+    _totalTimeController = TextEditingController(text: recipe?.totalTimeMinutes?.toString() ?? '');
     _imagePath = recipe?.imagePath;
-    _totalTimeMinutes = recipe?.totalTimeMinutes;
     if (recipe != null) {
       _ingredients.addAll(recipe.ingredients);
       _instructions.addAll(recipe.instructions);
@@ -125,6 +125,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
     _categoryController.dispose();
     _notesController.dispose();
     _caloriesController.dispose();
+    _totalTimeController.dispose();
     _ingredientNameController.dispose();
     _ingredientAmountController.dispose();
     _ingredientUnitController.dispose();
@@ -517,7 +518,7 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
       calories: int.tryParse(_caloriesController.text.trim()),
       imagePath: _imagePath,
       instructionDurationsMinutes: List.unmodifiable(_instructionDurationsMinutes),
-      totalTimeMinutes: _totalTimeMinutes,
+      totalTimeMinutes: int.tryParse(_totalTimeController.text.trim()),
     );
     Navigator.of(context).pop(recipe);
   }
@@ -1010,6 +1011,37 @@ class _RecipeFormScreenState extends State<RecipeFormScreen> {
                         icon: const Icon(Icons.add),
                         label: Text(l10n.recipeFormAddInstructionButton),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Total time
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Icon(Icons.schedule_outlined),
+                      const SizedBox(width: 8),
+                      Text(l10n.recipeFormTotalTimeSection, style: Theme.of(context).textTheme.titleMedium),
+                    ]),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _totalTimeController,
+                      decoration: InputDecoration(
+                        labelText: l10n.recipeFormTotalTimeLabel,
+                        hintText: l10n.recipeFormTotalTimeHint,
+                        border: const OutlineInputBorder(),
+                        suffixText: l10n.recipeStatMinutes,
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                   ],
                 ),

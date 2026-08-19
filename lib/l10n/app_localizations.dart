@@ -1186,6 +1186,30 @@ abstract class AppLocalizations {
   /// **'List at least one ingredient first.'**
   String get recipePantryEmptyHint;
 
+  /// No description provided for @recipePreferenceHighProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'High protein'**
+  String get recipePreferenceHighProtein;
+
+  /// No description provided for @recipePreferenceVegetarian.
+  ///
+  /// In en, this message translates to:
+  /// **'Vegetarian'**
+  String get recipePreferenceVegetarian;
+
+  /// No description provided for @recipePreferenceQuick.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick'**
+  String get recipePreferenceQuick;
+
+  /// No description provided for @recipePreferenceBudgetFriendly.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget-friendly'**
+  String get recipePreferenceBudgetFriendly;
+
   /// No description provided for @recipeFormCategoryLabel.
   ///
   /// In en, this message translates to:
@@ -1311,6 +1335,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Instruction must be at least 5 characters.'**
   String get recipeFormInstructionTooShort;
+
+  /// No description provided for @recipeFormTotalTimeSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Total time'**
+  String get recipeFormTotalTimeSection;
+
+  /// No description provided for @recipeFormTotalTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total time (minutes, optional)'**
+  String get recipeFormTotalTimeLabel;
+
+  /// No description provided for @recipeFormTotalTimeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 30'**
+  String get recipeFormTotalTimeHint;
 
   /// No description provided for @recipeFormCaloriesSection.
   ///

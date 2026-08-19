@@ -643,6 +643,18 @@ class AppLocalizationsNl extends AppLocalizations {
   String get recipePantryEmptyHint => 'Voer eerst minstens één ingrediënt in.';
 
   @override
+  String get recipePreferenceHighProtein => 'Veel eiwitten';
+
+  @override
+  String get recipePreferenceVegetarian => 'Vegetarisch';
+
+  @override
+  String get recipePreferenceQuick => 'Snel';
+
+  @override
+  String get recipePreferenceBudgetFriendly => 'Budgetvriendelijk';
+
+  @override
   String get recipeFormCategoryLabel => 'Categorie';
 
   @override
@@ -711,6 +723,15 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get recipeFormInstructionTooShort =>
       'Bereidingsstap moet minstens 5 tekens bevatten.';
+
+  @override
+  String get recipeFormTotalTimeSection => 'Totale tijd';
+
+  @override
+  String get recipeFormTotalTimeLabel => 'Totale tijd (minuten, optioneel)';
+
+  @override
+  String get recipeFormTotalTimeHint => 'bijv. 30';
 
   @override
   String get recipeFormCaloriesSection => 'Calorieën';

@@ -633,6 +633,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recipePantryEmptyHint => 'Önce en az bir malzeme yazın.';
 
   @override
+  String get recipePreferenceHighProtein => 'Yüksek protein';
+
+  @override
+  String get recipePreferenceVegetarian => 'Vejetaryen';
+
+  @override
+  String get recipePreferenceQuick => 'Hızlı';
+
+  @override
+  String get recipePreferenceBudgetFriendly => 'Ekonomik';
+
+  @override
   String get recipeFormCategoryLabel => 'Kategori';
 
   @override
@@ -701,6 +713,15 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get recipeFormInstructionTooShort =>
       'Yapılış adımı en az 5 karakter olmalı.';
+
+  @override
+  String get recipeFormTotalTimeSection => 'Toplam süre';
+
+  @override
+  String get recipeFormTotalTimeLabel => 'Toplam süre (dakika, opsiyonel)';
+
+  @override
+  String get recipeFormTotalTimeHint => 'örn. 30';
 
   @override
   String get recipeFormCaloriesSection => 'Kalori';
